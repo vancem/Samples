@@ -1,16 +1,15 @@
-
 <!doctype html>
 <html>
 <body>
     <!-- *********************************************************************** -->
     <p> This is a simple program that makes a ball bounce around in a box.</p>
     <ul>
-        <li> <button title="Start the simulation over" id="resetButton">reset</button> 
-             <button title="Pause the simulation" id="pauseButton">pause</button> 
+        <li> <button title="Start the simulation over" onclick="reset()">reset</button> 
+             <button title="Pause the simulation" onclick="pause()">pause</button> 
         </li>
         <li> Position: <span id=positionSpan>(0,0)</span> </li>
     </ul>
-    <canvas id="ballCanvas" style="border:2px solid red" height="500" width="800"> </canvas>
+    <canvas id="ballCanvas" style="border:2px solid red" onmousemove="mouseMove(event)" height="500" width="800"> </canvas>
 
     <script>
         /***********************************************************************/
@@ -122,15 +121,6 @@
         }
 
         /***********************************************************************/
-        // Callbacks
-
-        // Subscribe to callbacks needed for buttons etc (onclick)
-        document.getElementById('resetButton').onclick = reset;
-        document.getElementById('pauseButton').onclick = pause;
-
-        ballCanvas.onmousemove = mouseMove;
-        window.onkeydown = keypress;
-
         // Subscribe to a tick that goes off every 20 msec to update the animation
         window.setInterval(drawAndUpdate, 20);
 
