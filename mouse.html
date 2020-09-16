@@ -123,6 +123,8 @@
         /***********************************************************************/
         // Subscribe to a tick that goes off every 20 msec to update the animation
         window.setInterval(drawAndUpdate, 20);
+        // get keyboard strokes.  
+        window.onkeydown = keypress;
 
         /***********************************************************************/
         // Initialize program (after which callbacks take over)
