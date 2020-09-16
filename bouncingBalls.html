@@ -1,0 +1,265 @@
+<!doctype html>
+<html>
+<head>
+    <title>Bouncing Balls</title>
+</head>
+<body>
+    <!-- *********************************************************************** -->
+    <ul>
+        <li> <button title="Start the simulation over" id="resetButton">reset</button> 
+             <button title="Increase the number of balls by 20%" id="increaseButton">inc</button>
+             <button title="Decrease the number of balls by 20%" id="decreaseButton">dec</button>
+        </li>
+        <li> <label for="number">Number Of Balls </label>
+             <input id="numberOfBallsTextBox" type=text value=30 autofocus>
+        </li>
+        <li> Simulation Duration (sec): <span id=durationSpan>0</span> </li>
+    </ul>
+    <canvas id="ballCanvas" style="border:2px solid red" height="500" width="800"> </canvas>
+
+    <script>
+        /***********************************************************************/
+        // Global variables 
+        var colors = ["red", "green", "blue", "orange", "purple", "black", "brown", "grey", "magenta" ];
+
+        // get GUI object needed
+        var ballCanvas = document.getElementById('ballCanvas');
+        var ballCanvasContext = ballCanvas.getContext('2d');
+
+        /*******************************************************************/
+        // This is the main data model, which is just a array of balls.
+        var balls = [];
+
+        // start over
+        function resetModel(numBalls)
+        {
+            balls = [];
+            for(var i = 0; i < numBalls; i++)
+                balls[i] = Ball();
+        }
+        
+        /*******************************************************************/
+        // Create a ball
+        function Ball() {
+            var self = {};
+            self.color = colors[Math.floor(Math.random() * colors.length)];
+            self.radius = 20;
+            self.velocity = {x:(Math.random() * 2 - 1) * 10, y:(Math.random() * 2 - 1) * 10 };
+            self.x = ballCanvas.width / 2;
+            self.y = ballCanvas.height /2;
+            return self;
+        }
+
+        // Draw the ball on the screen
+        function draw(self) {
+            ballCanvasContext.beginPath();
+            ballCanvasContext.arc(self.x, self.y, self.radius, 0, 2 * Math.PI, false);
+            ballCanvasContext.fillStyle = self.color;
+            ballCanvasContext.fill();
+            ballCanvasContext.stroke();
+        }
+
+        // Update the position and velocity of the ball
+        function update(self) {
+            // move in the direction of the velocity (x dim)
+            self.x = self.x + self.velocity.x; 
+            if (self.x - self.radius < 0) 
+            {
+                var delta = 0 - (self.x - self.radius);                    // This is positive
+                self.x += 2*delta;                                         // reflect
+                self.velocity.x = -self.velocity.x;
+            }
+            else if (ballCanvas.width < self.x + self.radius)
+            {
+                var delta = (self.x + self.radius) - ballCanvas.width;         // This is positive
+                self.x -= 2*delta;                                         // reflect
+                self.velocity.x = -self.velocity.x;
+            }
+
+            // move in the direction of the velocity (y dim)
+            self.y = self.y + self.velocity.y; 
+            if (self.y - self.radius < 0) 
+            {
+                var delta = 0 - (self.y - self.radius);                    // This is positive
+                self.y += 2*delta;                                         // reflect
+                self.velocity.y = -self.velocity.y;
+            }
+            else if (ballCanvas.height < self.y + self.radius)
+            {
+                var delta = (self.y + self.radius) - ballCanvas.height;        // This is positive
+                self.y -= 2*delta;                                         // reflect
+                self.velocity.y = -self.velocity.y;
+            }
+        }
+
+        /********************************************************************/
+        // collision utilities
+
+        // This just upates the velocity of ball and otherball if they are in contact with each other.  
+        function updateIfCollidesWith(ball, otherBall)
+        {
+            // Quick check, do the enclosing rectangles intersect?
+            if (rectanglesOverlap(ball, otherBall))
+            {
+                // Do the more expensive check if the circles actually overlap
+                var collisionDir = sub(otherBall, ball);
+                var collisionDist = distance(collisionDir);
+
+                if (collisionDist <= ball.radius + otherBall.radius)
+                {
+                    // If the distances are too close, give up, to avoid / zero and scaling problems
+                    if (collisionDist >= 3)
+                    {
+                        // We have intersection, The balls should bounce
+                        var collisionUnit = scale(collisionDir, 1/collisionDist);
+
+                        // Calcuate speeds in the direction of the collision
+                        var collisionSpeed = dot(collisionUnit, ball.velocity);                        
+                        var otherBallCollisionSpeed = dot(collisionUnit, otherBall.velocity);
+
+                        // 'this' is overtaking 'otherBall', swap velocities in the direction of contact
+                        if (collisionSpeed > otherBallCollisionSpeed)
+                        {
+                            var collisionNormUnit =  {x:collisionUnit.y, y:-collisionUnit.x};        // negate flip finds the normal
+
+                            // Resolve the ball's and otherBall's velocity into components aligned with and normal to the collision direction
+                            var velDir = scale(collisionUnit, collisionSpeed);
+                            var velNorm = scale(collisionNormUnit, dot(collisionNormUnit, ball.velocity));
+
+                            otherBallVelDir = scale(collisionUnit, otherBallCollisionSpeed);
+                            otherBallVelNorm = scale(collisionNormUnit, dot(collisionNormUnit, otherBall.velocity));
+
+                            // Update the velocity of the otherBalls, (swap velocities in direction of collision) 
+                            ball.velocity = add(otherBallVelDir, velNorm);
+                            otherBall.velocity = add(velDir, otherBallVelNorm);
+
+                            // Keep the velocity under control
+                            clipSpeed(ball, 20);
+                            clipSpeed(otherBall, 20);
+                        }
+                    }
+                }
+            }
+        }
+
+        // returns true if the bounding rectangles of 'ball1' and 'ball2' overlap.  
+        function rectanglesOverlap(ball1, ball2) {
+            // First check if the rectangles overlap
+            if (ball1.x + ball1.radius < ball2.x - ball2.radius)
+                return false;
+            if (ball2.x + ball2.radius < ball1.x - ball1.radius)
+                return false;
+
+            if (ball1.y + ball1.radius < ball2.y - ball2.radius)
+                return false;
+            if (ball2.y + ball2.radius < ball1.y - ball1.radius)
+                return false;
+            return true;
+        }
+
+        // Keep 'ball's speed under maxSpeed
+        function clipSpeed(ball, maxSpeed) {
+            var s = distance(ball.velocity);
+            if (maxSpeed < s)
+                ball.velocity = scale(ball.velocity, maxSpeed / s);
+        }
+
+        // Given a vector v = (x,y), calculate its distance (scalar)
+        function distance(v) {
+            return Math.sqrt(v.x * v.x + v.y * v.y);
+        }
+
+        // Given a vector v = (x,y), and a scall factor scale, scale the vector by scale
+        function scale(v, scale) {
+            return { x:v.x * scale, y:v.y * scale };
+        }
+
+        // add two vectors
+        function add(v1, v2) {
+            return { x:(v1.x + v2.x), y:(v1.y + v2.y) };
+
+        }
+
+        // subtract two vectors
+        function sub(v1, v2) {
+            return { x:(v1.x - v2.x), y:(v1.y - v2.y) };
+        }
+
+        // compute the dot product of two vectors
+        function dot(v1, v2) {
+            return v1.x * v2.x + v1.y * v2.y;
+        }
+
+        /****************************************************************************************/
+        // GUI
+
+        // GUI object that have state (Used in other callbacks)
+        var numberOfBallsTextBox = document.getElementById('numberOfBallsTextBox');
+        var durationSpan = document.getElementById('durationSpan');
+        var duration = 0;
+
+        /*****************************/
+        // GUI Operations
+
+        // Start the simulation over
+        function reset() {
+            var numberOfBalls = parseInt(numberOfBallsTextBox.value);
+
+            if (isNaN(numberOfBalls) || numberOfBalls <= 0)
+                numberOfBalls = 30;
+            else if (500 < numberOfBalls)
+                numberOfBalls == 500;
+            numberOfBallsTextBox.value = numberOfBalls;        // Fix the textBox
+            resetModel(numberOfBalls);
+
+            duration = 0;
+            durationSpan.innerHTML = duration;
+        }
+
+        /*****************************/
+        // Callbacks 
+
+        document.getElementById('resetButton').onclick = reset;
+        document.getElementById('increaseButton').onclick = function() {  
+            numberOfBallsTextBox.value = Math.ceil(numberOfBallsTextBox.value * 1.2); 
+            reset(); 
+        }
+        document.getElementById('decreaseButton').onclick = function() { 
+            numberOfBallsTextBox.value = Math.floor(numberOfBallsTextBox.value * .8); 
+            reset(); 
+        }
+        numberOfBallsTextBox.onkeypress = function(eventData) { 
+            if (eventData.char == "\n") reset(); 
+        } 
+
+        /****************************************************************************************/
+        // Animation
+
+        // This goes off every tick (currently every 20 msec)
+        window.setInterval(function () {
+            ballCanvasContext.clearRect(0, 0, ballCanvas.width, ballCanvas.height);
+            for(var i = 0; i < balls.length; i++) {
+                update(balls[i]);
+        
+                // Look for collisions (makes this N*N)
+                for(var j = 0; j < i; j++)
+                    updateIfCollidesWith(balls[i], balls[j]);
+
+                // actually draw them on the screen 
+                draw(balls[i]);
+            }
+        }, 20);
+
+        // Keeps time running up to date
+        window.setInterval(function () {
+            duration++;
+            durationSpan.innerHTML = duration;
+        }, 1000);
+
+        /****************************************************************************************/
+        // Initialize display
+        reset();
+
+    </script>
+</body>
+</html>
