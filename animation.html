@@ -1,12 +1,14 @@
 <!doctype html>
 <html>
+
 <body>
     <!-- *********************************************************************** -->
     <p> This is a simple program that makes a ball bounce around in a box.</p>
     <ul>
-        <li> <button title="Start the simulation over" id="resetButton">reset</button> 
-             <button title="Pause the simulation" id="pauseButton">pause</button> 
+        <li> <button title="Start the simulation over" onclick="reset()">reset</button>
+            <button title="Pause the simulation" onclick="pause()">pause</button>
         </li>
+        <!-- positionSpan is a placeholder that holds an x,y coordinate that will be filled in by code -->
         <li> Position: <span id=positionSpan>(0,0)</span> </li>
     </ul>
     <canvas id="ballCanvas" style="border:2px solid red" height="500" width="800"> </canvas>
@@ -56,7 +58,7 @@
 
         // pauses or unpauses the simulation
         function pause() {
-             paused = !paused;
+            paused = !paused;
         }
 
         /*****************************/
@@ -76,18 +78,11 @@
             ballCanvasContext.stroke();
 
             // report the x, y position as numbers
-            positionSpan.innerHTML =  "(" + x + ", " + y + ")";
+            positionSpan.innerHTML = "(" + x + ", " + y + ")";
 
             // update the model (the ball)
             update();
         }
-
-        /***********************************************************************/
-        // Callbacks
-
-        // Subscribe to callbacks needed for buttons etc (onclick)
-        document.getElementById('resetButton').onclick = reset;
-        document.getElementById('pauseButton').onclick = pause;
 
         // Subscribe to a tick that goes off every 20 msec to update the animation
         window.setInterval(drawAndUpdate, 20);
@@ -97,4 +92,5 @@
         reset();
     </script>
 </body>
+
 </html>
