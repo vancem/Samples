@@ -1,0 +1,168 @@
+<!doctype html>
+<head> 
+    <style>
+        .calc, button, .display {
+            margin: 3px;
+            padding: 5px;
+            border-style: solid;
+        }
+        .display { 
+            text-align: right;
+        }
+        .calc {
+            width: 180px;
+        }
+         button {
+            color: blue;
+            width: 35px;
+        }
+    </style>
+</head>
+<html>
+<body>
+    <!-- *********************************************************************** -->
+    <p> This is a simple calculator program</p>
+
+    <div class="calc">
+        <div class="display" id="display">0</div>
+
+        <div>
+            <button onclick="doOperatorPressed('+')">+</button> 
+            <button onclick="doOperatorPressed('-')">-</button> 
+            <button onclick="doOperatorPressed('*')">*</button> 
+            <button onclick="doOperatorPressed('/')">/</button> 
+        </div>
+        <div>
+            <button onclick="doDigitPressed(7)">7</button> 
+            <button onclick="doDigitPressed(8)">8</button> 
+            <button onclick="doDigitPressed(9)">9</button> 
+            <button onclick="doEqualsPressed()">=</button> 
+        </div>
+        <div>
+            <button onclick="doDigitPressed(4)">4</button> 
+            <button onclick="doDigitPressed(5)">5</button> 
+            <button onclick="doDigitPressed(6)">6</button> 
+            <button onclick="doClearEntryPressed()">CE</button> 
+        </div>
+        <div>
+            <button onclick="doDigitPressed(1)">1</button> 
+            <button onclick="doDigitPressed(2)">2</button> 
+            <button onclick="doDigitPressed(3)">3</button> 
+        </div>
+        <div>
+            <button onclick="doDigitPressed(0)">0</button> 
+            <button onclick="doDotPressed()">.</button> 
+            <button onclick="doNegativePressed()">+/-</button> 
+        </div>
+    </div>
+    <script>
+        "use strict";           // Tell javaScript to be picky to find more errors
+        /***********************************************************************/
+        // Global variables 
+
+        var displaySpan = document.getElementById('display');
+        window.onkeydown = doKeyPress;                // for keyboard shortcuts
+
+        // displayValue is what is shown in the display of GUI
+        var displayValue = "0";         // This is always a string (not a number)
+
+        // In addition to the displayed value, the calculator has to remember
+        // the first argument and the operator in order to do the calculation
+        // when = (Or another operator) is pressed.  These variables remember this.
+        var operator = null;
+        var operand1 = null;                // This is always a string (not a number)
+
+        // pressing a digit after an operator clears the display, but
+        // does not clear the display digits typed after the first.  
+        // This boolean remembers which of these states we are in
+        var enteringAdditionalDigits = false;
+
+        /***********************************************************************/
+        // Functions
+
+        function setDisplay(value) {
+            display.innerHTML = displayValue = value.toString();
+        }
+
+        // one of the +-*/ buttons is pushed
+        function doOperatorPressed(op) {
+            doEqualsPressed();
+            operator = op;
+        }
+
+        // the = button is pushed
+        function doEqualsPressed() {
+            if (operand1 != null && operator != null) {
+                if (operator == "+")
+                    setDisplay(parseFloat(operand1) + parseFloat(displayValue));
+                else if (operator == "-")
+                    setDisplay(operand1 - displayValue);
+                else if (operator == "*")
+                    setDisplay(operand1 * displayValue);
+                else if (operator == "/")
+                    setDisplay(operand1 / displayValue);
+            }
+            operator = null;
+            operand1 = displayValue;
+            enteringAdditionalDigits = false;
+        }
+
+        // the CE (clear entry) button is pushed
+        function doClearEntryPressed() {
+            if (!enteringAdditionalDigits) {
+                operand1 = null;
+                operator = null;
+            }
+            setDisplay("0");
+            enteringAdditionalDigits = false;
+        }
+
+        function doDigitPressed(digit) {
+            if (enteringAdditionalDigits) {
+                if (displayValue.length < 15)
+                    setDisplay(displayValue + digit);
+            }
+            else {
+                setDisplay(digit);
+                enteringAdditionalDigits = true;
+            }
+        }
+
+        // the . button is pushed
+        function doDotPressed() {
+            if (!enteringAdditionalDigits)        // if . is the first digit we mean 0.
+                 setDisplay("0");
+
+            // we only add a dot if there is not already one present
+            if (displayValue.indexOf(".") < 0)
+                doDigitPressed(".");
+        }
+
+        // the +/- button is pushed
+        function doNegativePressed() {
+            if (!enteringAdditionalDigits) {
+                 setDisplay("-");
+                enteringAdditionalDigits = true;
+            }
+            else {
+                if (displayValue.startsWith("-"))
+                    setDisplay(displayValue.substring(1));        // remove the -
+                else 
+                    setDisplay("-" + displayValue);
+            }
+        }
+
+        // Turn keystrokes into button pushes.
+        function doKeyPress(event) {
+            if ("0" <= event.key && event.key <= "9")
+                doDigitPressed(event.key);
+            else if ("." === event.key)
+                doDotPressed();
+            else if ("+" === event.key || "-" === event.key || "*" === event.key || "/" === event.key)
+                doOperatorPressed(event.key);
+            else if ("=" === event.key || "Enter" == event.key)
+                doEqualsPressed();
+        }
+    </script>
+</body>
+</html>
