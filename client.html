@@ -1,0 +1,55 @@
+<!doctype html>
+
+<head>
+    <style>
+        /********************************************************************/
+    </style>
+</head>
+<html>
+<ul>
+    <li><button onclick="doStatus()">status</button></li>
+    <li><button onclick="doIncrement()">increment</button></li>
+    <li><button onclick="doDecrement()">decrement</button></li>
+    <li>status = <span id="statusSpan"></span></li>
+    <li>time = <span id="timeSpan"></span></li>
+</ul>
+
+<body>
+    <!-- *********************************************************************** -->
+    <script>
+        "use strict";           // Tell javaScript to be picky to find more errors
+
+        function update(response, responseData) {
+            console.log("Got a HTTP responce from URL: " + response.url);
+            console.log("response data: ", responseData);
+            document.getElementById("statusSpan").innerHTML = responseData.count;
+            document.getElementById("timeSpan").innerHTML = (new Date()).toLocaleTimeString();
+        }
+
+        function doDecrement() {
+            fetch("decrement").then(response => {
+                response.json().then(json => {
+                    update(response, json);
+                });
+            });
+        }
+
+        function doIncrement() {
+            fetch("increment").then(response => {
+                response.json().then(json => {
+                    update(response, json);
+                });
+            });
+        }
+
+        function doStatus() {
+            fetch("status").then(response => {
+                response.json().then(json => {
+                    update(response, json);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
