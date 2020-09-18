@@ -1,16 +1,17 @@
 <!doctype html>
 <html>
+
 <body>
     <!-- *********************************************************************** -->
     <p> This is a simple program that makes a ball bounce around in a box.</p>
     <ul>
-        <li> <button title="Start the simulation over" onclick="reset()">reset</button> 
-             <button title="Pause the simulation" onclick="pause()">pause</button> 
+        <li> <button title="Start the simulation over" onclick="reset()">reset</button>
+            <button title="Pause the simulation" onclick="pause()">pause</button>
         </li>
         <li> Position: <span id=positionSpan>(0,0)</span> </li>
     </ul>
-    <canvas id="ballCanvas" tabindex="1" onkeydown="keypress(event)"
-            style="border:2px solid red" onmousemove="mouseMove(event)" height="500" width="800"> </canvas>
+    <canvas id="ballCanvas" tabindex="1" onkeydown="keypress(event)" style="border:2px solid red"
+        onmousemove="mouseMove(event)" height="500" width="800"> </canvas>
 
     <script>
         /***********************************************************************/
@@ -21,7 +22,7 @@
         var positionSpan = document.getElementById('positionSpan');
         var ballCanvasContext = ballCanvas.getContext('2d');
 
-        // state variables for ball position, velocity and size (all will be overwritten in reset())
+        // state variables for ball position, velocity and size (all will be overwritten in reset()) 
         var x, y, deltaX, deltaY, ballSize;
         var paddleX, paddleY, paddleWidth;
         var paused = false;
@@ -55,22 +56,21 @@
             // Bounce off the top and bottom wall 
             if (y < ballSize && deltaY < 0)
                 deltaY = -deltaY;
-            else if (ballCanvas.height < y + ballSize && 0 < deltaY)
-               {
-                reset(); 
-                   return;
+            else if (ballCanvas.height < y + ballSize && 0 < deltaY) {
+                reset();
+                return;
                 //deltaY = -deltaY;
             }
 
             // Bounce off paddle
             var bottomOfBall = y + ballSize;
-            if (0 < deltaY && paddleY < bottomOfBall && paddleX - paddleWidth/2 <= x &&  x <= paddleX + paddleWidth/2)
+            if (0 < deltaY && paddleY < bottomOfBall && paddleX - paddleWidth / 2 <= x && x <= paddleX + paddleWidth / 2)
                 deltaY = -deltaY;
         }
 
         // pauses or unpauses the simulation
         function pause() {
-             paused = !paused;
+            paused = !paused;
         }
 
         /*****************************/
@@ -91,34 +91,32 @@
 
             // Draw the paddle
             ballCanvasContext.fillStyle = "black";
-            ballCanvasContext.fillRect(paddleX - paddleWidth/2, paddleY, paddleWidth, 20);
+            ballCanvasContext.fillRect(paddleX - paddleWidth / 2, paddleY, paddleWidth, 20);
 
             // report the x, y position as numbers
-            positionSpan.innerHTML =  "(" + x + ", " + y + ")";
+            positionSpan.innerHTML = "(" + x + ", " + y + ")";
 
             // update the model (the ball)
             update();
         }
 
         /*****************************/
-        function mouseMove(eventData)
-        {
-             paddleX = eventData.x; 
-             paddleX = Math.max(paddleX, paddleWidth/2);
-             paddleX = Math.min(paddleX, ballCanvas.width - paddleWidth/2);
+        function mouseMove(eventData) {
+            paddleX = eventData.x;
+            paddleX = Math.max(paddleX, paddleWidth / 2);
+            paddleX = Math.min(paddleX, ballCanvas.width - paddleWidth / 2);
         }
 
         /*****************************/
-        function keypress(eventData)
-        {
-             if (eventData.key == "ArrowLeft") {
+        function keypress(eventData) {
+            if (eventData.key == "ArrowLeft") {
                 paddleX -= 50;
-                paddleX = Math.max(paddleX, paddleWidth/2);
-                }
-             if (eventData.key == "ArrowRight") {
+                paddleX = Math.max(paddleX, paddleWidth / 2);
+            }
+            if (eventData.key == "ArrowRight") {
                 paddleX += 50;
-                paddleX = Math.min(paddleX, ballCanvas.width - paddleWidth/2);
-             }
+                paddleX = Math.min(paddleX, ballCanvas.width - paddleWidth / 2);
+            }
         }
 
         /***********************************************************************/
@@ -130,4 +128,5 @@
         reset();
     </script>
 </body>
+
 </html>

@@ -1,19 +1,25 @@
 <!doctype html>
-<head> 
+
+<head>
     <style>
-        .calc, button, .display {
+        .calc,
+        button,
+        .display {
             margin: 3px;
             padding: 5px;
             border-style: solid;
         }
-        .display { 
+
+        .display {
             text-align: right;
             border-color: blue;
         }
+
         .calc {
             width: 180px;
             border-color: blue;
         }
+
         button {
             color: blue;
             width: 35px;
@@ -21,6 +27,7 @@
     </style>
 </head>
 <html>
+
 <body>
     <!-- *********************************************************************** -->
     <p> This is a simple calculator program</p>
@@ -29,32 +36,32 @@
         <div class="display" id="display">0</div>
 
         <div>
-            <button tabindex="-1" onclick="doOperatorPressed('+')">+</button> 
-            <button tabindex="-1" onclick="doOperatorPressed('-')">-</button> 
-            <button tabindex="-1" onclick="doOperatorPressed('*')">*</button> 
-            <button tabindex="-1" onclick="doOperatorPressed('/')">/</button> 
+            <button tabindex="-1" onclick="doOperatorPressed('+')">+</button>
+            <button tabindex="-1" onclick="doOperatorPressed('-')">-</button>
+            <button tabindex="-1" onclick="doOperatorPressed('*')">*</button>
+            <button tabindex="-1" onclick="doOperatorPressed('/')">/</button>
         </div>
         <div>
-            <button tabindex="-1" onclick="doDigitPressed(7)">7</button> 
-            <button tabindex="-1" onclick="doDigitPressed(8)">8</button> 
-            <button tabindex="-1" onclick="doDigitPressed(9)">9</button> 
-            <button tabindex="-1" onclick="doEqualsPressed()">=</button> 
+            <button tabindex="-1" onclick="doDigitPressed(7)">7</button>
+            <button tabindex="-1" onclick="doDigitPressed(8)">8</button>
+            <button tabindex="-1" onclick="doDigitPressed(9)">9</button>
+            <button tabindex="-1" onclick="doEqualsPressed()">=</button>
         </div>
         <div>
-            <button tabindex="-1" onclick="doDigitPressed(4)">4</button> 
-            <button tabindex="-1" onclick="doDigitPressed(5)">5</button> 
-            <button tabindex="-1" onclick="doDigitPressed(6)">6</button> 
-            <button tabindex="-1" onclick="doClearEntryPressed()">CE</button> 
+            <button tabindex="-1" onclick="doDigitPressed(4)">4</button>
+            <button tabindex="-1" onclick="doDigitPressed(5)">5</button>
+            <button tabindex="-1" onclick="doDigitPressed(6)">6</button>
+            <button tabindex="-1" onclick="doClearEntryPressed()">CE</button>
         </div>
         <div>
-            <button tabindex="-1" onclick="doDigitPressed(1)">1</button> 
-            <button tabindex="-1" onclick="doDigitPressed(2)">2</button> 
-            <button tabindex="-1" onclick="doDigitPressed(3)">3</button> 
+            <button tabindex="-1" onclick="doDigitPressed(1)">1</button>
+            <button tabindex="-1" onclick="doDigitPressed(2)">2</button>
+            <button tabindex="-1" onclick="doDigitPressed(3)">3</button>
         </div>
         <div>
-            <button tabindex="-1" onclick="doDigitPressed(0)">0</button> 
-            <button tabindex="-1" onclick="doDotPressed()">.</button> 
-            <button tabindex="-1" onclick="doNegativePressed()">+/-</button> 
+            <button tabindex="-1" onclick="doDigitPressed(0)">0</button>
+            <button tabindex="-1" onclick="doDotPressed()">.</button>
+            <button tabindex="-1" onclick="doNegativePressed()">+/-</button>
         </div>
     </div>
     <script>
@@ -132,7 +139,7 @@
         // the . button is pushed
         function doDotPressed() {
             if (!enteringAdditionalDigits)        // if . is the first digit we mean 0.
-                 setDisplay("0");
+                setDisplay("0");
 
             // we only add a dot if there is not already one present
             if (displayValue.indexOf(".") < 0)
@@ -142,21 +149,21 @@
         // the +/- button is pushed
         function doNegativePressed() {
             if (!enteringAdditionalDigits) {
-                 setDisplay("-");
+                setDisplay("-");
                 enteringAdditionalDigits = true;
             }
             else {
                 if (displayValue.startsWith("-"))
                     setDisplay(displayValue.substring(1));        // remove the -
-                else 
+                else
                     setDisplay("-" + displayValue);
             }
         }
 
         // the Delete button is pushed
         function doDeletePressed() {
-               if (0 < displayValue.length) {
-                setDisplay(displayValue.substring(0, displayValue.length-1));
+            if (0 < displayValue.length) {
+                setDisplay(displayValue.substring(0, displayValue.length - 1));
                 if (displayValue.length == 0) {
                     setDisplay("0");
                     enteringAdditionalDigits = false;
@@ -179,4 +186,5 @@
         }
     </script>
 </body>
+
 </html>
