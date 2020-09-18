@@ -12,6 +12,7 @@
     <li><button onclick="doDecrement()">decrement</button></li>
     <li>status = <span id="statusSpan"></span></li>
     <li>time = <span id="timeSpan"></span></li>
+    <li>error = <span id="errorSpan"></span></li>
 </ul>
 
 <body>
@@ -19,35 +20,36 @@
     <script>
         "use strict";           // Tell javaScript to be picky to find more errors
 
-        function update(response, responseData) {
+        function doDecrement() {
+            wrapError(doUpdateAsync("decrement"))
+        }
+
+        function doIncrement() {
+            wrapError(doUpdateAsync("increment"))
+        }
+
+        function doStatus() {
+            wrapError(doUpdateAsync("status"))
+        }
+
+        function wrapError(asyncFtn) {
+            asyncFtn.catch(errorMessage => {
+                console.log("Got a HTTP Error " + errorMessage);
+                let errorHtml = "<pre>" + errorMessage + "</pre>";
+                document.getElementById("errorSpan").innerHTML = errorHtml;
+            });
+        }
+
+        async function doUpdateAsync(url) {
+            let response = await fetch(url);
+            if (!response.ok)
+                throw "Error fetching URL: ./" + url + " error: " + response.statusText;
+            let responseData = await response.json();
             console.log("Got a HTTP responce from URL: " + response.url);
             console.log("response data: ", responseData);
             document.getElementById("statusSpan").innerHTML = responseData.count;
             document.getElementById("timeSpan").innerHTML = (new Date()).toLocaleTimeString();
-        }
-
-        function doDecrement() {
-            fetch("decrement").then(response => {
-                response.json().then(json => {
-                    update(response, json);
-                });
-            });
-        }
-
-        function doIncrement() {
-            fetch("increment").then(response => {
-                response.json().then(json => {
-                    update(response, json);
-                });
-            });
-        }
-
-        function doStatus() {
-            fetch("status").then(response => {
-                response.json().then(json => {
-                    update(response, json);
-                });
-            });
+            document.getElementById("errorSpan").innerHTML = ""; //clear any error messages. 
         }
     </script>
 </body>
