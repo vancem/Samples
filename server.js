@@ -22,8 +22,7 @@ var state = { count: 0 };
 console.log("Staring server, accepting connections at port 80 (default)");
 
 /************************************************************************ */
-function sendJSONResponse(res, json)
-{
+function sendJSONResponse(res, json) {
     res.writeHead(200, { 'Content-Type': 'text/json' });
     let responseText = JSON.stringify(json);
     res.end(responseText);
@@ -44,8 +43,7 @@ http.createServer(function (req, res) {
     else if (req.url == "/status") {
         sendJSONResponse(res, state);
     }
-    else if (req.url == "/")
-    {
+    else if (req.url == "/") {
         console.log("*********** Recieved Request: ROOT");
         fs.readFile("client.html", (err, fileData) => {
             console.log("Read File  len = " + fileData.length);
@@ -53,10 +51,9 @@ http.createServer(function (req, res) {
             console.log("Sending Responce for ROOT");
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(fileData);
-          });
+        });
     }
-    else 
-    {
+    else {
         console.log("Unknown command " + req.url + " replying with error");
         res.writeHead(400);
         res.end();

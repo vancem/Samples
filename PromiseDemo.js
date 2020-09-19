@@ -63,3 +63,19 @@ fourthPromise.catch(errorValue => {
     console.log(ts() + " END OF CATCH");
 });
 **/
+
+
+
+/* Node's file system functions predate promises and async functions, but you can
+   make your own, which is what I do here */
+function readFileAsync(name)
+{
+    return new Promise((resolve, reject) => {
+        fs.readFile(name, (err, data) => {
+            if (data !== undefined)
+                resolve(data);
+            else 
+                reject(err)
+        })
+    }); 
+}
