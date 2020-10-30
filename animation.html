@@ -18,13 +18,13 @@
         // Global variables 
 
         // get GUI object needed
-        var ballCanvas = document.getElementById('ballCanvas');
-        var positionSpan = document.getElementById('positionSpan');
-        var ballCanvasContext = ballCanvas.getContext('2d');
+        let ballCanvas = document.getElementById("ballCanvas");
+        let positionSpan = document.getElementById("positionSpan");
+        let ballCanvasContext = ballCanvas.getContext("2d");
 
         // state variables for ball position, velocity and size (all will be overwritten in reset())
-        var x, y, deltaX, deltaY, ballSize;
-        var paused = 0;
+        let x, y, deltaX, deltaY, ballSize;
+        let paused = 0;
 
         /***********************************************************************/
         // Functions
@@ -66,6 +66,7 @@
 
         function drawAndUpdate() {
             if (paused != 0) return;
+        
 
             // clear the canvas
             ballCanvasContext.clearRect(0, 0, ballCanvas.width, ballCanvas.height);
@@ -86,7 +87,7 @@
 
         // Subscribe to a tick that goes off every 20 msec to update the animation
         window.setInterval(drawAndUpdate, 20);
-
+        
         /***********************************************************************/
         // Initialize program (after which callbacks take over)
         reset();

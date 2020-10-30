@@ -12,18 +12,18 @@
 /************************************************************************ */
 'use strict';           // be picky about errors.  
 const { fstat } = require('fs');
-var http = require('http');
+let http = require('http');
 const { fileURLToPath } = require('url');
 const fs = require('fs');
 
 // This is the state object, that is shared among all clients of the server.  
-var state = { count: 0 };
+let state = { count: 0 };
 
 console.log("Staring server, accepting connections at port 80 (default)");
 
 /************************************************************************ */
 function sendJSONResponse(res, json) {
-    res.writeHead(200, { 'Content-Type': 'text/json' });
+    res.writeHead(200, { "Content-Type": "text/json" });
     let responseText = JSON.stringify(json);
     res.end(responseText);
     console.log("Sent response: " + responseText);
@@ -49,7 +49,7 @@ http.createServer(function (req, res) {
             console.log("Read File  len = " + fileData.length);
             console.assert(!err);
             console.log("Sending Responce for ROOT");
-            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.writeHead(200, { "Content-Type": "text/html" });
             res.end(fileData);
         });
     }

@@ -1,0 +1,51 @@
+<!doctype html>
+
+<head>
+    <link rel="stylesheet" href="https://swisnl.github.io/jQuery-contextMenu/dist/jquery.contextMenu.css">
+    <style>
+        /********************************************************************/
+    </style>
+</head>
+<html>
+
+<body>
+    <!-- *********************************************************************** -->
+    <p>This is a demo of the contextMenu functionality from https://github.com/swisnl/jQuery-contextMenu.</p>
+    <p>To test simply right click on the 'right click me' text below.</p>
+    <p><span class="context-menu-one btn btn-neutral">right click me</span></p>
+    <!-- *********************************************************************** -->
+    <script src="jquery-3.5.1.js"></script> 
+    <script src="https://swisnl.github.io/jQuery-contextMenu/dist/jquery.contextMenu.js"></script>
+    <script>
+        "use strict";           // Tell javaScript to be picky to find more errors
+
+        $(function () {
+            $.contextMenu({
+                selector: ".context-menu-one",
+                callback: function (key, options) {
+                    let m = "clicked: " + key;
+                    window.console && console.log(m) || alert(m);
+                },
+                items: {
+                    "edit": { name: "Edit", icon: "edit" },
+                    "cut": { name: "Cut", icon: "cut" },
+                    copy: { name: "Copy", icon: "copy" },
+                    "paste": { name: "Paste", icon: "paste" },
+                    "delete": { name: "Delete", icon: "delete" },
+                    "sep1": "---------",
+                    "quit": {
+                        name: "Quit", icon: function () {
+                            return "context-menu-icon context-menu-icon-quit";
+                        }
+                    }
+                }
+            });
+
+            $(".context-menu-one").on("click", function (e) {
+                console.log("clicked", this);
+            })
+        });
+    </script>
+</body>
+
+</html>

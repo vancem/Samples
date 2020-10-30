@@ -69,21 +69,21 @@
         /***********************************************************************/
         // Global variables 
 
-        var displaySpan = document.getElementById('display');
+        let displaySpan = document.getElementById("display");
 
         // displayValue is what is shown in the display of GUI
-        var displayValue = "0";         // This is always a string (not a number)
+        let displayValue = "0";         // This is always a string (not a number)
 
         // In addition to the displayed value, the calculator has to remember
         // the first argument and the operator in order to do the calculation
         // when = (Or another operator) is pressed.  These variables remember this.
-        var operator = null;
-        var operand1 = null;                // This is always a string (not a number)
+        let operator = null;
+        let operand1 = null;                // This is always a string (not a number)
 
         // pressing a digit after an operator clears the display, but
         // does not clear the display digits typed after the first.  
         // This boolean remembers which of these states we are in
-        var enteringAdditionalDigits = false;
+        let enteringAdditionalDigits = false;
 
         /***********************************************************************/
         // Functions
@@ -160,7 +160,8 @@
             }
         }
 
-        // the Delete button is pushed
+        //******************* Keyboard Support *******************
+        // the Delete key is pushed.  Deletes a single digit.  
         function doDeletePressed() {
             if (0 < displayValue.length) {
                 setDisplay(displayValue.substring(0, displayValue.length - 1));

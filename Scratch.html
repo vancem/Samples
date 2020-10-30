@@ -1,0 +1,26 @@
+<html>
+
+<body>
+    <div id="output">Start<br></div>
+    <script>
+        "use strict";
+
+        let max = 4;
+        let sum = 0;
+        console.log("Running Scratch2.html");
+        for (let i = 1; i <= max; i++) {
+            sum += i;
+            log(i, sum);
+        }
+        console.log("loop finished i = " + sum);
+
+        // A simple logging function.  
+        function log(i, sum) {
+            let message = "In loop i = " + i + "  sum = " + sum;
+            console.log(message);
+            document.getElementById("output").innerHTML += message + "<br>";
+        }
+    </script>
+</body>
+
+</html>

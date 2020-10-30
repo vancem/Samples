@@ -18,14 +18,14 @@
         // Global variables 
 
         // get GUI object needed
-        var ballCanvas = document.getElementById('ballCanvas');
-        var positionSpan = document.getElementById('positionSpan');
-        var ballCanvasContext = ballCanvas.getContext('2d');
+        let ballCanvas = document.getElementById('ballCanvas');
+        let positionSpan = document.getElementById('positionSpan');
+        let ballCanvasContext = ballCanvas.getContext('2d');
 
         // state variables for ball position, velocity and size (all will be overwritten in reset()) 
-        var x, y, deltaX, deltaY, ballSize;
-        var paddleX, paddleY, paddleWidth;
-        var paused = false;
+        let x, y, deltaX, deltaY, ballSize;
+        let paddleX, paddleY, paddleWidth;
+        let paused = false;
 
         /***********************************************************************/
         // Functions
@@ -63,7 +63,7 @@
             }
 
             // Bounce off paddle
-            var bottomOfBall = y + ballSize;
+            let bottomOfBall = y + ballSize;
             if (0 < deltaY && paddleY < bottomOfBall && paddleX - paddleWidth / 2 <= x && x <= paddleX + paddleWidth / 2)
                 deltaY = -deltaY;
         }

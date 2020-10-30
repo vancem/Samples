@@ -1,0 +1,118 @@
+<!doctype html>
+
+<head>
+    <style>
+        /********************************************************************/
+        body {
+            font-family: "Roboto", san-serif;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .menu {
+            width: 120px;
+            z-index: 1;
+            box-shadow: 0 4px 5px 3px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            display: none;
+            transition: 0.2s display ease-in;
+
+            .menu-options {
+                list-style: none;
+                padding: 10px 0;
+                z-index: 1;
+
+                .menu-option {
+                    font-weight: 500;
+                    z-index: 1;
+                    font-size: 14px;
+                    padding: 10px 40px 10px 20px;
+                    // border-bottom: 1.5px solid rgba(0, 0, 0, 0.2);
+                    cursor: pointer;
+
+                    &:hover {
+                        background: rgba(0, 0, 0, 0.2);
+                    }
+                }
+            }
+        }
+
+        button {
+            background: grey;
+            border: none;
+
+            .next {
+                color: green;
+            }
+
+            &[disabled="false"]:hover {
+                .next {
+                    color: red;
+                    animation: move 0.5s;
+                    animation-iteration-count: 2;
+                }
+            }
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(0%);
+            }
+
+            50% {
+                transform: translate(-40%);
+            }
+
+            to {
+                transform: transform(0%);
+            }
+        }
+    </style>
+</head>
+<html>
+
+<body>
+    <!-- *********************************************************************** -->
+    <div class="menu" id="menu">
+        <ul class="menu-options">
+            <li class="menu-option">Back</li>
+            <li class="menu-option">Reload</li>
+            <li class="menu-option">Save</li>
+            <li class="menu-option">Save As</li>
+            <li class="menu-option">Inspect</li>
+        </ul>
+    </div>
+
+    <h3 class="center">Right click to view custom context menu</h3>
+    <p> Just some ordinary text</p>
+    <p> Just some ordinary text</p>
+
+    <!-- *********************************************************************** -->
+    <script>
+        "use strict";           // Tell javaScript to be picky to find more errors
+
+        const menu = document.getElementById("menu");
+        let menuVisible = false;
+
+        const toggleMenu = function (command) {
+            menu.style.display = command === "show" ? "block" : "none";
+        };
+
+        const setPosition = function (left, top) {
+            menu.style.left = left + "px";
+            menu.style.top = top + "px";
+            toggleMenu("show");
+        };
+
+        window.oncontextmenu = function (e) {
+            e.preventDefault()
+            setPosition(e.pageX, e.pageY);
+            return false;
+        };
+
+    </script>
+</body>
+
+</html>

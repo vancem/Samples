@@ -22,27 +22,27 @@
     <script>
         /***********************************************************************/
         // Global variables 
-        var colors = ["red", "green", "blue", "orange", "purple", "black", "brown", "grey", "magenta"];
+        let colors = ["red", "green", "blue", "orange", "purple", "black", "brown", "grey", "magenta"];
 
         // get GUI object needed
-        var ballCanvas = document.getElementById('ballCanvas');
-        var ballCanvasContext = ballCanvas.getContext('2d');
+        let ballCanvas = document.getElementById("ballCanvas");
+        let ballCanvasContext = ballCanvas.getContext("2d");
 
         /*******************************************************************/
         // This is the main data model, which is just a array of balls.
-        var balls = [];
+        let balls = [];
 
         // start over
         function resetModel(numBalls) {
             balls = [];
-            for (var i = 0; i < numBalls; i++)
+            for (let i = 0; i < numBalls; i++)
                 balls[i] = Ball();
         }
 
         /*******************************************************************/
         // Create a ball
         function Ball() {
-            var self = {};
+            let self = {};
             self.color = colors[Math.floor(Math.random() * colors.length)];
             self.radius = 20;
             self.velocity = { x: (Math.random() * 2 - 1) * 10, y: (Math.random() * 2 - 1) * 10 };
@@ -65,12 +65,12 @@
             // move in the direction of the velocity (x dim)
             self.x = self.x + self.velocity.x;
             if (self.x - self.radius < 0) {
-                var delta = 0 - (self.x - self.radius);                    // This is positive
+                let delta = 0 - (self.x - self.radius);                    // This is positive
                 self.x += 2 * delta;                                         // reflect
                 self.velocity.x = -self.velocity.x;
             }
             else if (ballCanvas.width < self.x + self.radius) {
-                var delta = (self.x + self.radius) - ballCanvas.width;         // This is positive
+                let delta = (self.x + self.radius) - ballCanvas.width;         // This is positive
                 self.x -= 2 * delta;                                         // reflect
                 self.velocity.x = -self.velocity.x;
             }
@@ -78,12 +78,12 @@
             // move in the direction of the velocity (y dim)
             self.y = self.y + self.velocity.y;
             if (self.y - self.radius < 0) {
-                var delta = 0 - (self.y - self.radius);                    // This is positive
+                let delta = 0 - (self.y - self.radius);                    // This is positive
                 self.y += 2 * delta;                                         // reflect
                 self.velocity.y = -self.velocity.y;
             }
             else if (ballCanvas.height < self.y + self.radius) {
-                var delta = (self.y + self.radius) - ballCanvas.height;        // This is positive
+                let delta = (self.y + self.radius) - ballCanvas.height;        // This is positive
                 self.y -= 2 * delta;                                         // reflect
                 self.velocity.y = -self.velocity.y;
             }
@@ -97,26 +97,26 @@
             // Quick check, do the enclosing rectangles intersect?
             if (rectanglesOverlap(ball, otherBall)) {
                 // Do the more expensive check if the circles actually overlap
-                var collisionDir = sub(otherBall, ball);
-                var collisionDist = distance(collisionDir);
+                let collisionDir = sub(otherBall, ball);
+                let collisionDist = distance(collisionDir);
 
                 if (collisionDist <= ball.radius + otherBall.radius) {
                     // If the distances are too close, give up, to avoid / zero and scaling problems
                     if (collisionDist >= 3) {
                         // We have intersection, The balls should bounce
-                        var collisionUnit = scale(collisionDir, 1 / collisionDist);
+                        let collisionUnit = scale(collisionDir, 1 / collisionDist);
 
                         // Calcuate speeds in the direction of the collision
-                        var collisionSpeed = dot(collisionUnit, ball.velocity);
-                        var otherBallCollisionSpeed = dot(collisionUnit, otherBall.velocity);
+                        let collisionSpeed = dot(collisionUnit, ball.velocity);
+                        let otherBallCollisionSpeed = dot(collisionUnit, otherBall.velocity);
 
                         // 'this' is overtaking 'otherBall', swap velocities in the direction of contact
                         if (collisionSpeed > otherBallCollisionSpeed) {
-                            var collisionNormUnit = { x: collisionUnit.y, y: -collisionUnit.x };        // negate flip finds the normal
+                            let collisionNormUnit = { x: collisionUnit.y, y: -collisionUnit.x };        // negate flip finds the normal
 
                             // Resolve the ball's and otherBall's velocity into components aligned with and normal to the collision direction
-                            var velDir = scale(collisionUnit, collisionSpeed);
-                            var velNorm = scale(collisionNormUnit, dot(collisionNormUnit, ball.velocity));
+                            let velDir = scale(collisionUnit, collisionSpeed);
+                            let velNorm = scale(collisionNormUnit, dot(collisionNormUnit, ball.velocity));
 
                             otherBallVelDir = scale(collisionUnit, otherBallCollisionSpeed);
                             otherBallVelNorm = scale(collisionNormUnit, dot(collisionNormUnit, otherBall.velocity));
@@ -151,7 +151,7 @@
 
         // Keep 'ball's speed under maxSpeed
         function clipSpeed(ball, maxSpeed) {
-            var s = distance(ball.velocity);
+            let s = distance(ball.velocity);
             if (maxSpeed < s)
                 ball.velocity = scale(ball.velocity, maxSpeed / s);
         }
@@ -186,16 +186,16 @@
         // GUI
 
         // GUI object that have state (Used in other callbacks)
-        var numberOfBallsTextBox = document.getElementById('numberOfBallsTextBox');
-        var durationSpan = document.getElementById('durationSpan');
-        var duration = 0;
+        let numberOfBallsTextBox = document.getElementById("numberOfBallsTextBox");
+        let durationSpan = document.getElementById("durationSpan");
+        let duration = 0;
 
         /*****************************/
         // GUI Operations
 
         // Start the simulation over
         function reset() {
-            var numberOfBalls = parseInt(numberOfBallsTextBox.value);
+            let numberOfBalls = parseInt(numberOfBallsTextBox.value);
 
             if (isNaN(numberOfBalls) || numberOfBalls <= 0)
                 numberOfBalls = 30;
@@ -228,11 +228,11 @@
         // This goes off every tick (currently every 20 msec)
         window.setInterval(function () {
             ballCanvasContext.clearRect(0, 0, ballCanvas.width, ballCanvas.height);
-            for (var i = 0; i < balls.length; i++) {
+            for (let i = 0; i < balls.length; i++) {
                 update(balls[i]);
 
                 // Look for collisions (makes this N*N)
-                for (var j = 0; j < i; j++)
+                for (let j = 0; j < i; j++)
                     updateIfCollidesWith(balls[i], balls[j]);
 
                 // actually draw them on the screen 

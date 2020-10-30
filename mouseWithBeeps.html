@@ -4,6 +4,7 @@
 <body>
     <!-- *********************************************************************** -->
     <p> This is a simple program that makes a ball bounce around in a box.</p>
+    <p> Click anywhere on the page to unmute the sound.</p>
     <ul>
         <li> <button title="Start the simulation over" onclick="reset()">reset</button>
             <button title="Pause the simulation" onclick="pause()">pause</button>
@@ -18,14 +19,14 @@
         // Global variables 
 
         // get GUI object needed
-        var ballCanvas = document.getElementById('ballCanvas');
-        var positionSpan = document.getElementById('positionSpan');
-        var ballCanvasContext = ballCanvas.getContext('2d');
+        let ballCanvas = document.getElementById('ballCanvas');
+        let positionSpan = document.getElementById('positionSpan');
+        let ballCanvasContext = ballCanvas.getContext('2d');
 
         // state variables for ball position, velocity and size (all will be overwritten in reset()) 
-        var x, y, deltaX, deltaY, ballSize;
-        var paddleX, paddleY, paddleWidth;
-        var paused = false;
+        let x, y, deltaX, deltaY, ballSize;
+        let paddleX, paddleY, paddleWidth;
+        let paused = false;
 
         /***********************************************************************/
         // Functions
@@ -72,7 +73,7 @@
             }
 
             // Bounce off paddle
-            var bottomOfBall = y + ballSize;
+            let bottomOfBall = y + ballSize;
             if (0 < deltaY && paddleY < bottomOfBall && paddleX - paddleWidth / 2 <= x && x <= paddleX + paddleWidth / 2)
             {
                 deltaY = -deltaY;
@@ -138,7 +139,7 @@
             if (audioCtx === undefined)
                 audioCtx = new window.AudioContext;
             let oscillator = audioCtx.createOscillator();
-            var gainNode = audioCtx.createGain();
+            let gainNode = audioCtx.createGain();
 
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);

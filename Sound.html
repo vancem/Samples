@@ -21,7 +21,7 @@
             if (audioCtx === undefined)
                 audioCtx = new window.AudioContext;
             let oscillator = audioCtx.createOscillator();
-            var gainNode = audioCtx.createGain();
+            let gainNode = audioCtx.createGain();
 
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
