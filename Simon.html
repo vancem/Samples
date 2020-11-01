@@ -1,0 +1,232 @@
+<!doctype html>
+
+<head>
+    <style>
+        /********************************************************************/
+        .window {
+            box-sizing: border-box;
+            height: 100vh;
+            /* layout of children */
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            margin: 0px;
+        }
+
+        .game {
+            /* attributes for layout in container */
+            flex-grow: 1;
+
+            /* my attributes */
+            margin: 5vmin;
+            background-color: gray;
+
+            /* layout of children */
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .button {
+            border: 1px solid;
+            min-height: 50px;
+            min-width: 50px;
+        }
+
+        #statusDiv {
+            font-weight: bold;
+            font-size: 200%;
+        }
+    </style>
+</head>
+<html>
+
+<body style="margin:0;">
+    <!-- by default margin=8 which I don't because I want vh=100 to be the whole screen -->
+    <div class="window">
+        <div>
+            <h1>Simon</h1>
+            Press the 'Start' button to begin.<br>
+            Simon will play a pattern and you have to repeat it back.<br>
+            If you miss it, hit 'Start' to retry.<br>
+            Refresh the page to start completely over.
+            <p>
+                <button id="startButton">Start</button>
+            </p>
+            <div id="statusDiv"></div>
+        </div>
+        <div class="game">
+            <div class="button" id="0"></div>
+            <div class="button" id="1"></div>
+            <div class="button" id="2"></div>
+            <div class="button" id="3"></div>
+        </div>
+    </div>
+    <!-- *********************************************************************** -->
+    <script>
+        "use strict";           // Tell javaScript to be picky to find more errors
+
+        // The bottons do very simmilar things, This array remembers the diffences.  
+        let buttonInfos = [
+            { color: "red", pressedColor: "#C00000", tone: 440 },
+            { color: "yellow", pressedColor: "#C0C000", tone: 550 },
+            { color: "green", pressedColor: "#006400", tone: 660 },
+            { color: "blue", pressedColor: "#0000C0", tone: 770 },
+        ];
+
+        // Initialize the buttons (their callbacks, etc)
+        let buttons = document.getElementsByClassName("button");
+        console.assert(buttons.length == 4);
+        for (let i = 0; i < buttons.length; i++) {
+            let button = buttons[i];
+            console.assert(0 <= parseInt(button.id) && parseInt(button.id) < 4);
+            let buttonInfo = buttonInfos[button.id];
+            buttonInfo.button = button;
+
+            button.style.backgroundColor = buttonInfo.color;
+            button.onmousedown = mouseDown;
+            button.onmouseup = mouseUp;
+            button.onmouseleave = mouseUp;
+        }
+
+        let startButton = document.getElementById("startButton");
+        startButton.onclick = startButtonClick;
+        let statusDiv = document.getElementById("statusDiv");
+
+        let seq = createRandomSeq(3);
+        let seqPos = -1;
+        let veryFirstTime = true;
+
+        statusDiv.innerHTML = "Press Start button to start playing.";
+        // This is the end of initialization.  
+
+        //***************************************************************
+        // Simon specific logic.  
+
+        function createRandomSeq(num) {
+            let ret = [];
+            while (num > 0) {
+                ret.push(Math.floor(Math.random() * 4));
+                --num;
+            }
+            return ret;
+        }
+
+        async function playHappySound() {
+            await sleep(200);
+            for (let i = 0; i < 10; i++) {
+                await tone(30, 440);
+                await tone(30, 660);
+                await tone(30, 550);
+                await tone(30, 770);
+            }
+        }
+
+        async function playSequence(sequence) {
+            for (let i = 0; i < sequence.length; i++) {
+                let info = buttonInfos[sequence[i]];
+
+                info.button.style.backgroundColor = info.pressedColor;
+                await tone(50, info.tone);
+                await sleep(250);
+                info.button.style.backgroundColor = info.color;
+                await sleep(250);
+            }
+        }
+
+        async function fail() {
+            seqPos = -1;
+            statusDiv.innerHTML = "Wrong! Hit start to try again.";
+            await tone(800, 250);
+        }
+
+        async function succeed() {
+            statusDiv.innerHTML = "Correct! You did a sequence of length " + seq.length;
+            seqPos = -1;
+            // Add one more.  
+            seq.push(Math.floor(Math.random() * 4));
+
+            await playHappySound();
+            await sleep(500);
+            await startButtonClick();
+        }
+
+        //***************************************************************
+        // GUI callbacks.  
+        async function startButtonClick(ev) {
+            if (veryFirstTime) {
+                veryFirstTime = false;
+                statusDiv.innerHTML = "Getting Ready";
+                // Sound is deactivated until first use after user interactions, 
+                // and then it takes a chunk of a second to turn on, so wait for it.   
+                await tone(1, 1);  // hack, play something inaudible. 
+                await sleep(800);
+            }
+            statusDiv.innerHTML = "Watch what I do...";
+            await playSequence(seq);
+            statusDiv.innerHTML = "Now you repeat it!";
+            seqPos = 0;     // expect validation             
+        }
+
+        async function mouseDown(ev) {
+            let button = ev.target;
+            console.assert(0 <= parseInt(button.id) && parseInt(button.id) < 4);
+            let buttonInfo = buttonInfos[button.id];
+
+            if (seqPos < 0)  // do nothing if we are not validating
+                return;
+
+            if (button.id != seq[seqPos]) {
+                await fail();
+                return;
+            }
+            // highlight the color
+            button.style.backgroundColor = buttonInfo.pressedColor;
+            await tone(50, buttonInfo.tone);
+            seqPos++
+
+            if (seqPos == seq.length)
+                await succeed();
+        }
+
+        function mouseUp(ev) {
+            let button = ev.target;
+            console.assert(0 <= parseInt(button.id) && parseInt(button.id) < 4);
+            let buttonInfo = buttonInfos[button.id];
+            // put the color back 
+            button.style.backgroundColor = buttonInfo.color;
+        }
+
+        //****************************************************************
+        // utility functions.  
+        function sleep(msec) {
+            return new Promise(resolve => setTimeout(resolve, msec));
+        }
+
+        function tone(duration, frequency) {
+            if (audioCtx === undefined)
+                audioCtx = new window.AudioContext;
+            let oscillator = audioCtx.createOscillator();
+            let gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.frequency.value = frequency;
+            // oscillator.type = "sine"; 
+
+            oscillator.start();
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    oscillator.stop()
+                    resolve();
+                }, duration);
+            });
+        };
+        let audioCtx;
+    </script>
+</body>
+
+</html>
