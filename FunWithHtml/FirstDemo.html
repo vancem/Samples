@@ -1,0 +1,43 @@
+<html>
+
+<body>
+    <p style="border:3px solid red">this is my first html</p>
+    <!-- this is a comment -->
+    Hello world from html and some modifications <br>
+    here is another line. <br>
+    <div id="output"></div>
+    <canvas id="mainCanvas" style="background-color:lightblue;" width="500" height="300"></canvas>
+    <script>
+        "use strict";
+
+        let y = myOutputDiv; 
+
+        /* asdfh */
+        // This is a comment
+        var myOutputDiv = document.getElementById("output");
+        let mainCanvas = document.getElementById("mainCanvas");
+        let drawer = mainCanvas.getContext("2d");
+
+        let x = 250;
+        let y = 150;
+
+        function drawBallAndUpdate() {
+            drawer.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+            // Draw the ball
+            drawer.beginPath();
+            drawer.arc(x, y, 50, 0, 2 * Math.PI, false);
+            drawer.fillStyle = "red";
+            drawer.fill();
+            drawer.stroke();
+
+            x += 10; 
+            y += 10;
+        }
+
+        window.setInterval(drawBallAndUpdate, 100);
+
+    </script>
+</body>
+
+</html>

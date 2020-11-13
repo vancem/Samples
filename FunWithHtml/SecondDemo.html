@@ -1,0 +1,42 @@
+<html>
+
+<body>
+    <p>this is my first html</p>
+    <!-- ************************************************************ -->
+    Hello world from html and some modifications <br>
+    here is another line. <br>
+    <div id="outputDiv"></div>
+    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas>
+    <script>
+        /* *********************************************************** */
+        // This is a comment 
+        let outputDiv = document.getElementById("outputDiv");
+        outputDiv.innerHTML = "Hello there this is a test<br>";
+        for (let i = 0; i < 5; i++)
+            myMethod(i, i + 2);
+
+        let mainCanvas = document.getElementById("mainCanvas");
+        let drawer = mainCanvas.getContext("2d");
+
+        // Draw the ball
+        drawer.beginPath();
+        drawer.arc(mainCanvas.width/2, mainCanvas.height/2, 50, 0, 2 * Math.PI, false);
+        drawer.fillStyle = "red";
+        drawer.fill();
+        drawer.stroke();
+
+        function myMethod(i, j) {
+            outputDiv.innerHTML += "In myMethod i = " + i + " j = " + j + "<br>";
+            return 0;
+        }
+
+                // Subscribe to a tick that goes off every 20 msec to update the animation
+        window.setInterval(drawAndUpdate, 20);
+        
+
+
+
+    </script>
+</body>
+
+</html>

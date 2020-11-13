@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+
+<body>
+    <!-- *********************************************************************** -->
+    <p> This is a simple program lets you draw graphics. </p>
+    <div id="output">&nbsp;</div>
+    <canvas id="canvas" style="border:2px solid red" height="500" width="800"> </canvas>
+    <ul>
+        <li> <button id="myButton">My Button</button></li>
+        <li> input: <input id="input" type="text"></li>
+    </ul>
+    <script>
+        /***********************************************************************/
+        // Global variables 
+
+        // get GUI object needed
+        let outputDiv = document.getElementById("output");
+        let inputTextbox = document.getElementById("input");
+        inputTextbox.onchange = onTextBoxChange
+        let canvas = document.getElementById("canvas");
+        let canvasContext = canvas.getContext("2d");
+        canvas.onmousemove = onCanvasMouseMove;
+        let myButton = document.getElementById("myButton");
+        myButton.onclick = onMyButtonClick;
+
+        function onMyButtonClick(ev) {
+            outputDiv.innerHTML = "MyButton Clicked!";
+            tickCount = 0;
+        }
+        function onCanvasMouseMove(ev) {
+            outputDiv.innerHTML = "Got x = " + ev.x + " y = " + ev.y;
+            drawBall(ev.x, ev.y, 100);
+        }
+
+        function onTextBoxChange(ev) {
+            outputDiv.innerHTML = "Got value " + inputTextbox.value;
+        }
+
+        function drawBall(x, y, ballSize) {
+            // clear the canvas
+            canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the ball
+            canvasContext.beginPath();
+            canvasContext.arc(x, y, ballSize, 0, 2 * Math.PI, false);
+            canvasContext.fillStyle = "red";
+            canvasContext.fill();
+            canvasContext.stroke();
+
+            canvasContext.moveTo(x, y-100);
+            canvasContext.lineTo(x, y+100);
+            canvasContext.moveTo(x-100, y);
+            canvasContext.lineTo(x+100, y);
+        }
+
+        /************************/
+        // functions that update the gui (and model)
+
+        var tickCount = 0;
+        function update() {
+            output.innerHTML = "Got Tick " + tickCount;
+            drawBall(400 + tickCount * 4, 250 + tickCount * 2, 100);
+            tickCount++;
+        }
+
+        // Subscribe to a tick that goes off every 1000 msec to update the animation
+        window.setInterval(update, 1000);
+    </script>
+</body>
+
+</html>

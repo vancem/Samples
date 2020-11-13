@@ -1,0 +1,37 @@
+<html>
+
+<body>
+    <p>Click in the canvas to make balls. </p>
+    <!-- ************************************************************ -->
+    <div id="outputDiv"></div>
+    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas>
+    <script>
+        /* *********************************************************** */
+        let outputDiv = document.getElementById("outputDiv");
+        let mainCanvas = document.getElementById("mainCanvas");
+        let drawer = mainCanvas.getContext("2d");
+
+        // Set up callbacks
+        mainCanvas.onmousemove = mainCanvasOnMouseMove
+
+        function mainCanvasOnMouseMove(event) {
+            let x = event.offsetX; 
+            let y = event.offsetY; 
+            outputDiv.innerHTML = "x = " + x + " y = " + y;
+
+            // clear the canvas
+            drawer.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+            // draw the ball
+            let ballSize = 10;
+            drawer.beginPath();
+            drawer.arc(x, y, ballSize, 0, 2 * Math.PI, false);
+            drawer.fillStyle = "red";
+            drawer.fill();
+            drawer.stroke();
+        }
+
+    </script>
+</body>
+
+</html>

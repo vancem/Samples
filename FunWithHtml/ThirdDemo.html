@@ -1,0 +1,48 @@
+<html>
+
+<body>
+    <p>this is my first html</p>
+    <!-- ************************************************************ -->
+    Hello world from html and some modifications <br>
+    here is another line. <br>
+    <div id="outputDiv"></div>
+    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas>
+    <script>
+        /* *********************************************************** */
+        // This is a comment 
+        let outputDiv = document.getElementById("outputDiv");
+        outputDiv.innerHTML = "Starting";
+
+        let mainCanvas = document.getElementById("mainCanvas");
+        let drawer = mainCanvas.getContext("2d");
+
+        let x = 0;
+        let y = 0;
+
+        //********************************************
+        function drawAndUpdate() {
+            // update the ball's position for next time.  
+            x += 10;
+            y += 15; 
+
+            // clear the canvas
+            drawer.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+            // Draw the ball
+            drawer.beginPath();
+            drawer.arc(x, y, 50, 0, 2 * Math.PI, false);
+            drawer.fillStyle = "red";
+            drawer.fill();
+            drawer.stroke();
+
+            // Update the stats to the user.    
+            outputDiv.innerHTML = "x = " + x + " y = " + y + "<br>";
+        }
+
+        // Subscribe to a tick that goes off every 20 msec to update the animation
+        window.setInterval(drawAndUpdate, 20);
+
+    </script>
+</body>
+
+</html>
