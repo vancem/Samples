@@ -7,6 +7,7 @@
     <div id="outputDiv"></div>
     <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas>
     <script>
+        "use strict";
         /* *********************************************************** */
         // This is a comment 
         let outputDiv = document.getElementById("outputDiv");
@@ -17,17 +18,47 @@
 
         mainCanvas.onclick = mainCanvasOnClick;
 
-        function mainCanvasOnClick(event) {
-            let x = event.offsetX;
-            let y = event.offsetY;
-            outputDiv.innerHTML = "x = " + x + " y = " + y;
+        let balls = [];
+        let curSize = 10;
+        let curColor = "red";
+        let clickNum = 0;
 
-            let ballSize = 10;
-            drawer.beginPath();
-            drawer.arc(x, y, ballSize, 0, 2 * Math.PI, false);
-            drawer.fillStyle = "red";
-            drawer.fill();
-            drawer.stroke(); 
+        function mainCanvasOnClick(event) {
+            let currentX = event.offsetX;
+            let currentY = event.offsetY;
+            outputDiv.innerHTML = "x = " + currentX + " y = " + currentY;
+            clickNum++;
+
+            curSize = curSize + 5;
+            if (curColor == "red")
+                curColor = "blue";
+            else
+                curColor = "red";
+
+            if (clickNum <= 10) {
+                balls.push({ x: currentX, y: currentY, size: curSize, color: curColor });
+            }
+            else {
+                let ball = balls[clickNum % 10];
+                ball.x = currentX;
+                ball.y = currentY;
+                ball.color = "green";
+            }
+
+            console.log("balls", balls);
+
+            drawer.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+            let ballSize = 20;
+
+            for (let i = 0; i < balls.length; i++) {
+                let ball = balls[i];
+
+                drawer.beginPath();
+                drawer.arc(ball.x, ball.y, ball.size, 0, 2 * Math.PI, false);
+                drawer.fillStyle = ball.color;
+                drawer.fill();
+                drawer.stroke();
+            }
         }
 
     </script>

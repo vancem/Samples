@@ -116,7 +116,7 @@
 
         /*****************************/
         function mouseMove(eventData) {
-            paddleX = eventData.x;
+            paddleX = eventData.offsetX;
             paddleX = Math.max(paddleX, paddleWidth / 2);
             paddleX = Math.min(paddleX, ballCanvas.width - paddleWidth / 2);
         }

@@ -20,6 +20,33 @@
             console.log(message);
             document.getElementById("output").innerHTML += message + "<br>";
         }
+
+
+        class Point {
+            constructor(x y) {
+                this.x = x;
+                this.y = y;
+            }
+
+            get magnitude() {
+                return Math.sqrt(this.x*this.x + this.y*this.y)
+            }
+            
+        }
+
+        let v = {}
+        v.x = 1;
+        v.test = test;
+
+        v.test(3);
+
+
+        function test(i)
+        {
+            console.log("In test this = " + this.x + " i = " + i);
+        }
+
+
     </script>
 </body>
 

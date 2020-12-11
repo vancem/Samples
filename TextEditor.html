@@ -1,0 +1,249 @@
+<!doctype html>
+
+<head>
+    <style>
+        /********************************************************************/
+        .window {
+            box-sizing: border-box;
+            height: 100vh;
+
+            /* layout of children */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .textWindow {
+            flex-grow: 1;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 5px;
+            /* turn off text selection (so I can do it) */
+            /*
+            -webkit-user-select: none;
+            */
+        }
+
+        #cursor {
+            border-left-width: 1px;
+            border-left-style: solid;
+            border-left-color: black;
+            animation: cursorAnimation 1s infinite
+        }
+
+        @keyframes cursorAnimation {
+            0% {
+                border-left-color: black;
+            }
+
+            50% {
+                border-left-color: white;
+            }
+
+            100% {
+                border-left-color: black;
+            }
+        }
+    </style>
+</head>
+<html>
+
+<body style="margin:0;">
+    <!-- by default margin=8 which I don't because I want vh=100 to be the whole screen -->
+    <div class="window">
+        <div id="textEditor" tabindex="1" autofocus class="textWindow"></div>
+    </div>
+    <!-- *********************************************************************** -->
+    <script>
+    </script>
+    <script>
+        "use strict";
+
+        let editor = newEditor();
+
+
+        function newEditor() {
+            let editor = {};
+            editor.window = document.getElementById("textEditor");
+            editor.window.onkeydown = onKeyDown;
+            editor.window.onclick = onMouseClick;
+
+            editor.cursorLine = document.createElement("div");
+            editor.window.appendChild(editor.cursorLine);
+
+            editor.cursor = document.createElement("span");
+            editor.cursor.id = "cursor";
+            editor.cursorLine.appendChild(editor.cursor);
+
+            // compute the width of the font. 
+            let style = window.getComputedStyle(editor.window);
+            let canvas = document.createElement("canvas");
+            let context = canvas.getContext("2d");
+            context.font = style.font;
+            editor.charWidth = context.measureText(" ").width;  // we can use any character since it is fix width.
+            return editor;
+        }
+
+        function addChar(editor, str) {
+            assert(str.length == 1);
+            if (str == "\n")
+                addNewLineChar(editor);
+            else if (" " <= str && str <= "~" || str == "\t") {
+                if (str == " " || str == "\t")
+                    str = "\u00A0";
+                editor.cursorLine.insertBefore(document.createTextNode(str), cursor);
+            }
+            else if (str != "\r")
+                console.log("Skipping illegal char 0x" + str.charCodeAt(0).toString(16));
+        }
+
+        function insertAfter(newNode, node) {
+            let nextChar = node.nextSibling;
+            if (nextChar != null)
+                node.parentNode.insertBefore(newNode, nextChar);
+            else
+                node.parentNode.appendChild(newNode);
+        }
+
+        function addNewLineChar(editor) {
+            // Make the new line 
+            let newLine = document.createElement("div");
+            insertAfter(newLine, editor.cursorLine);
+
+            // Move the cursor and everything after it to the new line.  
+            let toMove = editor.cursor;
+            while (toMove != null) {
+                let nextCharChild = toMove.nextSibling;
+                editor.cursorLine.removeChild(toMove)
+                newLine.appendChild(toMove);
+                toMove = nextCharChild;
+            }
+
+            // Leave behind a space on empty lines to avoid collapse.   
+            if (editor.cursorLine.firstChild == null)
+                editor.cursorLine.appendChild(document.createTextNode("\u00A0"));
+
+            editor.cursorLine = newLine;
+        }
+
+        function deleteChar(editor) {
+            let prevChar = editor.cursor.previousSibling;
+            if (prevChar != null)
+                prevChar.remove();
+        }
+
+        function moveLeft(editor) {
+            let prevChar = editor.cursor.previousSibling;
+            if (prevChar != null) {
+                editor.cursorLine.removeChild(prevChar);
+                insertAfter(prevChar, editor.cursor);
+            }
+        }
+        function moveRight(editor) {
+            let nextChar = editor.cursor.nextSibling;
+            if (nextChar != null) {
+                editor.cursorLine.removeChild(nextChar);
+                editor.cursorLine.insertBefore(nextChar, editor.cursor);
+            }
+        }
+
+        function moveUp(editor) {
+            let prevLine = editor.cursorLine.previousSibling;
+            if (prevLine != null) {
+                let cursorIdx = childIndex(editor.cursor);
+                editor.cursorLine.removeChild(editor.cursor);
+                insertChildAt(prevLine, editor.cursor, cursorIdx);
+                editor.cursorLine = prevLine;
+            }
+        }
+
+        function moveDown(editor) {
+            let nextLine = editor.cursorLine.nextSibling;
+            if (nextLine != null) {
+                let cursorIdx = childIndex(editor.cursor);
+                editor.cursorLine.removeChild(editor.cursor);
+                insertChildAt(nextLine, editor.cursor, cursorIdx);
+                editor.cursorLine = nextLine;
+            }
+        }
+
+        function insertChildAt(node, newChild, newChildIdx) {
+            let children = node.childNodes;
+            if (newChildIdx < children.length)
+                node.insertBefore(newChild, children[newChildIdx]);
+            else
+                node.appendChild(newChild);
+        }
+
+        // returns the number of children before 'child'
+        function childIndex(child) {
+            let ret = 0;
+            while (true) {
+                child = child.previousSibling;
+                if (child == null)
+                    break;
+                ret++;
+            }
+            return ret;
+        }
+
+        function onMouseClick(event) {
+            let line = event.target;
+            if (event.target == null)
+                return;
+            if (line.parentNode != editor.window)
+                return;
+            let charPos = event.offsetX / editor.charWidth;
+            let idx = Math.round(charPos);
+            if (line.childNodes.length < idx)
+                return;
+            editor.cursorLine.removeChild(cursor);
+            insertChildAt(line, editor.cursor, idx);
+            editor.cursorLine = line;
+        }
+
+        function pasteClipboard() {
+            navigator.clipboard.readText().then(
+                text => {
+                    for (let i = 0; i < text.length; i++)
+                        addChar(editor, text.substring(i, i+1));
+                });
+        }
+
+        function onKeyDown(event) {
+            console.log("onKeyDown: ", event);
+
+            if (event.ctrlKey) {
+                if (event.key == "v")
+                    pasteClipboard();
+                return;
+            }
+            if (event.altKey)
+                return;
+
+            if (event.key.length == 1) {
+                if (" " <= event.key && event.key <= "~")
+                    addChar(editor, event.key);
+            }
+            else if ("Enter" == event.key)
+                addNewLineChar(editor);
+            else if ("Backspace" == event.key || "Delete" == event.key)
+                deleteChar(editor);
+            else if ("ArrowLeft" == event.key)
+                moveLeft(editor);
+            else if ("ArrowRight" == event.key)
+                moveRight(editor);
+            else if ("ArrowUp" == event.key)
+                moveUp(editor);
+            else if ("ArrowDown" == event.key)
+                moveDown(editor);
+            else
+                console.log("Unknonwn key: ", event);
+        }
+
+        function assert(condition) {
+            console.assert(condition);
+        }
+
+    </script>
+</body>
+
+</html>

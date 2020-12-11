@@ -1,0 +1,105 @@
+/<html>
+
+<body>
+    <!-- ************************************************************ -->
+    This is <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Conways game of life</a><br>
+    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas>
+    <script>
+        "use strict";
+
+        let mainCanvas = document.getElementById("mainCanvas");
+        let drawer = mainCanvas.getContext("2d");
+
+        // Define the 2x2 matrix of cells (60 by 40) (alll dead to start with)
+        let cells = [];
+        for (let rIdx = 0; rIdx < 60; rIdx++) {
+            let row = [];
+            cells[rIdx] = row;
+            for (let cIdx = 0; cIdx < 40; cIdx++) {
+                row[cIdx] = false;
+            }
+        }
+
+        // Create a splotch of cell s in the center to start. 
+        for (let i = 29; i <= 31; i++)
+            for (let j = 19; j <= 21; j++)
+                cells[i][j] = true;
+
+        cells[28][20] = true;
+        cells[28][19] = true;
+
+        draw();    // Display the initial condition.  
+
+        // Subscribe to a tick that goes off every 800 msec to update the animation
+        window.setInterval(updateAndDraw, 800);
+
+        /* function definitions */
+
+        //********************************************
+        function updateAndDraw() {
+            update();
+            draw();
+        }
+
+        //********************************************
+        function getNeighborCount(cells, rIdx, cIdx) {
+            let ret = 0;
+            for (let i = Math.max(rIdx - 1, 0); i <= Math.min(rIdx + 1, cells.length - 1); i++) {
+                let row = cells[i];
+                for (let j = Math.max(cIdx - 1, 0); j <= Math.min(cIdx + 1, row.length - 1); j++) {
+                    if (row[j]) {
+                        ret++;
+                    }
+                }
+            }
+            if (cells[rIdx][cIdx])      // Dont' count the cell itself.  
+                --ret;
+            return ret
+        }
+
+        //********************************************
+        function update() {
+            let newCells = [];
+            for (let rIdx = 0; rIdx < cells.length; rIdx++) {
+                let row = cells[rIdx];
+                let newRow = [];
+                newCells[rIdx] = newRow;
+                for (let cIdx = 0; cIdx < row.length; cIdx++) {
+                    let numNeighbors = getNeighborCount(cells, rIdx, cIdx)
+
+                    if (row[cIdx])       // Is it alive
+                        newRow[cIdx] = (numNeighbors == 2 || numNeighbors == 3);    
+                    else
+                        newRow[cIdx] = (numNeighbors == 3);
+                }
+            }
+            cells = newCells;
+        }
+
+        //********************************************
+        function draw() {
+            drawer.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+            for (let rIdx = 0; rIdx < cells.length; rIdx++) {
+                let row = cells[rIdx];
+                for (let cIdx = 0; cIdx < row.length; cIdx++) {
+                    let ballSize = 4;
+                    let x = 5 + rIdx * 10;
+                    let y = 5 + cIdx * 10;
+                    let color = "white";
+                    if (row[cIdx])
+                        color = "red";
+
+                    // Draw the ball
+                    drawer.beginPath();
+                    drawer.arc(x, y, ballSize, 0, 2 * Math.PI, false);
+                    drawer.fillStyle = color;
+                    drawer.fill();
+                    drawer.stroke();
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

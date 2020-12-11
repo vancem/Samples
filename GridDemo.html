@@ -7,10 +7,11 @@
   <style>
     .grid-container {
       display: grid;
-      grid-template-columns: auto auto auto;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
       background-color: #f32121;
       padding: 10px;
-      height: 70vh;
+      height: 90vh;
     }
 
     .grid-item {
@@ -25,12 +26,6 @@
 </head>
 
 <body>
-
-  <h1>Grid Elements</h1>
-  <p>A Grid Layout must have a parent element with the <em>display</em> property set to <em>grid</em> or
-    <em>inline-grid</em>.</p>
-  <p>Direct child element(s) of the grid container automatically becomes grid items.</p>
-
   <div class="grid-container">
     <div class="grid-item">
       <div>1</div>

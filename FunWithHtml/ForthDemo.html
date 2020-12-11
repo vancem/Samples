@@ -1,0 +1,81 @@
+<html>
+
+<body>
+    <p>this is my first html</p>
+    <!-- ************************************************************ -->
+    Hello world from html and some modifications <br>
+    here is another line. <br>
+    <div id="outputDiv"></div>
+    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas>
+    <script>
+        "use strict";
+        /* *********************************************************** */
+        // This is a comment 
+        let outputDiv = document.getElementById("outputDiv");
+        outputDiv.innerHTML = "Starting";
+
+        let mainCanvas = document.getElementById("mainCanvas");
+        let drawer = mainCanvas.getContext("2d");
+
+        let x = mainCanvas.width / 2;
+        let y = mainCanvas.height / 2;
+        let deltaX = Math.floor((8 + 4 * Math.random()));
+        let deltaY = Math.floor((5 + 8 * Math.random()));
+        let ballSize = 25;
+
+        //********************************************
+        function drawAndUpdate() {
+            // update the ball's position for next time.  
+            x += deltaX;
+            y += deltaY;
+
+            if (y - ballSize < 0 || mainCanvas.height < y + ballSize) {
+                deltaY = -deltaY;
+                beep();
+            }
+
+            if (x - ballSize < 0 || mainCanvas.width < x + ballSize) {
+                deltaX = -deltaX;
+                beep();
+            }
+
+            // clear the canvas
+            drawer.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+
+            // Draw the ball
+            drawer.beginPath();
+            drawer.arc(x, y, ballSize, 0, 2 * Math.PI, false);
+            drawer.fillStyle = "red";
+            drawer.fill();
+            drawer.stroke();
+
+            // Update the stats to the user.    
+            outputDiv.innerHTML = "x = " + x + " y = " + y + "<br>";
+        }
+
+        // Subscribe to a tick that goes off every 20 msec to update the animation
+        window.setInterval(drawAndUpdate, 40);
+
+        function beep() {  if (!silent) tone(50, 440); }
+
+        function tone(duration, frequency) {
+            if (audioCtx === undefined)
+                audioCtx = new window.AudioContext;
+            let oscillator = audioCtx.createOscillator();
+            let gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.frequency.value = frequency;
+            // oscillator.type = "sine"; 
+
+            oscillator.start();
+            setTimeout(function () { oscillator.stop() }, duration);
+        };
+
+        let audioCtx;
+    </script>
+</body>
+
+</html>

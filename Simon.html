@@ -11,6 +11,10 @@
             flex-direction: column;
         }
 
+        .instructions {
+            margin: 0px 8px /* 5px for left and right */ 
+        }
+
         h1 {
             margin: 0px;
         }
@@ -46,7 +50,7 @@
 <body style="margin:0;">
     <!-- by default margin=8 which I don't because I want vh=100 to be the whole screen -->
     <div class="window">
-        <div>
+        <div class="instructions">
             <h1>Simon</h1>
             Press the 'Start' button to begin.<br>
             Simon will play a pattern and you have to repeat it back.<br>
