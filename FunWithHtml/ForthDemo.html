@@ -22,6 +22,7 @@
         let deltaX = Math.floor((8 + 4 * Math.random()));
         let deltaY = Math.floor((5 + 8 * Math.random()));
         let ballSize = 25;
+        let silent = false;
 
         //********************************************
         function drawAndUpdate() {
@@ -29,12 +30,12 @@
             x += deltaX;
             y += deltaY;
 
-            if (y - ballSize < 0 || mainCanvas.height < y + ballSize) {
+            if (y - ballSize < 0 || mainCanvas.height < y + ballSize ) {
                 deltaY = -deltaY;
                 beep();
             }
 
-            if (x - ballSize < 0 || mainCanvas.width < x + ballSize) {
+            if (x -  ballSize < 0 || mainCanvas.width < x + ballSize) {
                 deltaX = -deltaX;
                 beep();
             }

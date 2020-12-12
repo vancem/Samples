@@ -4,68 +4,82 @@
 <body>
     <!-- *********************************************************************** -->
     <p> This is a simple program lets you draw graphics. </p>
-    <div id="output">&nbsp;</div>
+    <div id="outputDiv">&nbsp;</div>
     <canvas id="canvas" style="border:2px solid red" height="500" width="800"> </canvas>
     <ul>
-        <li> <button id="myButton">My Button</button></li>
-        <li> input: <input id="input" type="text"></li>
+        <li> <button id="myButton">Increase Size</button></li>
+        <li> input: <input id="myTextBox" type="text"></li>
     </ul>
     <script>
         /***********************************************************************/
         // Global variables 
 
         // get GUI object needed
-        let outputDiv = document.getElementById("output");
-        let inputTextbox = document.getElementById("input");
+        let outputDiv = document.getElementById("outputDiv");
+        let inputTextbox = document.getElementById("myTextBox");
         inputTextbox.onchange = onTextBoxChange
         let canvas = document.getElementById("canvas");
         let canvasContext = canvas.getContext("2d");
         canvas.onmousemove = onCanvasMouseMove;
+        canvas.onclick = onCanvasMouseClick;
         let myButton = document.getElementById("myButton");
         myButton.onclick = onMyButtonClick;
 
+        let curBallSize = 20;
+
+        let balls = [];
+        let cursorBall = {
+            x: 0,
+            y: 0,
+            ballSize : 50,
+        };
+
         function onMyButtonClick(ev) {
-            outputDiv.innerHTML = "MyButton Clicked!";
-            tickCount = 0;
+            curBallSize *= 1.2; 
+            outputDiv.innerHTML = "Ball size = " + curBallSize;
         }
         function onCanvasMouseMove(ev) {
-            outputDiv.innerHTML = "Got x = " + ev.x + " y = " + ev.y;
-            drawBall(ev.x, ev.y, 100);
+            outputDiv.innerHTML = "Got x = " + ev.offsetX + " y = " + ev.offsetY;
+            cursorBall.x = ev.offsetX;
+            cursorBall.y = ev.offsetY;
+            draw();
+        }
+        function onCanvasMouseClick(ev) {
+            outputDiv.innerHTML = "Got a Click at x = " + ev.offsetX + " y = " + ev.offsetY;
+            balls.push({x: ev.offsetX, y: ev.offsetY, ballSize : curBallSize});
+            draw();
         }
 
         function onTextBoxChange(ev) {
             outputDiv.innerHTML = "Got value " + inputTextbox.value;
         }
 
-        function drawBall(x, y, ballSize) {
+        function draw() {
             // clear the canvas
             canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the ball
+            // Draw the cursor
             canvasContext.beginPath();
-            canvasContext.arc(x, y, ballSize, 0, 2 * Math.PI, false);
+            canvasContext.arc(cursorBall.x, cursorBall.y, 20, 0, 2 * Math.PI, false);
             canvasContext.fillStyle = "red";
             canvasContext.fill();
             canvasContext.stroke();
 
-            canvasContext.moveTo(x, y-100);
-            canvasContext.lineTo(x, y+100);
-            canvasContext.moveTo(x-100, y);
-            canvasContext.lineTo(x+100, y);
+            canvasContext.moveTo(cursorBall.x, cursorBall.y - 100);
+            canvasContext.lineTo(cursorBall.x, cursorBall.y + 100);
+            canvasContext.moveTo(cursorBall.x - 100, cursorBall.y);
+            canvasContext.lineTo(cursorBall.x + 100,cursorBall. y);
+            canvasContext.stroke();
+
+            // Draw all the other balls
+            for (let ball of balls) {
+                canvasContext.beginPath();
+                canvasContext.arc(ball.x, ball.y, ball.ballSize, 0, 2 * Math.PI, false);
+                canvasContext.fillStyle = "blue";
+                canvasContext.fill();
+                canvasContext.stroke();
+            }
         }
-
-        /************************/
-        // functions that update the gui (and model)
-
-        var tickCount = 0;
-        function update() {
-            output.innerHTML = "Got Tick " + tickCount;
-            drawBall(400 + tickCount * 4, 250 + tickCount * 2, 100);
-            tickCount++;
-        }
-
-        // Subscribe to a tick that goes off every 1000 msec to update the animation
-        window.setInterval(update, 1000);
     </script>
 </body>
 
