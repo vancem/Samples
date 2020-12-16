@@ -3,30 +3,39 @@
 <body>
     <!-- ************************************************************ -->
     This is <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Conways game of life</a><br>
-    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas>
+    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas><br>
+    <button id="startButton">Start</button>
+    <button id="stopButton">Stop</button><br>
     <script>
         "use strict";
 
         let mainCanvas = document.getElementById("mainCanvas");
         let drawer = mainCanvas.getContext("2d");
+        mainCanvas.onclick = onMouseClick;
+        mainCanvas.ondblclick = onMouseDblClick;
+        let startButton = document.getElementById("startButton");
+        startButton.onclick = onStartClick;
+        let stopButton = document.getElementById("stopButton");
+        stopButton.onclick = onStopClick;
 
         // Define the 2x2 matrix of cells (60 by 40) (alll dead to start with)
+        let running = true;
         let cells = [];
-        for (let rIdx = 0; rIdx < 60; rIdx++) {
+        for (let rIdx = 0; rIdx < 40; rIdx++) {
             let row = [];
             cells[rIdx] = row;
-            for (let cIdx = 0; cIdx < 40; cIdx++) {
+            for (let cIdx = 0; cIdx < 60; cIdx++) {
                 row[cIdx] = false;
             }
         }
 
         // Create a splotch of cell s in the center to start. 
-        for (let i = 29; i <= 31; i++)
-            for (let j = 19; j <= 21; j++)
+        for (let i = 19; i <= 21; i++)
+            for (let j = 29; j <= 31; j++)
                 cells[i][j] = true;
 
-        cells[28][20] = true;
-        cells[28][19] = true;
+        cells[20][28] = true;
+        cells[19][28] = true;
 
         draw();    // Display the initial condition.  
 
@@ -35,8 +44,49 @@
 
         /* function definitions */
 
+        // On a mouse click, flip the cell from dead to alive (or vice versa).
+        function onMouseClick(ev) {
+            let x = ev.offsetX;
+            let y = ev.offsetY;
+
+            let xIdx = Math.floor(x / 10);
+            let yIdx = Math.floor(y / 10);
+            if (yIdx < cells.length) {
+                let row = cells[yIdx];
+                if (xIdx < row.length)
+                    row[xIdx] = !row[xIdx];
+            }
+            draw();
+        }
+
+        function onMouseDblClick(ev) {
+            let x = ev.offsetX;
+            let y = ev.offsetY;
+
+            let xIdx = Math.floor(x / 10);
+            let yIdx = Math.floor(y / 10);
+
+            for(let r = Math.max(yIdx-1, 0); r <= Math.min(yIdx + 1, cells.length); r++) {
+                let row = cells[r];
+                for(let c = Math.max(xIdx-1, 0); c <= Math.min(xIdx + 1, row.length); c++) {
+                    row[c] = true;  
+                }
+            }
+            draw();
+        }
+
+
+        function onStartClick() {
+            running = true;
+        }
+        function onStopClick() {
+            running = false;
+        }
+
         //********************************************
         function updateAndDraw() {
+            if (!running)
+                return;
             update();
             draw();
         }
@@ -52,7 +102,7 @@
                     }
                 }
             }
-            if (cells[rIdx][cIdx])      // Dont' count the cell itself.  
+            if (cells[rIdx][cIdx])      // Dont' count the cell itself (if it is alive)
                 --ret;
             return ret
         }
@@ -68,7 +118,7 @@
                     let numNeighbors = getNeighborCount(cells, rIdx, cIdx)
 
                     if (row[cIdx])       // Is it alive
-                        newRow[cIdx] = (numNeighbors == 2 || numNeighbors == 3);    
+                        newRow[cIdx] = (numNeighbors == 2 || numNeighbors == 3);
                     else
                         newRow[cIdx] = (numNeighbors == 3);
                 }
@@ -84,8 +134,8 @@
                 let row = cells[rIdx];
                 for (let cIdx = 0; cIdx < row.length; cIdx++) {
                     let ballSize = 4;
-                    let x = 5 + rIdx * 10;
-                    let y = 5 + cIdx * 10;
+                    let x = 5 + cIdx * 10;
+                    let y = 5 + rIdx * 10;
                     let color = "white";
                     if (row[cIdx])
                         color = "red";
