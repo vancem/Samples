@@ -51,6 +51,7 @@
             <input type="file" id="openFileInput" onchange="doOpenFileDialogClose(event)" style="display:none">
             <button onclick="document.getElementById('openFileInput').click()">Open</button>
             Find: <input type="text" onchange="doFindTextInputChange(event)"></input>
+            <button onClick="doFindNextButton(event)">Next</button>
             Status: <div id="statusDiv"></div>
         </div>
         <div id="textEditor" tabindex="1" autofocus class="textWindow"></div>
@@ -72,7 +73,7 @@
                 this.#editorWindow.onpaste = TextEditor.#onPaste;
                 this.#editorWindow.onclick = TextEditor.#onMouseClick;
                 this.#editorWindow.style["font-family"] = "'Courier New', Courier, monospace";
-                this.#editorWindow.style["font-size"] = "16 px";
+                this.#editorWindow.style["font-size"] = "12px";
                 this.#editorWindow.style["padding"] = "3px";
                 this.#editorWindow.style["white-space"] = "pre";
                 this.#editorWindow.style["overflow"] = "hidden";
@@ -97,7 +98,7 @@
                 return context.measureText("M").width;  // we can use any character since it is fix width, pick a 'big' one
             }
 
-            #addString(str) {
+            addString(str) {
                 for (let i = 0; i < str.length; i++)
                     this.#addChar(str[i]);
             }
@@ -135,20 +136,20 @@
                     cursorLine.appendChild(document.createTextNode("\u00A0"));
             }
 
-            #deleteChar() {
+            deleteChar() {
                 const prevChar = this.#cursor.previousSibling;
                 if (prevChar != null)
                     prevChar.remove();
             }
 
-            #moveLeft() {
+            moveLeft() {
                 const prevChar = this.#cursor.previousSibling;
                 if (prevChar != null) {
                     prevChar.remove();
                     this.#cursor.after(prevChar);
                 }
             }
-            #moveRight() {
+            moveRight() {
                 const nextChar = this.#cursor.nextSibling;
                 if (nextChar != null) {
                     nextChar.remove();
@@ -156,7 +157,7 @@
                 }
             }
 
-            #moveUp() {
+            moveUp() {
                 const prevLine = this.#cursor.parentNode.previousSibling;
                 if (prevLine != null) {
                     const cursorIdx = childIndex(this.#cursor);
@@ -165,7 +166,7 @@
                 }
             }
 
-            #moveDown() {
+            moveDown() {
                 const nextLine = this.#cursor.parentNode.nextSibling;
                 if (nextLine != null) {
                     const cursorIdx = childIndex(this.#cursor);
@@ -180,7 +181,7 @@
                 const line = event.target;
                 if (event.target == null)
                     return;
-                const editor = event.target.editor;  // get editor associated with this DOM elememnt
+                const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
                 if (editor == null)
                     return;
                 if (line.parentNode != editor.#editorWindow)
@@ -198,10 +199,10 @@
                 const text = event.clipboardData.getData("text");
                 if (!text)
                     return;
-                const editor = event.target.editor;  // get editor associated with this DOM elememnt
+                const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
                 if (editor == null)
                     return;
-                editor.#addString(text);
+                editor.addString(text);
             }
 
             static #onKeyDown(event) {
@@ -213,7 +214,7 @@
                 if (event.metaKey)
                     return;
 
-                const editor = event.target.editor;  // get editor associated with this DOM elememnt
+                const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
                 if (editor == null)
                     return;
                 if (event.key.length == 1) {
@@ -223,15 +224,15 @@
                 else if ("Enter" == event.key)
                     editor.#addNewLineChar();
                 else if ("Backspace" == event.key || "Delete" == event.key)
-                    editor.#deleteChar();
+                    editor.deleteChar();
                 else if ("ArrowLeft" == event.key)
-                    editor.#moveLeft();
+                    editor.moveLeft();
                 else if ("ArrowRight" == event.key)
-                    editor.#moveRight();
+                    editor.moveRight();
                 else if ("ArrowUp" == event.key)
-                    editor.#moveUp();
+                    editor.moveUp();
                 else if ("ArrowDown" == event.key)
-                    editor.#moveDown();
+                    editor.moveDown();
                 else
                     console.log("Unknonwn key: ", event);
             }
@@ -269,8 +270,9 @@
                 let retStr = undefined;
                 let curPos = this.#offsetInBuffer;
                 let endPos = this.#offsetInBufferEnd;   // cached for speed
-                let buffer = this.#buffer;            // cached for speed
-                while (curPos < maxBytes) {
+                let buffer = this.#buffer;              // cached for speed
+                let maxPos = curPos + maxBytes;      
+                while (curPos < maxPos) {
                     if (endPos <= curPos) {
                         // This code is not hot, it only happens ever bufferSize chars. 
                         if (this.#offsetInBuffer < curPos) {
@@ -280,7 +282,7 @@
                         const newPositionOfBuffer = this.#positionOfBuffer + curPos;
                         if (this.size <= newPositionOfBuffer)  // Hit end of file
                             break;
-                        maxBytes -= curPos - this.#offsetInBuffer;
+                        maxPos -= curPos - this.#offsetInBuffer;
                         await this.#fill(newPositionOfBuffer);
                         curPos = this.#offsetInBuffer;
                         endPos = this.#offsetInBufferEnd;
@@ -430,15 +432,20 @@
             console.log("opening file ", file);
 
             const bigFile = new BigFile(file);
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 60; i++) {
                 const line = await bigFile.readLine(1000);
-                console.log(`Got line ${i} = ${line}`);
+                console.log(`Got line ${i} length: ${line.length} = ${line}`);
+                myEditor.addString(line);
             }
         }
 
         function doFindTextInputChange(event) {
             const textBoxStr = event.target.value;
             console.log("doFindTextboxChange " + textBoxStr, event);
+        }
+
+        function doFindNextButton(event) {
+            console.log("doFindNextButton", event);
         }
 
     </script>
