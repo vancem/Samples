@@ -99,7 +99,7 @@
             }
 
             addString(str) {
-                assert(typeof(str) == "string");
+                assert(typeof (str) == "string");
                 for (let i = 0; i < str.length; i++)
                     this.#addChar(str[i]);
             }
@@ -273,7 +273,7 @@
                 let curPos = this.#offsetInBuffer;
                 let endPos = this.#offsetInBufferEnd;   // cached for speed
                 let buffer = this.#buffer;              // cached for speed
-                let maxPos = curPos + maxBytes;      
+                let maxPos = curPos + maxBytes;
                 while (curPos < maxPos) {
                     if (endPos <= curPos) {
                         // This code is not hot, it only happens ever bufferSize chars. 
@@ -326,8 +326,8 @@
             }
 
             async search(searchStr, searchEndPos = this.size) {
-                assert(0 < searchBytes.length);
-                if (searchBytes.length == 0)
+                assert(0 < searchStr.length);
+                if (searchStr.length == 0)
                     return true;   // should never happen, but 
 
                 this.#utf8Encoder ||= new TextEncoder();
@@ -357,14 +357,23 @@
                         searchIdx++;
                         if (searchBytes.length <= searchIdx) {
                             this.#offsetInBuffer = curPos;
-                            await this.seek(this.position - searchBytes.length6t); // We want to be at the start of the search string. 
+                            await this.seek(this.position - searchBytes.length); // We want to be at the start of the search string. 
                             return true;
                         }
                     }
                     else if (0 < searchIdx) {
-                        await this.seek(this.#positionOfBuffer + curPos - searchIdx);
-                        curPos = this.#offsetInBuffer;
-                        endPos = this.#offsetInBufferEnd;
+                        console.log(`RESETTING after finding ${searchIdx} chars`);
+                        // Start over one byte further on (curPos has been incremented at this point)
+                        if (searchIdx <= curPos)
+                            curPos -= searchIdx;
+                        else {  // this is the case where the string spans a buffer boundary.  
+                            await this.seek(this.#positionOfBuffer + curPos - searchIdx);
+                            curPos = this.#offsetInBuffer;
+                            endPos = this.#offsetInBufferEnd;
+                        }
+                        searchIdx = 0;
+                        console.log(`AFTER RESETTING pos = ${curPos}`);
+                        console.log(`AFTER RESETTING ***>${this.#utf8Decoder.decode(this.#buffer.slice(curPos, curPos+40))}`);
                     }
                 }
             }
@@ -398,6 +407,8 @@
                 this.#buffer = new Uint8Array(bufferArrayBuffer);
                 this.#offsetInBuffer = 0;
                 this.#offsetInBufferEnd = this.#buffer.length;
+                // TODO remove after debugging.  
+                this.DEBUGBytes = this.#utf8Decoder.decode(this.#buffer.slice(0, 80));
             }
         }
 
@@ -460,14 +471,23 @@
             console.log("***************************************************************");
             console.log("Showing the end of the file. ")
             await bigFile.seek(bigFile.size - 2000);
-            bigFile.readLine()  // Don't display the clipped line
-            for(let i = 0; i < 50; i++) {
+            await bigFile.readLine()  // Don't display the clipped line
+            for (let i = 0; i < 50; i++) {
                 line = await bigFile.readLine(1000);
                 if (line.length == 0)
                     break;
                 console.log(`Got line: ${1} pos: ${bigFile.position} len: ${line.length} = ${line}`);
                 myEditor.addString(line);
             }
+            console.log("***************************************************************");
+            console.log("Searching for ath="); // HarddiskVolume3
+            await bigFile.seek(0);
+            line = await bigFile.readLine(1000);
+            console.log(`First Line ${line}`);
+            const searchResult = await bigFile.search("ath=", 4000);
+            console.log(`Got search result ${searchResult}`);
+            const data = await bigFile.readLine(1000);
+            console.log(`Got search data ***>${data}`);
         }
 
         function doFindTextInputChange(event) {
