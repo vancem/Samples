@@ -99,6 +99,7 @@
             }
 
             addString(str) {
+                assert(typeof(str) == "string");
                 for (let i = 0; i < str.length; i++)
                     this.#addChar(str[i]);
             }
@@ -247,6 +248,7 @@
             #positionOfBuffer; #offsetInBuffer; #offsetInBufferEnd; #buffer;
 
             constructor(file) {
+                assert(file.size && file.slice);    // should at least look like a File type
                 this.#file = file;
                 this.#utf8Decoder = new TextDecoder("utf-8");
                 this.#positionOfBuffer = 0;
@@ -266,7 +268,7 @@
             // Returns the next line in the file, returns the empty string on end of file. 
             // It will only read 'maxByte' (not characters), so you can use that to limit
             // the size of the line returned.    
-            async readLine(maxBytes) {
+            async readLine(maxBytes = Infinity) {
                 let retStr = undefined;
                 let curPos = this.#offsetInBuffer;
                 let endPos = this.#offsetInBufferEnd;   // cached for speed
@@ -355,39 +357,45 @@
                         searchIdx++;
                         if (searchBytes.length <= searchIdx) {
                             this.#offsetInBuffer = curPos;
-                            this.seek(this.position - searchBytes.length6t); // We want to be at the start of the search string. 
+                            await this.seek(this.position - searchBytes.length6t); // We want to be at the start of the search string. 
                             return true;
                         }
                     }
                     else if (0 < searchIdx) {
-                        this.seek(this.#positionOfBuffer + curPos - searchIdx);
+                        await this.seek(this.#positionOfBuffer + curPos - searchIdx);
                         curPos = this.#offsetInBuffer;
                         endPos = this.#offsetInBufferEnd;
                     }
                 }
             }
 
-            seek(position) {
+            // seeks to the given position.  If position is negative, it seeks from the end of the file. 
+            async seek(position) {
+                if (position < 0)
+                    position = this.size + position;
+                position = Math.max(0, Math.min(position, this.size))
+
                 const offset = position - this.#positionOfBuffer;
                 if (0 <= offset && offset < bufferSize) {
                     this.#offsetInBuffer = offset;
                     return;
                 }
-                // Round position to bufferSize;
-                this.#positionOfBuffer = postion / bufferSize * bufferSize;
-                this.#offsetInBuffer = postion - this.#positionOfBuffer;
-                this.#offsetInBufferEnd = 0;    // indicates that the buffer need refilling
+
+                // Round position to bufferSize, and fill the buffer.  
+                const newPositionOfBuffer = Math.floor(position / bufferSize) * bufferSize;
+                await this.#fill(newPositionOfBuffer);
                 assert(this.#offsetInBuffer < bufferSize);
                 assert(this.#positionOfBuffer % bufferSize == 0);   // we read in bufferSize chunks aways.  
+                return this.position;
             }
 
             // Fill the buffer with 'bufferSize' bytes (if we don't hit EOF) starting at file offset 'filePos'
             async #fill(filePos) {
                 assert(filePos % bufferSize == 0);   // we read in bufferSize chunks aways.  
                 this.#positionOfBuffer = filePos;
-                const smallBlob = this.#file.slice(this.#positionOfBuffer, this.#positionOfBuffer + bufferSize);
-                const arrayBuffer = await smallBlob.arrayBuffer();
-                this.#buffer = new Uint8Array(arrayBuffer);
+                const bufferBlob = this.#file.slice(this.#positionOfBuffer, this.#positionOfBuffer + bufferSize);
+                const bufferArrayBuffer = await bufferBlob.arrayBuffer();
+                this.#buffer = new Uint8Array(bufferArrayBuffer);
                 this.#offsetInBuffer = 0;
                 this.#offsetInBufferEnd = this.#buffer.length;
             }
@@ -432,9 +440,32 @@
             console.log("opening file ", file);
 
             const bigFile = new BigFile(file);
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < 20; i++) {
                 const line = await bigFile.readLine(1000);
-                console.log(`Got line ${i} length: ${line.length} = ${line}`);
+                console.log(`Got line ${i} pos: ${bigFile.position} len: ${line.length} = ${line}`);
+                myEditor.addString(line);
+            }
+
+            myEditor.addString("\n*********************************    ...   ************************************\n\n");
+
+            await bigFile.seekLineBackwards();
+            console.log(`Backing up a line pos:  ${bigFile.position}`);
+            await bigFile.seekLineBackwards();
+            console.log(`Backing up a line pos:  ${bigFile.position}`);
+            let line = await bigFile.readLine(1000);
+            console.log(`READ line pos: ${bigFile.position} len: ${line.length} = ${line}`);
+            line = await bigFile.readLine(1000);
+            console.log(`READ line pos: ${bigFile.position} len: ${line.length} = ${line}`);
+
+            console.log("***************************************************************");
+            console.log("Showing the end of the file. ")
+            await bigFile.seek(bigFile.size - 2000);
+            bigFile.readLine()  // Don't display the clipped line
+            for(let i = 0; i < 50; i++) {
+                line = await bigFile.readLine(1000);
+                if (line.length == 0)
+                    break;
+                console.log(`Got line: ${1} pos: ${bigFile.position} len: ${line.length} = ${line}`);
                 myEditor.addString(line);
             }
         }
