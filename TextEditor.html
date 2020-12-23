@@ -76,12 +76,17 @@
                 this.#cursor.id = "cursor";
                 cursorLine.appendChild(this.#cursor);
 
-                // compute the width of the font. 
+                this.#charWidth = this.#computeCharWidth();
+            }
+
+            // simple helper that computes the character with for a given font
+            // Note for this to make sense the font has to be fixed width.  
+            #computeCharWidth() {
                 const style = window.getComputedStyle(this.#editorWindow);
                 const canvas = document.createElement("canvas");
                 const context = canvas.getContext("2d");
                 context.font = style.font;
-                this.#charWidth = context.measureText(" ").width;  // we can use any character since it is fix width.
+                return context.measureText(" ").width;  // we can use any character since it is fix width.
             }
 
             #addString(str) {
