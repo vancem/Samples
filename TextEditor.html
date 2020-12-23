@@ -13,9 +13,9 @@
 
         .textWindow {
             flex-grow: 1;
-            font-family: 'Courier New', Courier, monospace;
-            padding: 5px;
         }
+
+
 
         #cursor {
             border-left-width: 2px;
@@ -65,6 +65,9 @@
                 this.#editorWindow.onkeydown = TextEditor.#onKeyDown;
                 this.#editorWindow.onpaste = TextEditor.#onPaste;
                 this.#editorWindow.onclick = TextEditor.#onMouseClick;
+                this.#editorWindow.style["font-family"] = "'Courier New', Courier, monospace";
+                this.#editorWindow.style["font-size"] = "16 px";
+                this.#editorWindow.style["padding"] = "3px";
 
                 const cursorLine = document.createElement("div");
                 this.#editorWindow.appendChild(cursorLine);
@@ -83,7 +86,7 @@
                 const canvas = document.createElement("canvas");
                 const context = canvas.getContext("2d");
                 context.font = style.font;
-                return context.measureText(" ").width;  // we can use any character since it is fix width.
+                return context.measureText("M").width;  // we can use any character since it is fix width, pick a 'big' one
             }
 
             #addString(str) {
