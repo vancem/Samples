@@ -65,6 +65,7 @@
             constructor() {
                 assert(TextEditor.editor === undefined);
                 this.#editorWindow = document.getElementById("textEditor");
+                this.#editorWindow.editor = this;
                 this.#editorWindow.onkeydown = TextEditor.#onKeyDown;
                 this.#editorWindow.onpaste = TextEditor.#onPaste;
                 this.#editorWindow.onclick = TextEditor.#onMouseClick;
@@ -172,7 +173,7 @@
                 const line = event.target;
                 if (event.target == null)
                     return;
-                const editor = TextEditor.editor;
+                const editor = event.target.editor;  // get editor associated with this DOM elememnt
                 if (line.parentNode != editor.#editorWindow)
                     return;
                 const charPos = event.offsetX / editor.#charWidth;
@@ -188,7 +189,9 @@
                 const text = event.clipboardData.getData("text");
                 if (!text)
                     return;
-                TextEditor.editor.#addString(text);
+                const editor = event.target.editor;  // get editor associated with this DOM elememnt
+                editor.#addString(text);
+
             }
 
             static #onKeyDown(event) {
@@ -200,7 +203,7 @@
                 if (event.metaKey)
                     return;
 
-                const editor = TextEditor.editor;
+                const editor = event.target.editor;  // get editor associated with this DOM elememnt
                 if (event.key.length == 1) {
                     if (" " <= event.key && event.key <= "~")
                         editor.#addChar(event.key);
