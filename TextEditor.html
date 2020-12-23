@@ -13,9 +13,9 @@
 
         .textWindow {
             flex-grow: 1;
+            border: solid black 1px;
+            margin: 1px;
         }
-
-
 
         #cursor {
             border-left-width: 2px;
@@ -47,6 +47,12 @@
 <body style="margin:0;">
     <!-- by default margin=8 which I don't want because I want vh=100 to be the whole screen -->
     <div class="window">
+        <div>
+            <input type="file" id="openFileInput" onchange="doOpenFileDialogClose(event)" style="display:none">
+            <button onclick="document.getElementById('openFileInput').click()">Open</button>
+            Find: <input type="text" onchange="doFindTextInputChange(event)"></input>
+            Status: <div id="statusDiv"></div>
+        </div>
         <div id="textEditor" tabindex="1" autofocus class="textWindow"></div>
     </div>
     <!-- *********************************************************************** -->
@@ -68,6 +74,8 @@
                 this.#editorWindow.style["font-family"] = "'Courier New', Courier, monospace";
                 this.#editorWindow.style["font-size"] = "16 px";
                 this.#editorWindow.style["padding"] = "3px";
+                this.#editorWindow.style["white-space"] = "pre";
+                this.#editorWindow.style["overflow"] = "hidden";
 
                 const cursorLine = document.createElement("div");
                 this.#editorWindow.appendChild(cursorLine);
@@ -173,6 +181,8 @@
                 if (event.target == null)
                     return;
                 const editor = event.target.editor;  // get editor associated with this DOM elememnt
+                if (editor == null)
+                    return;
                 if (line.parentNode != editor.#editorWindow)
                     return;
                 const charPos = event.offsetX / editor.#charWidth;
@@ -189,8 +199,9 @@
                 if (!text)
                     return;
                 const editor = event.target.editor;  // get editor associated with this DOM elememnt
+                if (editor == null)
+                    return;
                 editor.#addString(text);
-
             }
 
             static #onKeyDown(event) {
@@ -203,6 +214,8 @@
                     return;
 
                 const editor = event.target.editor;  // get editor associated with this DOM elememnt
+                if (editor == null)
+                    return;
                 if (event.key.length == 1) {
                     if (" " <= event.key && event.key <= "~")
                         editor.#addChar(event.key);
@@ -233,6 +246,7 @@
             #positionOfBuffer; #offsetInBuffer; #offsetInBufferEnd; #buffer;
 
             constructor(file) {
+                this.#file = file;
                 this.#utf8Decoder = new TextDecoder("utf-8");
                 this.#positionOfBuffer = 0;
                 this.#offsetInBuffer = 0;
@@ -240,13 +254,13 @@
             }
 
             // returns the size of the file
-            get size() { return file.size; }
+            get size() { return this.#file.size; }
             // position in the file (from zero to size())
             get position() { return this.#positionOfBuffer + this.#offsetInBuffer; }
             // returns the (short) name do the file (files may not have a full path)
-            get name() { return file.name; }
+            get name() { return this.#file.name; }
             // returns true if the cursor is at the end of file (readLine will return "")
-            get endOfFile() { return file.size <= this.postion; }
+            get endOfFile() { return this.size <= this.postion; }
 
             // Returns the next line in the file, returns the empty string on end of file. 
             // It will only read 'maxByte' (not characters), so you can use that to limit
@@ -255,25 +269,29 @@
                 let retStr = undefined;
                 let curPos = this.#offsetInBuffer;
                 let endPos = this.#offsetInBufferEnd;   // cached for speed
-                const buffer = this.#buffer;            // cached for speed
+                let buffer = this.#buffer;            // cached for speed
                 while (curPos < maxBytes) {
                     if (endPos <= curPos) {
-                        // This code is not hot, it only happens ever bufferSize chars.  
-                        retStr = this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, curPos));
+                        // This code is not hot, it only happens ever bufferSize chars. 
+                        if (this.#offsetInBuffer < curPos) {
+                            retStr ||= "";  // If not set yet, set it to the empty string.      
+                            retStr += this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, curPos));
+                        }
                         const newPositionOfBuffer = this.#positionOfBuffer + curPos;
-                        if (file.size <= newPositionOfBuffer)  // Hit end of file
+                        if (this.size <= newPositionOfBuffer)  // Hit end of file
                             break;
                         maxBytes -= curPos - this.#offsetInBuffer;
-                        await this.fill(newPositionOfBuffer);
+                        await this.#fill(newPositionOfBuffer);
                         curPos = this.#offsetInBuffer;
                         endPos = this.#offsetInBufferEnd;
+                        buffer = this.#buffer;
                     }
                     // Note it increments the position past the newline before breaking out of the loop. 
                     if (buffer[curPos++] === newLine)
                         break;
                 }
-                this.#offsetInBuffer = curPos;
                 const chunkStr = this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, curPos));
+                this.#offsetInBuffer = curPos;
                 return (retStr === undefined) ? chunkStr : retStr + chunkStr; // concatinate if necessary.  
             }
 
@@ -281,15 +299,16 @@
             async seekLineBackwards() {
                 let origPos = this.#offsetInBuffer;
                 let curPos = origPos;
-                const buffer = this.#buffer;            // cached for speed
+                let buffer = this.#buffer;            // cached for speed
                 while (true) {
                     // have we fallen off the front of the buffer? 
                     if (curPos === 0) {
                         if (this.#positionOfBuffer === 0)  // Hit start of file
                             break;
-                        await this.fill(this.#positionOfBuffer - bufferSize);
+                        await this.#fill(this.#positionOfBuffer - bufferSize);
                         curPos += bufferSize;
                         origPos += bufferSize;
+                        buffer = this.#buffer;
                     }
                     // Note it increments the position past the newline before breaking out of the loop. 
                     // We also have to find the newline further than the neighboring location so we read 
@@ -315,7 +334,7 @@
                 let searchIdx = 0;                      // how much of searchBytes matches so far.  
                 let curPos = this.#offsetInBuffer;
                 let endPos = this.#offsetInBufferEnd;   // cached for speed
-                const buffer = this.#buffer;            // cached for speed
+                let buffer = this.#buffer;            // cached for speed
                 while (true) {
                     if (endPos <= curPos) {
                         // This code is not hot, it only happens ever bufferSize chars.  
@@ -324,9 +343,10 @@
                             this.#offsetInBuffer = curPos;
                             return false;
                         }
-                        await this.fill(newPositionOfBuffer);
+                        await this.#fill(newPositionOfBuffer);
                         curPos = this.#offsetInBuffer;
                         endPos = this.#offsetInBufferEnd;
+                        buffer = this.#buffer;
                     }
                     // Note it increments the position past the newline before breaking out of the loop. 
                     if (buffer[curPos++] === searchBytes[searchIdx]) {
@@ -338,7 +358,7 @@
                         }
                     }
                     else if (0 < searchIdx) {
-                        seek(this.#positionOfBuffer + curPos - searchIdx);
+                        this.seek(this.#positionOfBuffer + curPos - searchIdx);
                         curPos = this.#offsetInBuffer;
                         endPos = this.#offsetInBufferEnd;
                     }
@@ -365,7 +385,7 @@
                 this.#positionOfBuffer = filePos;
                 const smallBlob = this.#file.slice(this.#positionOfBuffer, this.#positionOfBuffer + bufferSize);
                 const arrayBuffer = await smallBlob.arrayBuffer();
-                this.#buffer = new Uint8Array();
+                this.#buffer = new Uint8Array(arrayBuffer);
                 this.#offsetInBuffer = 0;
                 this.#offsetInBufferEnd = this.#buffer.length;
             }
@@ -400,6 +420,26 @@
         /*************************************************************************/
         // main program
         let myEditor = new TextEditor(document.getElementById("textEditor"));
+
+        async function doOpenFileDialogClose(event) {
+            console.log("doFindTextboxChange", event);
+            const fileList = event.target.files;
+            if (fileList.length == 0)
+                return;     // user canceled
+            const file = fileList[0];
+            console.log("opening file ", file);
+
+            const bigFile = new BigFile(file);
+            for (let i = 0; i < 20; i++) {
+                const line = await bigFile.readLine(1000);
+                console.log(`Got line ${i} = ${line}`);
+            }
+        }
+
+        function doFindTextInputChange(event) {
+            const textBoxStr = event.target.value;
+            console.log("doFindTextboxChange " + textBoxStr, event);
+        }
 
     </script>
 </body>
