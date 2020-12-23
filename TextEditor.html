@@ -59,12 +59,8 @@
             // instance fields
             #cursor; #charWidth; #editorWindow;
 
-            // TextEditor (since it wires into the GUI DOM which is also singleton)
-            static editor = new TextEditor();
-
-            constructor() {
-                assert(TextEditor.editor === undefined);
-                this.#editorWindow = document.getElementById("textEditor");
+            constructor(parentWindow) {
+                this.#editorWindow = parentWindow;
                 this.#editorWindow.editor = this;
                 this.#editorWindow.onkeydown = TextEditor.#onKeyDown;
                 this.#editorWindow.onpaste = TextEditor.#onPaste;
@@ -397,6 +393,11 @@
         function assert(condition) {
             console.assert(condition);
         }
+
+        /*************************************************************************/
+        // main program
+        let myEditor = new TextEditor(document.getElementById("textEditor"));
+
     </script>
 </body>
 
