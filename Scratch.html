@@ -5,48 +5,54 @@
     <script>
         "use strict";
 
-        let max = 4;
-        let sum = 0;
-        console.log("Running Scratch2.html");
-        for (let i = 1; i <= max; i++) {
-            sum += i;
-            log(i, sum);
-        }
-        console.log("loop finished i = " + sum);
+        async function main() {
+            for (let i = 0; i < 3; i++) {
+                let start = performance.now();
+                console.log("Starting ", start);
+                
+                for(let desiredDelay = 0; desiredDelay < 20; desiredDelay++) {
+                    let start = performance.now();
+                    await sleep(desiredDelay);
+                    let delayMs = performance.now() - start;
+                    console.log("Desired delay " + desiredDelay + " Got delay " + delayMs);
+                }
 
-        // A simple logging function.  
-        function log(i, sum) {
-            let message = "In loop i = " + i + "  sum = " + sum;
-            console.log(message);
-            document.getElementById("output").innerHTML += message + "<br>";
-        }
-
-
-        class Point {
-            constructor(x y) {
-                this.x = x;
-                this.y = y;
+                console.log("main Done ", performance.now());
+                sleep(100);
             }
-
-            get magnitude() {
-                return Math.sqrt(this.x*this.x + this.y*this.y)
-            }
-            
         }
+        performance.now();
+        let start = performance.now();
+        let stop = performance.now();
+        console.log("Minimum delta ", stop-start);
 
-        let v = {}
-        v.x = 1;
-        v.test = test;
+        start = performance.now();
+        console.log("Do Log");
+        stop = performance.now();
+        console.log("Console delta ", stop-start);
 
-        v.test(3);
+        start = performance.now();
+        console.log("Do Log " + start);
+        stop = performance.now();
+        console.log("Console delta ", stop-start);
 
+        start = performance.now();
+        console.log("Do Log " + stop);
+        stop = performance.now();
+        console.log("Console delta ", stop-start);
 
-        function test(i)
-        {
-            console.log("In test this = " + this.x + " i = " + i);
+        
+        start = performance.now();
+        console.log("Do Log " + (stop - start));
+        stop = performance.now();
+        console.log("Console delta ", stop-start);
+
+        main().then(() => console.log("Main method finished"));
+        console.log("Script ending", performance.now());
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
         }
-
-
     </script>
 </body>
 

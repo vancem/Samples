@@ -3,10 +3,11 @@
 <body>
     <!-- ************************************************************ -->
     This is <a href="https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Conways game of life</a><br>
-    Clicking will change a cell.  Double clicking will leave a 3x3 splotch of cells.<br>
-    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600 height=400></canvas><br>
-    <button id="startButton">Start</button>
-    <button id="stopButton">Stop</button><br>
+    Clicking will change a cell. Double clicking will leave a 3x3 splotch of cells.<br>
+    <canvas id="mainCanvas" style="background-color:lightblue; border:3px solid black;" width=600
+        height=400></canvas><br>
+    <button onclick="running=true">Start</button>
+    <button onclick="running=true">Stop</button><br>
     <script>
         "use strict";
 
@@ -14,12 +15,9 @@
         let drawer = mainCanvas.getContext("2d");
         mainCanvas.onclick = onMouseClick;
         mainCanvas.ondblclick = onMouseDblClick;
-        let startButton = document.getElementById("startButton");
-        startButton.onclick = onStartClick;
-        let stopButton = document.getElementById("stopButton");
-        stopButton.onclick = onStopClick;
 
-        // Define the 2x2 matrix of cells (60 by 40) (alll dead to start with)
+
+        // Define the 2x2 matrix of cells (60 by 40) (all dead to start with)
         let running = true;
         let cells = [];
         for (let rIdx = 0; rIdx < 40; rIdx++) {
@@ -31,9 +29,9 @@
         }
 
         // Create a splotch of cell s in the center to start. 
-        for (let i = 19; i <= 21; i++)
-            for (let j = 29; j <= 31; j++)
-                cells[i][j] = true;
+        for (let r = 19; r <= 21; r++)
+            for (let c = 29; c <= 31; c++)
+                cells[r][c] = true;
 
         cells[20][28] = true;
         cells[19][28] = true;
@@ -43,13 +41,13 @@
         // Subscribe to a tick that goes off every 800 msec to update the animation
         window.setInterval(updateAndDraw, 800);
 
+        /***********************************************************************/
         /* function definitions */
 
         // On a mouse click, flip the cell from dead to alive (or vice versa).
         function onMouseClick(ev) {
             let x = ev.offsetX;
             let y = ev.offsetY;
-
             let xIdx = Math.floor(x / 10);
             let yIdx = Math.floor(y / 10);
             if (yIdx < cells.length) {
@@ -63,25 +61,17 @@
         function onMouseDblClick(ev) {
             let x = ev.offsetX;
             let y = ev.offsetY;
-
             let xIdx = Math.floor(x / 10);
             let yIdx = Math.floor(y / 10);
 
-            for(let r = Math.max(yIdx-1, 0); r <= Math.min(yIdx + 1, cells.length); r++) {
+            // Make s splotch
+            for (let r = Math.max(yIdx - 1, 0); r <= Math.min(yIdx + 1, cells.length); r++) {
                 let row = cells[r];
-                for(let c = Math.max(xIdx-1, 0); c <= Math.min(xIdx + 1, row.length); c++) {
-                    row[c] = true;  
+                for (let c = Math.max(xIdx - 1, 0); c <= Math.min(xIdx + 1, row.length); c++) {
+                    row[c] = true;
                 }
             }
             draw();
-        }
-
-
-        function onStartClick() {
-            running = true;
-        }
-        function onStopClick() {
-            running = false;
         }
 
         //********************************************
@@ -95,10 +85,10 @@
         //********************************************
         function getNeighborCount(cells, rIdx, cIdx) {
             let ret = 0;
-            for (let i = Math.max(rIdx - 1, 0); i <= Math.min(rIdx + 1, cells.length - 1); i++) {
-                let row = cells[i];
-                for (let j = Math.max(cIdx - 1, 0); j <= Math.min(cIdx + 1, row.length - 1); j++) {
-                    if (row[j]) {
+            for (let r = Math.max(rIdx - 1, 0); r <= Math.min(rIdx + 1, cells.length - 1); r++) {
+                let row = cells[r];
+                for (let c = Math.max(cIdx - 1, 0); c <= Math.min(cIdx + 1, row.length - 1); c++) {
+                    if (row[c]) {
                         ret++;
                     }
                 }

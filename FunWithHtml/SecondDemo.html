@@ -14,6 +14,7 @@
         // This is a comment 
         let outputDiv = document.getElementById("outputDiv");
         outputDiv.innerHTML = "Hello there this is a test<br>";
+        document.body.onkeydown = keyDown;
 
         let mainCanvas = document.getElementById("mainCanvas");
         let drawer = mainCanvas.getContext("2d");
@@ -25,7 +26,10 @@
         drawer.fill();
         drawer.stroke();
 
-
+        function keyDown(event) {
+            console.log("Got event ", event);
+        }
+ 
     </script>
 </body>
 

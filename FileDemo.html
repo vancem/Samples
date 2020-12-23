@@ -9,15 +9,15 @@
 </p> Here is a file chooser </p>
 <ul>
 
-    <li>File: <input type="file" id="inputFile" onchange="doFileChange(event)" />is my input. </li>
+    <li>File: <input type="file" id="inputFile" onchange="doFileDialogClose(event)" />is my input. </li>
     <li>Color: <input type="color" id="inputColor" /> is my input. </li>
     <li>Date: <input type="date" id="inputDate" /> is my input. </li>
 
     <li>
         // If you don't like how this looks, you can do display:none and call the 'click()' method on some button
         File:
-        <input type="file" id="fileElem" onchange="doFileChange(event)" style="display:none">
-        <button onclick="document.getElementById("fileElem").click()">File Select Button</button>is my input. </li>
+        <input type="file" id="fileElem" onchange="doFileDialogClose(event)" style="display:none">
+        <button onclick="document.getElementById('fileElem').click()">File Select Button</button>is my input. </li>
     </li>
 
     <div id="drop_zone"  ondragover="dragOverHandler(event)"
@@ -36,7 +36,6 @@
         function dropHandler(event) {
             // Prevent default behavior (Prevent file from being opened)
             event.preventDefault();
-
             console.log("Files dropped, files in dataTransfer.files", event);
             lookAtFiles(event.dataTransfer.files);
         }
@@ -46,32 +45,30 @@
             event.preventDefault();
         }
 
+        // Files are Blobs with extra Information (name, size, modfied time, mime type)
+
+        // DON'T USE FileReader - it is obsolete.   
+        // Typically the File blob can simply be converted to text() (for text) or u8gfO() 
+        // (for binary).    For network things (e.g. fetch), you need to use ReadableStream
+        // (since you don't have everything in one go), that comes with its own reader 
+        // (ReadableStreamDefaultReader).  Streams (unlike blobs/files) are NOT random access.  
         function lookAtFiles(files) {
             console.log("Got " + files.length + " files");
             for (let file of files) {
                 console.log("Got file ", file);
                 console.log("File name ", file.name);
+                console.log("File size ", file.size);
                 if (file.name.endsWith(".txt")) {
-                    readFileAsText(file).then(txt => {
+                    file.text().then(txt => {
                         console.log("File Contents: ", txt)
                     });
                 }
             }
         }
 
-        function doFileChange(event) {
+        function doFileDialogClose(event) {
             console.log("files changed files = ", event.target.files);
             lookAtFiles(event.target.files);
-        }
-
-        // given a blob (a file is a blob), read it as text return it as a Promise of text.   
-        function readFileAsText(file) {
-            return new Promise((resolve, reject) => {
-                let fileReader = new FileReader();
-                fileReader.onload = event =>
-                    resolve(event.target.result);
-                fileReader.readAsText(file);
-            });
         }
 
         // This is from https://developer.mozilla.org/en-US/docs/Web/API/ReadableStreamDefaultReader/read

@@ -86,6 +86,8 @@
         }
 
         // Subscribe to a tick that goes off every 20 msec to update the animation
+        // see window.requestAnimationFrame() for a better way.
+        // performance.now() gets a high-res tick.  
         window.setInterval(drawAndUpdate, 20);
         
         /***********************************************************************/
