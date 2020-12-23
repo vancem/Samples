@@ -217,6 +217,7 @@
             }
         }
 
+        /***********************************************************************/
         const newLine = "\n".codePointAt(0); // \n as a integer
         const bufferSize = 1024 * 16;
         class BigFile {
@@ -225,8 +226,7 @@
             #positionOfBuffer; #offsetInBuffer; #offsetInBufferEnd; #buffer;
 
             constructor(file) {
-                this.#file = file;
-                 = new TextDecoder("utf-8");
+                this.#utf8Decoder = new TextDecoder("utf-8");
                 this.#positionOfBuffer = 0;
                 this.#offsetInBuffer = 0;
                 this.#offsetInBufferEnd = 0;
@@ -295,13 +295,15 @@
                 this.#offsetInBuffer = curPos;
             }
 
-            async search(searchStr, endPos = this.size) {
+            async search(searchStr, searchEndPos = this.size) {
+                assert(0 < searchBytes.length);
+                if (searchBytes.length == 0)
+                    return true;   // should never happen, but 
+
                 this.#utf8Encoder ||= new TextEncoder();
                 const searchBytes = this.#utf8Encoder.encode(searchStr);
-                if (this.size < endPos)
-                    endPos = this.size;
-                if (searchBytes.length == 0)
-                    return true;                        // Reallly an error
+                if (this.size < searchEndPos)
+                    searchEndPos = this.size;
 
                 let searchIdx = 0;                      // how much of searchBytes matches so far.  
                 let curPos = this.#offsetInBuffer;
@@ -311,7 +313,7 @@
                     if (endPos <= curPos) {
                         // This code is not hot, it only happens ever bufferSize chars.  
                         const newPositionOfBuffer = this.#positionOfBuffer + curPos;
-                        if (endPos <= newPositionOfBuffer) { // Hit end of search region
+                        if (searchEndPos <= newPositionOfBuffer) { // Hit end of search region
                             this.#offsetInBuffer = curPos;
                             return false;
                         }
@@ -324,7 +326,7 @@
                         searchIdx++;
                         if (searchBytes.length <= searchIdx) {
                             this.#offsetInBuffer = curPos;
-                            this.seek(this.position-searchBytes.length6t); // We want to be at the start of the search string. 
+                            this.seek(this.position - searchBytes.length6t); // We want to be at the start of the search string. 
                             return true;
                         }
                     }
@@ -334,32 +336,33 @@
                         endPos = this.#offsetInBufferEnd;
                     }
                 }
-
-                this.seek(position) {
-                    const offset = position - this.#positionOfBuffer;
-                    if (0 <= offset && offset < bufferSize) {
-                        this.#offsetInBuffer = offset;
-                        return;
-                    }
-                    // Round position to bufferSize;
-                    this.#positionOfBuffer = postion / bufferSize * bufferSize;
-                    this.#offsetInBuffer = postion - this.#positionOfBuffer;
-                    this.#offsetInBufferEnd = 0;    // indicates that the buffer need refilling
-                    assert(this.#offsetInBuffer < bufferSize);
-                    assert(this.#positionOfBuffer % bufferSize == 0);   // we read in bufferSize chunks aways.  
-                }
-
-                // Fill the buffer with 'bufferSize' bytes (if we don't hit EOF) starting at file offset 'filePos'
-                async #fill(filePos) {
-                    assert(filePos % bufferSize == 0);   // we read in bufferSize chunks aways.  
-                    this.#positionOfBuffer = filePos;
-                    const smallBlob = this.#file.slice(this.#positionOfBuffer, this.#positionOfBuffer + bufferSize);
-                    const arrayBuffer = await smallBlob.arrayBuffer();
-                    this.#buffer = new Uint8Array();
-                    this.#offsetInBuffer = 0;
-                    this.#offsetInBufferEnd = this.#buffer.length;
-                }
             }
+
+            seek(position) {
+                const offset = position - this.#positionOfBuffer;
+                if (0 <= offset && offset < bufferSize) {
+                    this.#offsetInBuffer = offset;
+                    return;
+                }
+                // Round position to bufferSize;
+                this.#positionOfBuffer = postion / bufferSize * bufferSize;
+                this.#offsetInBuffer = postion - this.#positionOfBuffer;
+                this.#offsetInBufferEnd = 0;    // indicates that the buffer need refilling
+                assert(this.#offsetInBuffer < bufferSize);
+                assert(this.#positionOfBuffer % bufferSize == 0);   // we read in bufferSize chunks aways.  
+            }
+
+            // Fill the buffer with 'bufferSize' bytes (if we don't hit EOF) starting at file offset 'filePos'
+            async #fill(filePos) {
+                assert(filePos % bufferSize == 0);   // we read in bufferSize chunks aways.  
+                this.#positionOfBuffer = filePos;
+                const smallBlob = this.#file.slice(this.#positionOfBuffer, this.#positionOfBuffer + bufferSize);
+                const arrayBuffer = await smallBlob.arrayBuffer();
+                this.#buffer = new Uint8Array();
+                this.#offsetInBuffer = 0;
+                this.#offsetInBufferEnd = this.#buffer.length;
+            }
+        }
 
         /************************  utility functions ******************/
         function insertChildAt(node, newChild, newChildIdx) {
