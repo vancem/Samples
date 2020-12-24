@@ -61,7 +61,7 @@
     </script>
     <script>
         "use strict";
-
+        /***********************************************************************/
         class TextEditor {
             // instance fields
             #cursor; #charWidth; #editorWindow;
@@ -241,8 +241,7 @@
 
         /***********************************************************************/
         const newLine = "\n".codePointAt(0); // \n as a integer
-        // TODO make it a constant after testing.  
-        let bufferSize = 1024 * 16;
+        let bufferSize = 1024 * 16;         // TODO make it a constant after testing.
         class BigFile {
             // private fields
             #file; #utf8Decoder; #utf8Encoder;
@@ -270,6 +269,8 @@
             // It will only read 'maxByte' (not characters), so you can use that to limit
             // the size of the line returned.    
             async readLine(maxBytes = Infinity) {
+                assert(typeof (maxBytes) == "number");
+                assertExclusiveEnter("BigFile.readline");
                 let retStr = undefined;
                 let curPos = this.#offsetInBuffer;
                 let endPos = this.#offsetInBufferEnd;   // cached for speed
@@ -297,10 +298,12 @@
                 }
                 const chunkStr = this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, curPos));
                 this.#offsetInBuffer = curPos;
+                assertExclusiveLeave("BigFile.readline");
                 return (retStr === undefined) ? chunkStr : retStr + chunkStr; // concatinate if necessary.  
             }
 
-            // scans backwards in the file one line (it basically undoes a readLine)
+            // scans backwards in the file one line.   If you are in the middle of a ine it goes to 
+            // the first character in the line.  If you are at the first character it goes 
             async seekLineBackwards() {
                 let origPos = this.#offsetInBuffer;
                 let curPos = origPos;
@@ -324,7 +327,8 @@
                     }
                 }
                 this.#offsetInBuffer = curPos;
-                return curPos;
+                assert(curPos < origPos || origPos == 0);   // we move a non-zero amount except at the very start. 
+                return this.position;
             }
 
             async search(searchStr, searchEndPos = this.size) {
@@ -364,7 +368,6 @@
                         }
                     }
                     else if (0 < searchIdx) {
-                        console.log(`RESETTING after finding ${searchIdx} chars`);
                         // Start over one byte further on (curPos has been incremented at this point)
                         if (searchIdx <= curPos)
                             curPos -= searchIdx;
@@ -374,14 +377,16 @@
                             endPos = this.#offsetInBufferEnd;
                         }
                         searchIdx = 0;
-                        console.log(`AFTER RESETTING pos = ${curPos}`);
-                        console.log(`AFTER RESETTING ***>${this.#utf8Decoder.decode(this.#buffer.slice(curPos, curPos + 40))}`);
                     }
                 }
             }
 
+
+
             // seeks to the given position.  If position is negative, it seeks from the end of the file. 
             async seek(position) {
+                assert(typeof (position) == "number");
+                assertExclusiveEnter("BigFile.seek");
                 if (position < 0)
                     position = this.size + position;
                 position = Math.max(0, Math.min(position, this.size))
@@ -389,6 +394,7 @@
                 const offset = position - this.#positionOfBuffer;
                 if (0 <= offset && offset < this.#offsetInBufferEnd) {
                     this.#offsetInBuffer = offset;
+                    assertExclusiveLeave("BigFile.seek");
                     return;
                 }
 
@@ -400,6 +406,7 @@
                 assert(this.#positionOfBuffer % bufferSize == 0);   // we read in bufferSize chunks aways.  
 
                 this.DEBUGPosBytes = this.#utf8Decoder.decode(this.#buffer.slice(this.#offsetInBuffer, this.#offsetInBuffer + 80));
+                assertExclusiveLeave("BigFile.seek");
                 return this.position;
             }
 
@@ -508,8 +515,7 @@
             });
         }
 
-        /*****************************************************************************/
-
+        /******************************** Testing ********************************/
         function mulberry32(a) {
             return function (bound) {
                 let t = a += 0x6D2B79F5;
@@ -522,6 +528,7 @@
 
         let lines;
         let cumChars;           // Number of characters BEFORE this line.  
+        let allLines;
         let allLinesCharCount;  // total size of all lines.
 
         function getExpectedLineIndexAt(seekPos) {
@@ -551,45 +558,46 @@
             lines = [];
             cumChars = [];
             allLinesCharCount = 0;
+            allLines = "";
 
             console.time('Run Tests');
-            console.log("Generating test data");
+            console.log("** Generating test data **");
             for (let i = 0; i < 10000; i++) {
-                const line = i + "\n";
+                let line = i + "\n";
+                // Every now and then make a line that is bigger (so it spans buffers)
+                if (i % 300 == 2)
+                    line = "AAABCDEFGHIJKLMNOPQRSTUVWXYZ" + line;
+
                 lines.push(line);
                 cumChars.push(allLinesCharCount);
+                allLines += line;
                 allLinesCharCount += line.length;
             }
-            const allStringsBlob = new Blob(lines);
-            assert(allStringsBlob.size == allLinesCharCount);
+            const allLinesBlob = new Blob(lines);
+            assert(allLinesBlob.size == allLinesCharCount);
+            assert(allLines.length == allLinesCharCount);
 
-            console.log("Running tests");
-
-            let bigBufferSize = 50000;
-            console.log(`Running Test with bufferSize ${bigBufferSize}`);
-            // await runReadLineTest(allStringsBlob, testBufferSize);
-            // await runSeekTest(allStringsBlob, bigBufferSize);
-            await runSeekLineBackwardsTest(allStringsBlob, bigBufferSize);
-
-            // Now try some small ones to really test it. 
-            for (let testBufferSize = 11; testBufferSize < 17; testBufferSize++) {
-                console.log(`Running Test with bufferSize ${testBufferSize}`);
-                // await runReadLineTest(allStringsBlob, testBufferSize);
-                // await runSeekTest(allStringsBlob, testBufferSize);
-                await runSeekLineBackwardsTest(allStringsBlob, bigBufferSize);
-            }
+            console.log("**** Running tests *****");
+            for (let testBufferSize of [allLinesBlob.size + 16, 12, 13])
+                await runTestAll(allLinesBlob, testBufferSize);
             console.log("Done running tests");
             console.timeLog('Run Tests');
         }
 
-        async function runReadLineTest(file, testBufferSize) {
+        async function runTestAll(file, testBufferSize) {
+            await runTestReadLine(file, testBufferSize);
+            await runTestSeek(file, testBufferSize);
+            await runTestSeekLineBackwards(file, testBufferSize);
+            await runTestSearch(file, testBufferSize);
+        }
+
+        async function runTestReadLine(file, testBufferSize) {
+            console.log(`runTestReadLine ${testBufferSize}`);
             bufferSize = testBufferSize;
 
             const bigFile = new BigFile(file);
             let lineNum = 0;
             while (true) {
-                if (lineNum % 1000 == 0)
-                    console.log(`testing lineNum ${lineNum}`);
                 const line = await bigFile.readLine();
                 if (line.length == 0)
                     break;
@@ -599,16 +607,23 @@
             assert(lineNum == lines.length);
         }
 
-        async function runSeekTest(file, testBufferSize) {
+        async function runTestSeek(file, testBufferSize) {
+            console.log(`runTestSeek ${testBufferSize}`);
             const random = mulberry32(4534);
             bufferSize = testBufferSize;
 
             const bigFile = new BigFile(file);
             for (let trial = 0; trial < 10000; trial++) {
                 if (trial % 1000 == 0)
-                    console.log(`ran ${trial} times`);
+                    console.log(`    ran ${trial} times`);
 
-                const seekPos = random(bigFile.size);
+                let seekPos = random(bigFile.size);
+                // We want to test 0 and size all the time, 
+                if (trial % 2001 == 0)
+                    seekPos = 0;
+                else if (trial % 2901 == 0)
+                    seekPos = bigFile.size;
+
                 const expected = getExpectedLineAt(seekPos);
 
                 await bigFile.seek(seekPos);
@@ -617,17 +632,43 @@
             }
         }
 
-        async function runSeekLineBackwardsTest(file, testBufferSize) {
+        async function runTestSeekLineBackwards(file, testBufferSize) {
+            console.log(`runTestSeekLineBackwards ${testBufferSize}`);
+            assertExclusiveEnter("runTestSeekLineBackwards");
+
             const random = mulberry32(4534);
             bufferSize = testBufferSize;
 
+            console.log("    running backwards read test");
             const bigFile = new BigFile(file);
+            // reverse read files 
+            await bigFile.seek(Infinity);
+            let expectedLine = cumChars.length;
+            while (true) {
+                --expectedLine;
+                const pos = await bigFile.seekLineBackwards();
+                assert(pos === cumChars[expectedLine]);
+                if (pos == 0)
+                    break;
+            }
+
+            console.log("    running random location trials");
+            // Random location tials 
             for (let trial = 0; trial < 10000; trial++) {
                 if (trial % 1000 == 0)
-                    console.log(`ran ${trial} times`);
+                    console.log(`    ran ${trial} times`);
 
-                const seekPos = random(bigFile.size);
-                const expectedLineIdx = getExpectedLineIndexAt(seekPos);
+                let seekPos = random(bigFile.size);
+                // We want to test 0 and size all the time, 
+                if (trial % 2001 == 0)
+                    seekPos = 0;
+                else if (trial % 2901 == 0)
+                    seekPos = bigFile.size;
+
+                // If we are at the start of a line, seekLineBackwards gets the previous line.
+                let expectedLineIdx = getExpectedLineIndexAt(seekPos);
+                if (0 < expectedLineIdx && seekPos == cumChars[expectedLineIdx])
+                    --expectedLineIdx;
 
                 await bigFile.seek(seekPos);
                 const resultPosition = await bigFile.seekLineBackwards();
@@ -637,6 +678,59 @@
                 assert(resultPosition === expectedPosition);
                 assert(resultLine === expectedLine);
             }
+            assertExclusiveLeave("runTestSeekLineBackwards");
+        }
+
+        async function runTestSearch(file, testBufferSize) {
+            console.log(`runTestSearch ${testBufferSize}`);
+            const random = mulberry32(4534);
+            bufferSize = testBufferSize;
+
+            const bigFile = new BigFile(file);
+            for (let searchStr of ["AAABCDEFGHIJKLMN", "ABCDEFGHIJKLMNOPQR", "2793", "23242"]) {
+                let successes = 0;
+                let numTrials = 15;
+                for (let trial = 0; trial < numTrials; trial++) {
+                    let seekPos = random(bigFile.size);
+                    // We want to test 0 and size all the time, 
+                    if (trial % 5 == 0)
+                        seekPos = 0;
+                    else if (trial % 13 == 0)
+                        seekPos = bigFile.size;
+
+                    const expectedPos = allLines.indexOf(searchStr, seekPos);
+
+                    // Seek to a position and search for the string from there.  
+                    console.log(`  Search test for bufferSize: ${testBufferSize} search: ${searchStr}`);
+                    await bigFile.seek(seekPos);
+                    const resultPos = (await bigFile.search(searchStr)) ? bigFile.position : -1;
+                    assert(resultPos == expectedPos);
+
+                    if (0 <= resultPos) {
+                        successes++;
+                        const resultLine = await bigFile.readLine();
+                        const resultValue = resultLine.slice(0, searchStr.length);
+                        assert(resultValue == searchStr);
+                    }
+                }
+                console.log(`****** COMPLETED ${numTrials} TESTS for Search BufferSize: ${testBufferSize} Search: ${searchStr} Successes: ${successes}`);
+            }
+        }
+
+        let inFunctions = new Map();
+        function assertExclusiveEnter(id) {
+            if (inFunctions.has(id)) {
+                console.log(`ERROR: In the method ${id} twice`);
+                assert(false);
+            }
+            inFunctions.set(id, true);
+        }
+        function assertExclusiveLeave(id) {
+            if (!inFunctions.has(id)) {
+                console.log(`ERROR: leaving the method ${id} without entering it`);
+                assert(false);
+            }
+            inFunctions.delete(id);
         }
     </script>
 </body>
