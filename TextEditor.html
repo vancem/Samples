@@ -16,20 +16,6 @@
             border: solid black 1px;
             margin: 1px;
         }
-
-        @keyframes cursorAnimation {
-            0% {
-                border-left-color: black;
-            }
-
-            50% {
-                border-left-color: white;
-            }
-
-            100% {
-                border-left-color: black;
-            }
-        }
     </style>
 </head>
 <html>
@@ -37,15 +23,18 @@
 <body style="margin:0;">
     <!-- by default margin=8 which I don't want because I want vh=100 to be the whole screen -->
     <div class="window">
-        <div>
-            <input type="file" id="openFileInput" onchange="doOpenFileDialogClose(event)" style="display:none">
+        <div style="white-space: nowrap;">
+            <input type="file" id="openFileInput" style="display:none" onchange="doOpenFileDialogClose(event)">
             <button onclick="document.getElementById('openFileInput').click()">Open</button>
             Find: <input type="text" id="findInputText" onchange="doFindTextInputChange(event)"></input>
             <button onClick="doFindNextButton(event)">Next</button>
-            Goto %: <input type="text" id="gotoInputText" onchange="doGotoTextInputChange(event)"></input>
-            Status: <div id="statusDiv"></div>
+            Goto %: <input type="text" id="gotoInputText" style="width:50px"
+                onchange="doGotoTextInputChange(event)"></input>
+            Status: <span id="statusSpan"></span>
         </div>
-        <div id="textEditor" tabindex="1" autofocus class="textWindow"></div>
+        <div class="textWindow" id="textEditor">
+            <div    tabindex="1" autofocus style="height:98%;" ></div>
+        </div>
     </div>
     <!-- *********************************************************************** -->
     <script>
@@ -58,6 +47,16 @@
             #cursor; #charWidth; #editorWindow;
 
             constructor(parentWindow) {
+                // Add styles we need 
+                let styleTag = document.createElement("style");
+                styleTag.innerHTML = `
+                    @keyframes cursorAnimation {
+                        0% { border-left-color: black; }
+                        50% { border-left-color: white; }
+                        100% { border-left-color: black; }
+                    }`;
+                parentWindow.appendChild(styleTag);
+
                 this.#editorWindow = parentWindow;
                 this.#editorWindow.editor = this;
                 this.#editorWindow.onkeydown = TextEditor.#onKeyDown;
@@ -462,7 +461,7 @@
         /*************************************************************************/
         /****************************   Main Script  *****************************/
         let myEditor = new TextEditor(document.getElementById("textEditor"));
-        let statusDiv = document.getElementsByName("statusDiv");
+        let statusSpan = document.getElementById("statusSpan");
 
         async function doOpenFileDialogClose(event) {
             console.log("doFindTextboxChange", event);
@@ -471,7 +470,7 @@
                 return;     // user canceled
             const file = fileList[0];
 
-            statusDiv.innerHTML = "Opening file: " + file.name;
+            statusSpan.innerHTML = "Opening file: " + file.name;
             myEditor.open(file);
             bigFile = new BigFile(file);
 
@@ -484,14 +483,17 @@
 
         function doGotoTextInputChange(event) {
             const textStr = event.target.value;
+            event.target.value = "";
             console.log("doGotoTextInputChange " + textStr, event);
 
             let asNum = new Number(textStr);
-            if (asNum.isNaN) {
-                statusDiv.innerHTML = "Error: invalid input "  + textStr;
-                event.target.value = "";
+            if (isNaN(asNum)) {
+                statusSpan.innerHTML = "Error: goto must be 0-100";
                 return;
             }
+            asNum = Math.min(100, Math.max(0, asNum));
+
+            statusSpan.innerHTML = `Goto line ${asNum}%`;
         }
 
         function doFindNextButton(event) {
