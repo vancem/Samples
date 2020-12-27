@@ -3,27 +3,40 @@
 <head>
     <style>
         /********************************************************************/
-        .window {
+        /* Put on <body> tag to do full screen layout */
+        .fullScreen {
+            /* by default body has a margin=8 which I don't want because
+               I want vh=100 to be the whole screen */
+            margin: 0;
             box-sizing: border-box;
             height: 100vh;
-            /* layout of children */
+        }
+
+        .flexDown,
+        .fullScreen {
             display: flex;
             flex-direction: column;
         }
 
-        .textWindow {
+        .flexGrow {
             flex-grow: 1;
+        }
+
+        .border {
             border: solid black 1px;
             margin: 1px;
+        }
+
+        .nowrap {
+            white-space: nowrap;
         }
     </style>
 </head>
 <html>
 
-<body style="margin:0;">
-    <!-- by default margin=8 which I don't want because I want vh=100 to be the whole screen -->
-    <div class="window">
-        <div style="white-space: nowrap;">
+<body class="fullScreen">
+    <div class="flexDown flexGrow">
+        <div class="nowrap">
             <input type="file" id="openFileInput" style="display:none" onchange="doOpenFileDialogClose(event)">
             <button onclick="document.getElementById('openFileInput').click()">Open</button>
             Find: <input type="text" id="findInputText" onchange="doFindTextInputChange(event)"></input>
@@ -32,7 +45,7 @@
                 onchange="doGotoTextInputChange(event)"></input>
             Status: <span id="statusSpan"></span>
         </div>
-        <div id="textEditor" tabindex="1" autofocus class="textWindow"></div>
+        <div id="textEditor" class="flexGrow border" tabindex=1 autofocus></div>
     </div>
     <!-- *********************************************************************** -->
     <script>
@@ -42,9 +55,9 @@
         /***********************************************************************/
         class TextEditor {
             // instance fields
-            #cursor; #charWidth; #editorWindow;
+            #cursor; #charWidth; #charHeight; #editorWindow;
 
-            constructor(parentWindow) {
+            constructor(divWindow) {
                 // Add styles we need 
                 let styleTag = document.createElement("style");
                 styleTag.innerHTML = `
@@ -53,15 +66,16 @@
                         50% { border-left-color: white; }
                         100% { border-left-color: black; }
                     }`;
-                parentWindow.appendChild(styleTag);
+                divWindow.appendChild(styleTag);
 
-                this.#editorWindow = parentWindow;
+                this.#editorWindow = divWindow;
                 this.#editorWindow.editor = this;
                 this.#editorWindow.onkeydown = TextEditor.#onKeyDown;
                 this.#editorWindow.onpaste = TextEditor.#onPaste;
                 this.#editorWindow.onclick = TextEditor.#onMouseClick;
                 this.#editorWindow.style["font-family"] = "'Courier New', Courier, monospace";
-                this.#editorWindow.style["font-size"] = "12px";
+                this.#charHeight = 12;
+                this.#editorWindow.style["font-size"] = this.#charHeight + "px";
                 this.#editorWindow.style["padding"] = "3px";
                 this.#editorWindow.style["white-space"] = "pre";
                 this.#editorWindow.style["overflow"] = "hidden";
@@ -434,7 +448,7 @@
             return ret;
         }
 
-         /************************  debugging functions ******************/
+        /************************  debugging functions ******************/
         // Asserts that something is true (here so we can turn it off easily);
         function assert(condition) {
             console.assert(condition);
