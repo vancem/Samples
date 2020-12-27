@@ -17,16 +17,6 @@
             margin: 1px;
         }
 
-        #cursor {
-            border-left-width: 2px;
-            margin-left: -2px;
-            position: relative;
-            left: 2px;
-            border-left-style: solid;
-            border-left-color: black;
-            animation: cursorAnimation 1s infinite
-        }
-
         @keyframes cursorAnimation {
             0% {
                 border-left-color: black;
@@ -50,8 +40,9 @@
         <div>
             <input type="file" id="openFileInput" onchange="doOpenFileDialogClose(event)" style="display:none">
             <button onclick="document.getElementById('openFileInput').click()">Open</button>
-            Find: <input type="text" onchange="doFindTextInputChange(event)"></input>
+            Find: <input type="text" id="findInputText" onchange="doFindTextInputChange(event)"></input>
             <button onClick="doFindNextButton(event)">Next</button>
+            Goto %: <input type="text" id="gotoInputText" onchange="doGotoTextInputChange(event)"></input>
             Status: <div id="statusDiv"></div>
         </div>
         <div id="textEditor" tabindex="1" autofocus class="textWindow"></div>
@@ -82,7 +73,10 @@
                 this.#editorWindow.appendChild(cursorLine);
 
                 this.#cursor = document.createElement("span");
-                this.#cursor.id = "cursor";
+                this.#cursor.style["border-left-width"] = "2px";
+                this.#cursor.style["margin-left"] = "-2px";
+                this.#cursor.style["border-left-style"] = "solid";
+                this.#cursor.style["animation"] = "cursorAnimation 1s infinite";
                 cursorLine.appendChild(this.#cursor);
 
                 this.#charWidth = this.#computeCharWidth();
@@ -280,7 +274,7 @@
                     if (endPos <= curPos) {
                         // This code is not hot, it only happens ever bufferSize chars. 
                         if (this.#offsetInBuffer < curPos) {
-                            retStr ||= "";  // If not set yet, set it to the empty string.      
+                            retStr ??= "";  // If not set yet, set it to the empty string.      
                             retStr += this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, curPos));
                         }
                         const newPositionOfBuffer = this.#positionOfBuffer + curPos;
@@ -336,7 +330,7 @@
                 if (searchStr.length == 0)
                     return true;   // should never happen, but 
 
-                this.#utf8Encoder ||= new TextEncoder();
+                this.#utf8Encoder ??= new TextEncoder();
                 const searchBytes = this.#utf8Encoder.encode(searchStr);
                 if (this.size < searchEndPos)
                     searchEndPos = this.size;
@@ -380,8 +374,6 @@
                     }
                 }
             }
-
-
 
             // seeks to the given position.  If position is negative, it seeks from the end of the file. 
             async seek(position) {
@@ -445,14 +437,32 @@
             return ret;
         }
 
+         /************************  debugging functions ******************/
         // Asserts that something is true (here so we can turn it off easily);
         function assert(condition) {
             console.assert(condition);
         }
 
+        let inFunctions = new Map();
+        function assertExclusiveEnter(id) {
+            if (inFunctions.has(id)) {
+                console.log(`ERROR: In the method ${id} twice`);
+                assert(false);
+            }
+            inFunctions.set(id, true);
+        }
+        function assertExclusiveLeave(id) {
+            if (!inFunctions.has(id)) {
+                console.log(`ERROR: leaving the method ${id} without entering it`);
+                assert(false);
+            }
+            inFunctions.delete(id);
+        }
+
         /*************************************************************************/
-        // main program
+        /****************************   Main Script  *****************************/
         let myEditor = new TextEditor(document.getElementById("textEditor"));
+        let statusDiv = document.getElementsByName("statusDiv");
 
         async function doOpenFileDialogClose(event) {
             console.log("doFindTextboxChange", event);
@@ -460,59 +470,37 @@
             if (fileList.length == 0)
                 return;     // user canceled
             const file = fileList[0];
-            console.log("opening file ", file);
 
-            const bigFile = new BigFile(file);
-            for (let i = 0; i < 20; i++) {
-                const line = await bigFile.readLine(1000);
-                console.log(`Got line ${i} pos: ${bigFile.position} len: ${line.length} = ${line}`);
-                myEditor.addString(line);
-            }
+            statusDiv.innerHTML = "Opening file: " + file.name;
+            myEditor.open(file);
+            bigFile = new BigFile(file);
 
-            myEditor.addString("\n*********************************    ...   ************************************\n\n");
-
-            await bigFile.seekLineBackwards();
-            console.log(`Backing up a line pos:  ${bigFile.position}`);
-            await bigFile.seekLineBackwards();
-            console.log(`Backing up a line pos:  ${bigFile.position}`);
-            let line = await bigFile.readLine(1000);
-            console.log(`READ line pos: ${bigFile.position} len: ${line.length} = ${line}`);
-            line = await bigFile.readLine(1000);
-            console.log(`READ line pos: ${bigFile.position} len: ${line.length} = ${line}`);
-
-            console.log("***************************************************************");
-            console.log("Showing the end of the file. ")
-            await bigFile.seek(bigFile.size - 2000);
-            await bigFile.readLine()  // Don't display the clipped line
-            for (let i = 0; i < 50; i++) {
-                line = await bigFile.readLine(1000);
-                if (line.length == 0)
-                    break;
-                console.log(`Got line: ${1} pos: ${bigFile.position} len: ${line.length} = ${line}`);
-                myEditor.addString(line);
-            }
-            console.log("***************************************************************");
-            console.log("Searching for ath="); // HarddiskVolume3
-            await bigFile.seek(0);
-            line = await bigFile.readLine(1000);
-            console.log(`First Line ${line}`);
-            const searchResult = await bigFile.search("ath=", 4000);
-            console.log(`Got search result ${searchResult}`);
-            const data = await bigFile.readLine(1000);
-            console.log(`Got search data ***>${data}`);
         }
 
         function doFindTextInputChange(event) {
-            const textBoxStr = event.target.value;
-            console.log("doFindTextboxChange " + textBoxStr, event);
+            const textStr = event.target.value;
+            console.log("doFindTextboxChange " + textStr, event);
+        }
+
+        function doGotoTextInputChange(event) {
+            const textStr = event.target.value;
+            console.log("doGotoTextInputChange " + textStr, event);
+
+            let asNum = new Number(textStr);
+            if (asNum.isNaN) {
+                statusDiv.innerHTML = "Error: invalid input "  + textStr;
+                event.target.value = "";
+                return;
+            }
         }
 
         function doFindNextButton(event) {
             console.log("doFindNextButton", event);
 
-            testBigFile();  // fire and
+            testBigFile();  // fire and forget
         }
-
+    </script>
+    <script>
         /******************************** Testing ********************************/
         function makeRandomGen(seed) {
             return function (randomUpperBound) {
@@ -713,22 +701,6 @@
                 }
                 console.log(`****** COMPLETED ${numTrials} TESTS for Search BufferSize: ${testBufferSize} Search: ${searchStr} Successes: ${successes}`);
             }
-        }
-
-        let inFunctions = new Map();
-        function assertExclusiveEnter(id) {
-            if (inFunctions.has(id)) {
-                console.log(`ERROR: In the method ${id} twice`);
-                assert(false);
-            }
-            inFunctions.set(id, true);
-        }
-        function assertExclusiveLeave(id) {
-            if (!inFunctions.has(id)) {
-                console.log(`ERROR: leaving the method ${id} without entering it`);
-                assert(false);
-            }
-            inFunctions.delete(id);
         }
     </script>
 </body>
