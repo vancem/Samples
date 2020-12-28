@@ -40,7 +40,7 @@
 <html>
 
 <body class="fullScreen">
-    <div class="flexDown flexGrow">
+    <div class="flexDown flexGrow" style="overflow:hidden">
         <div class="nowrap">
             <input type="file" id="openFileInput" style="display:none" onchange="doOpenFileDialogClose(event)">
             <button onclick="document.getElementById('openFileInput').click()">Open</button>
@@ -54,9 +54,9 @@
             <!-- The main editor window.  -->
             <div id="textEntryWindow" class="flexGrow" tabindex=1 autofocus></div>
             <!-- This is scrollbar (to the right) -->
-            <div style="background-color: lightgray; width:12px;">
+            <div style="background-color: lightgray; width:12px; position:relative">
                 <div id="scrollBarSlider"
-                    style="background-color:darkgray; width:12px; height:25px; position:absolute; top:25%"></div>
+                    style="background-color:darkgray; width:12px; height:25px; position:absolute; top:0%"></div>
             </div>
         </div>
 
@@ -69,10 +69,15 @@
         /***********************************************************************/
         class TextEditor {
             // instance fields
-            #cursor; #charWidth; #charHeight; #editorWindow; #bigFile
+            #editorWindowDiv; #nextEditor; #bigFile;
+            #padding; #charWidth; #charHeight;  
+            #cursorSpan; #cursorCharX; #cursorCharY;
+            #lines; #charsInLine; #numLines; #linesPosStart;  #linesPosEnd;
+            static #allEditors;
 
-            constructor(divWindow) {
-                // Add styles we need 
+            constructor(editorWindowDiv) {
+                console.log("Creating a TextEditor instance");
+                // Add styles we need for cursor animation.  
                 let styleTag = document.createElement("style");
                 styleTag.innerHTML = `
                     @keyframes cursorAnimation {
@@ -80,37 +85,70 @@
                         50% { border-left-color: white; }
                         100% { border-left-color: black; }
                     }`;
-                divWindow.appendChild(styleTag);
+                editorWindowDiv.appendChild(styleTag);
 
-                this.#editorWindow = divWindow;
-                this.#editorWindow.editor = this;
-                this.#editorWindow.onkeydown = TextEditor.#onKeyDown;
-                this.#editorWindow.onpaste = TextEditor.#onPaste;
-                this.#editorWindow.onclick = TextEditor.#onMouseClick;
-                this.#editorWindow.style["font-family"] = "'Courier New', Courier, monospace";
+                this.#padding = 3;
                 this.#charHeight = 12;
-                this.#editorWindow.style["font-size"] = this.#charHeight + "px";
-                this.#editorWindow.style["padding"] = "3px";
-                this.#editorWindow.style["white-space"] = "pre";
-                this.#editorWindow.style["overflow"] = "hidden";
 
-                const cursorLine = document.createElement("div");
-                this.#editorWindow.appendChild(cursorLine);
-
-                this.#cursor = document.createElement("span");
-                this.#cursor.style["border-left-width"] = "2px";
-                this.#cursor.style["margin-left"] = "-2px";
-                this.#cursor.style["border-left-style"] = "solid";
-                this.#cursor.style["animation"] = "cursorAnimation 1s infinite";
-                cursorLine.appendChild(this.#cursor);
+                this.#editorWindowDiv = editorWindowDiv;
+                this.#editorWindowDiv.editor = this;
+                this.#editorWindowDiv.onkeydown = TextEditor.#onKeyDown;
+                this.#editorWindowDiv.onpaste = TextEditor.#onPaste;
+                this.#editorWindowDiv.onclick = TextEditor.#onMouseClick;
+                this.#editorWindowDiv.style["font-family"] = "'Courier New', Courier, monospace";
+                this.#editorWindowDiv.style["font-size"] = this.#charHeight + "px";
+                this.#editorWindowDiv.style["padding-top"] =  this.#padding + "px";
+                this.#editorWindowDiv.style["padding-left"] =  this.#padding + "px";
+                this.#editorWindowDiv.style["white-space"] = "pre";
+                this.#editorWindowDiv.style["overflow"] = "hidden";
+                this.#editorWindowDiv.style["position"] = "relative";
 
                 this.#charWidth = this.#computeCharWidth();
+                this.#charsInLine = Math.floor((this.#editorWindowDiv.clientWidth - (this.#padding)) / this.#charWidth);
+                this.#numLines = Math.floor((this.#editorWindowDiv.clientHeight - (this.#padding)) / this.#charHeight);
+
+
+                this.#cursorSpan = document.createElement("span");
+                this.#cursorSpan.id = "cursorSpan";         // for debugging only 
+                this.#cursorSpan.style["border-left-width"] = "2px";
+                this.#cursorSpan.style["border-left-style"] = "solid";
+                this.#cursorSpan.style["animation"] = "cursorAnimation 1s infinite";
+                this.#cursorSpan.style["position"] = "absolute";
+                this.#cursorSpan.style["z-index"] = "1";    // cursor goes in front
+                this.#cursorSpan.innerText = "\u00A0";
+                this.#setCursor(0, 0);
+                this.#editorWindowDiv.appendChild(this.#cursorSpan)
+
+                this.#lines = [];
+                for (let i = 0; i < this.#numLines; i++) {
+                    const line = document.createElement("div");
+                    line.style["height"] = this.#charHeight + "px";
+                    this.#editorWindowDiv.appendChild(line);
+                    this.#lines.push(line);
+                }
+
+                // Add this to a global list of editors (needed for window resize callback)
+                if (TextEditor.#allEditors == null)
+                    window.addEventListener('resize', TextEditor.#onResize);
+
+                // TODO this is a memory leak.  Maybe we don't care however.  
+                this.#nextEditor = TextEditor.#allEditors;
+                TextEditor.#allEditors = this;
+
+                console.log(`TextEditor: char-x:${this.#charWidth} char-y:${this.#charHeight}`);
+                console.log(`TextEditor: window-x:${this.#editorWindowDiv.clientWidth} window-y:${this.#editorWindowDiv.clientHeight}`);
+                console.log(`TextEditor: charsInLine:${this.#charsInLine} numLines:${this.#numLines}`);
+            }
+
+            #resize() {
+                console.log("In Resize");
+                // TODO NOT DONE
             }
 
             // simple helper that computes the character with for a given font
             // Note for this to make sense the font has to be fixed width.  
             #computeCharWidth() {
-                const style = window.getComputedStyle(this.#editorWindow);
+                const style = window.getComputedStyle(this.#editorWindowDiv);
                 const canvas = document.createElement("canvas");
                 const context = canvas.getContext("2d");
                 context.font = style.font;
@@ -119,44 +157,33 @@
 
             async open(file) {
                 this.#bigFile = new BigFile(file);
+                await this.gotoPercent(0);
+            }
+
+            #setCursor(charX, charY) {
+                this.#cursorCharX = charX;
+                this.#cursorCharY = charY;
+                this.#cursorSpan.style["left"] = (this.#padding + this.#charWidth * charX) + "px";
+                this.#cursorSpan.style["top"] = (this.#padding + this.#charHeight * charY) + "px";
             }
 
             async gotoPercent(posPercent) {
-                this.#cursor.remove();
-
-                const style = this.#editorWindow.firstChild;
-                style.remove();
-
-                for (const child of this.#editorWindow.children)
-                    this.#editorWindow.removeChild(child);
-
-                assert(this.#editorWindow.children.length == 0);
-                
-                this.appendChild(style);
-
-                const cursorLine = document.createElement("div");
-                this.#editorWindow.appendChild(cursorLine);
-                cursorLine.appendChild(this.#cursor);
-
                 let pos = Math.floor(this.#bigFile.size * posPercent / 100.0);
                 await this.#bigFile.seek(pos);
 
-                const numLines = 40;
-
-                for (let i = 0; i < numLines; i++) {
+                for (let i = 0; i < this.#lines.length; i++) {
                     if (this.#bigFile.position === 0)
                         break;
                     await this.#bigFile.seekLineBackwards();
                 }
 
-                for (let i = 0; i < numLines; i++) {
-                    const line = await this.#bigFile.readLine();
-                    if (line.length == 0) {
-                        i = 60;
-                        break;
-                    }
-                    this.addString(line);
+                this.#linesPosStart = this.#bigFile.position;
+                for (let i = 0; i < this.#lines.length; i++) {
+                    const line = await this.#bigFile.readLine(this.#charsInLine + 2);
+                    this.#lines[i].innerText = line;
                 }
+                this.#linesPosEnd = this.#bigFile.position;
+                this.#setCursor(0,0);
             }
 
             get size() {
@@ -178,7 +205,7 @@
                 else if (" " <= ch && ch <= "~" || ch == "\t") {
                     if (ch == " " || ch == "\t")
                         ch = "\u00A0"; // no break space char. 
-                    this.#cursor.before(document.createTextNode(ch));
+                    this.#cursorSpan.before(document.createTextNode(ch));
                 }
                 else if (ch != "\r")
                     console.log("Skipping illegal char 0x" + ch.charCodeAt(0).toString(16));
@@ -187,11 +214,11 @@
             #addNewLineChar() {
                 // Make the new line 
                 const newLine = document.createElement("div");
-                const cursorLine = this.#cursor.parentNode;
+                const cursorLine = this.#cursorSpan.parentNode;
                 cursorLine.after(newLine);
 
                 // Move the cursor and everything after it to the new line.  
-                let toMove = this.#cursor;
+                let toMove = this.#cursorSpan;
                 while (toMove != null) {
                     const nextCharChild = toMove.nextSibling;
                     toMove.remove();
@@ -205,61 +232,41 @@
             }
 
             deleteChar() {
-                const prevChar = this.#cursor.previousSibling;
+                const prevChar = this.#cursorSpan.previousSibling;
                 if (prevChar != null)
                     prevChar.remove();
             }
 
             moveLeft() {
-                const prevChar = this.#cursor.previousSibling;
-                if (prevChar != null) {
-                    prevChar.remove();
-                    this.#cursor.after(prevChar);
-                }
+                if (0 < this.#cursorCharX)
+                    this.#setCursor(this.#cursorCharX-1, this.#cursorCharY);
             }
             moveRight() {
-                const nextChar = this.#cursor.nextSibling;
-                if (nextChar != null) {
-                    nextChar.remove();
-                    this.#cursor.before(nextChar);
-                }
+                if (this.#cursorCharX < this.#charsInLine)
+                    this.#setCursor(this.#cursorCharX+1, this.#cursorCharY);
             }
-
             moveUp() {
-                const prevLine = this.#cursor.parentNode.previousSibling;
-                if (prevLine != null) {
-                    const cursorIdx = childIndex(this.#cursor);
-                    this.#cursor.remove();
-                    insertChildAt(prevLine, this.#cursor, cursorIdx);
-                }
+                if (0 < this.#cursorCharY)
+                    this.#setCursor(this.#cursorCharX, this.#cursorCharY-1);
             }
-
             moveDown() {
-                const nextLine = this.#cursor.parentNode.nextSibling;
-                if (nextLine != null) {
-                    const cursorIdx = childIndex(this.#cursor);
-                    this.#cursor.remove();
-                    insertChildAt(nextLine, this.#cursor, cursorIdx);
-                }
+                if (this.#cursorCharY < this.#numLines)
+                    this.#setCursor(this.#cursorCharX, this.#cursorCharY+1);
             }
 
             /************************  GUI callback methods ******************/
             static #onMouseClick(event) {
                 console.log("onMouseClick: ", event);
-                const line = event.target;
-                if (event.target == null)
+                if (event.currentTarget == null)
                     return;
                 const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
                 if (editor == null)
                     return;
-                if (line.parentNode != editor.#editorWindow)
-                    return;
-                const charPos = event.offsetX / editor.#charWidth;
-                const idx = Math.round(charPos);
-                if (line.childNodes.length < idx)
-                    return;
-                editor.#cursor.remove();
-                insertChildAt(line, editor.#cursor, idx);
+                
+                // TODO REVIEW
+                const charX = Math.floor((event.clientX - event.currentTarget.offsetLeft  - editor.#padding) / editor.#charWidth);
+                const charY = Math.floor((event.clientY - event.currentTarget.offsetTop - editor.#padding) / editor.#charHeight);
+                editor.#setCursor(charX, charY);
             }
 
             static #onPaste(event) {
@@ -304,6 +311,16 @@
                 else
                     console.log("Unknonwn key: ", event);
             }
+
+            static #onResize(event) {
+                console.log("onKeyDown: ", event);
+
+                let curEditor = TextEditor.#allEditors;
+                while (curEditor != null) {
+                    curEditor.#resize()
+                    curEditor = curEditor.#nextEditor;
+                }
+            }
         }
 
         /***********************************************************************/
@@ -339,26 +356,19 @@
                 this.#lastReadLineTruncated = false;
                 assert(typeof (maxBytes) == "number");
                 assertExclusiveEnter("BigFile.readline");
-                let retStr = undefined;
+                let retStr = "";
                 let curPos = this.#offsetInBuffer;
                 let endPos = this.#offsetInBufferEnd;   // cached for speed
                 let buffer = this.#buffer;              // cached for speed
-                let maxPos = curPos + maxBytes;
                 while (true) {
-                    if (maxPos <= curPos) {
-                        this.#lastReadLineTruncated = true;
-                        break;
-                    }
                     if (endPos <= curPos) {
-                        // This code is not hot, it only happens ever bufferSize chars. 
-                        if (this.#offsetInBuffer < curPos) {
-                            retStr ??= "";  // If not set yet, set it to the empty string.      
-                            retStr += this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, curPos));
+                        if (retStr.length < maxBytes) {  
+                            const sliceEnd = Math.min(curPos, this.#offsetInBuffer + maxBytes - retStr.length)  
+                            retStr += this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, sliceEnd));
                         }
                         const newPositionOfBuffer = this.#positionOfBuffer + curPos;
                         if (this.size <= newPositionOfBuffer)  // Hit end of file
                             break;
-                        maxPos -= curPos - this.#offsetInBuffer;
                         await this.#fill(newPositionOfBuffer);
                         curPos = this.#offsetInBuffer;
                         endPos = this.#offsetInBufferEnd;
@@ -368,10 +378,13 @@
                     if (buffer[curPos++] === newLine)
                         break;
                 }
-                const chunkStr = this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, curPos));
+                if (retStr.length < maxBytes) {
+                    const sliceEnd = Math.min(curPos, this.#offsetInBuffer + maxBytes - retStr.length)
+                    retStr += this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, sliceEnd));
+                }
                 this.#offsetInBuffer = curPos;
                 assertExclusiveLeave("BigFile.readline");
-                return (retStr === undefined) ? chunkStr : retStr + chunkStr; // concatinate if necessary.  
+                return retStr;
             }
 
             // returns true if the last readLine executed was trucated (Because hit maxBytes limit)
