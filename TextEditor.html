@@ -18,6 +18,11 @@
             flex-direction: column;
         }
 
+        .flexRight {
+            display: flex;
+            flex-direction: row;
+        }
+
         .flexGrow {
             flex-grow: 1;
         }
@@ -45,7 +50,13 @@
                 onchange="doGotoTextInputChange(event)"></input>
             Status: <span id="statusSpan"></span>
         </div>
-        <div id="textEditor" class="flexGrow border" tabindex=1 autofocus></div>
+        <div class="flexGrow flexRight border">
+            <div id="textEditor" class="flexGrow" tabindex=1 autofocus></div>
+            <div style="background-color: lightgray; width:12px;">
+                <div style="background-color:darkgray; width:12px; height:25px; position:absolute; top:25%"></div>
+            </div>
+        </div>
+
     </div>
     <!-- *********************************************************************** -->
     <script>
