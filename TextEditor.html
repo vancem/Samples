@@ -55,24 +55,47 @@
             <div id="textEntryWindow" class="flexGrow" tabindex=1 autofocus></div>
             <!-- This is scrollbar (to the right) -->
             <div style="background-color: lightgray; width:12px; position:relative">
-                <div id="scrollBarSlider"
-                    style="background-color:darkgray; width:12px; height:25px; position:absolute; top:0%"></div>
+                <div style="background-color:darkgray; width:12px; height:25px; position:absolute; top:0%"></div>
             </div>
         </div>
-
     </div>
     <!-- *********************************************************************** -->
     <script>
-    </script>
-    <script>
         "use strict";
         /***********************************************************************/
+        class ScrollBar {
+            #scrollBar; #slider;
+
+            // Construct a scrollbar on the right hand side of 'container'
+            // Note that container will appended as the last child of
+            // container and container will be made flex-direction:row.  
+            constructor(container) {
+                container.style[flex - direction] = "row";
+
+                this.#scrollBar = document.createElement("div");
+                this.#scrollBar.style["background-color"] = "lightgray";
+                this.#scrollBar.style["width"] = "12px";
+                this.#scrollBar.style["position"] = "relative"; // allows absolute positioning of slider
+                this.#scrollBar.scrollBar = this;
+                container.appendChild(this.#scrollBar);
+
+                this.#slider = document.createElement("div");
+                this.#slider.style["background-color"] = "darkgray";
+                this.#slider.style["height"] = "30px";
+                this.#slider.style["position"] = "absolute";
+                this.#slider.style["top"] = "0%";
+                this.#slider.appendChild(this.#slider);
+            }
+
+        }
+
+
         class TextEditor {
             // instance fields
             #editorWindowDiv; #nextEditor; #bigFile;
-            #padding; #charWidth; #charHeight;  
+            #padding; #charWidth; #charHeight;
             #cursorSpan; #cursorCharX; #cursorCharY;
-            #lines; #charsInLine; #numLines; #linesPosStart;  #linesPosEnd;
+            #lines; #charsInLine; #numLines; #linesPosStart; #linesPosEnd;
             static #allEditors;
 
             constructor(editorWindowDiv) {
@@ -90,15 +113,15 @@
                 this.#padding = 3;
                 this.#charHeight = 12;
 
-                this.#editorWindowDiv = editorWindowDiv;
+                this.#editorWindowDiv = editorWindowDiv;               
                 this.#editorWindowDiv.editor = this;
                 this.#editorWindowDiv.onkeydown = TextEditor.#onKeyDown;
                 this.#editorWindowDiv.onpaste = TextEditor.#onPaste;
                 this.#editorWindowDiv.onclick = TextEditor.#onMouseClick;
                 this.#editorWindowDiv.style["font-family"] = "'Courier New', Courier, monospace";
                 this.#editorWindowDiv.style["font-size"] = this.#charHeight + "px";
-                this.#editorWindowDiv.style["padding-top"] =  this.#padding + "px";
-                this.#editorWindowDiv.style["padding-left"] =  this.#padding + "px";
+                this.#editorWindowDiv.style["padding-top"] = this.#padding + "px";
+                this.#editorWindowDiv.style["padding-left"] = this.#padding + "px";
                 this.#editorWindowDiv.style["white-space"] = "pre";
                 this.#editorWindowDiv.style["overflow"] = "hidden";
                 this.#editorWindowDiv.style["position"] = "relative";
@@ -134,6 +157,8 @@
                 // TODO this is a memory leak.  Maybe we don't care however.  
                 this.#nextEditor = TextEditor.#allEditors;
                 TextEditor.#allEditors = this;
+
+                // this.#scrollBar = new ScrollBar(this.#editorWindowDiv)
 
                 console.log(`TextEditor: char-x:${this.#charWidth} char-y:${this.#charHeight}`);
                 console.log(`TextEditor: window-x:${this.#editorWindowDiv.clientWidth} window-y:${this.#editorWindowDiv.clientHeight}`);
@@ -183,7 +208,8 @@
                     this.#lines[i].innerText = line;
                 }
                 this.#linesPosEnd = this.#bigFile.position;
-                this.#setCursor(0,0);
+                this.#setCursor(0, 0);
+                this.#editorWindowDiv.focus();
             }
 
             get size() {
@@ -194,6 +220,8 @@
 
             addString(str) {
                 assert(typeof (str) == "string");
+                // TODO FIX NOW
+                return;
                 for (let i = 0; i < str.length; i++)
                     this.#addChar(str[i]);
             }
@@ -203,9 +231,6 @@
                 if (ch == "\n")
                     this.#addNewLineChar();
                 else if (" " <= ch && ch <= "~" || ch == "\t") {
-                    if (ch == " " || ch == "\t")
-                        ch = "\u00A0"; // no break space char. 
-                    this.#cursorSpan.before(document.createTextNode(ch));
                 }
                 else if (ch != "\r")
                     console.log("Skipping illegal char 0x" + ch.charCodeAt(0).toString(16));
@@ -232,6 +257,8 @@
             }
 
             deleteChar() {
+                return;
+                // TODO FIX NOW
                 const prevChar = this.#cursorSpan.previousSibling;
                 if (prevChar != null)
                     prevChar.remove();
@@ -239,19 +266,19 @@
 
             moveLeft() {
                 if (0 < this.#cursorCharX)
-                    this.#setCursor(this.#cursorCharX-1, this.#cursorCharY);
+                    this.#setCursor(this.#cursorCharX - 1, this.#cursorCharY);
             }
             moveRight() {
                 if (this.#cursorCharX < this.#charsInLine)
-                    this.#setCursor(this.#cursorCharX+1, this.#cursorCharY);
+                    this.#setCursor(this.#cursorCharX + 1, this.#cursorCharY);
             }
             moveUp() {
                 if (0 < this.#cursorCharY)
-                    this.#setCursor(this.#cursorCharX, this.#cursorCharY-1);
+                    this.#setCursor(this.#cursorCharX, this.#cursorCharY - 1);
             }
             moveDown() {
                 if (this.#cursorCharY < this.#numLines)
-                    this.#setCursor(this.#cursorCharX, this.#cursorCharY+1);
+                    this.#setCursor(this.#cursorCharX, this.#cursorCharY + 1);
             }
 
             /************************  GUI callback methods ******************/
@@ -262,9 +289,9 @@
                 const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
                 if (editor == null)
                     return;
-                
+
                 // TODO REVIEW
-                const charX = Math.floor((event.clientX - event.currentTarget.offsetLeft  - editor.#padding) / editor.#charWidth);
+                const charX = Math.floor((event.clientX - event.currentTarget.offsetLeft - editor.#padding) / editor.#charWidth);
                 const charY = Math.floor((event.clientY - event.currentTarget.offsetTop - editor.#padding) / editor.#charHeight);
                 editor.#setCursor(charX, charY);
             }
@@ -362,8 +389,8 @@
                 let buffer = this.#buffer;              // cached for speed
                 while (true) {
                     if (endPos <= curPos) {
-                        if (retStr.length < maxBytes) {  
-                            const sliceEnd = Math.min(curPos, this.#offsetInBuffer + maxBytes - retStr.length)  
+                        if (retStr.length < maxBytes) {
+                            const sliceEnd = Math.min(curPos, this.#offsetInBuffer + maxBytes - retStr.length)
                             retStr += this.#utf8Decoder.decode(buffer.slice(this.#offsetInBuffer, sliceEnd));
                         }
                         const newPositionOfBuffer = this.#positionOfBuffer + curPos;
@@ -568,7 +595,6 @@
 
             statusSpan.innerHTML = "Opening file: " + file.name;
             await myEditor.open(file);
-            myEditor.gotoPercent(0);
         }
 
         async function doFindTextInputChange(event) {
