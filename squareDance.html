@@ -3,14 +3,29 @@
 
 <body>
     <!-- *********************************************************************** -->
-    <p> This is a simple program that makes a ball bounce around in a box.</p>
+    <p> This is a program that sequences square dance calls for a 6 couple rectangle.
+	calls are tive very short abbreviations that are mostly the fist letter of 
+        each word in the call.   
+    </p> <p>
+ 	Reset is the command that starts over (you can also refresh the web page).
+        The error handling is generally called rudimentary.   It has also only been
+        tested in 'simple' cases, but it does seem to work.   The whole program is
+        in a single file, squareDance.html, so you can make your own modifications 
+        easily if you need anything fixed.   
+    </p> <p>
+	You can start with  hsq4, rlt ptc csq3 to see how it works.  You currently have 
+        to explicty call step to a wave (stw) from facing couples before calling a
+        ocean wave move.   You can type multiple calls at one time, and in particular 
+        you can cut the call history an paste it into the input box to 'rerun' a sequence (or some prefix).   
+    </p>
     <ul>
-        <li> Command: <input id=command type=text onchange="doCommandOnChange()"> </li>
+	<li> Calls Available: <span id=allCalls></span> </li>
+        <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()"> </li>
         <li> Message: <span id=message></span> </li>
     </ul>
     <canvas id="canvas" tabindex="1" style="border:2px solid red" height="500" width="500"> </canvas>
     <p>
-        <b>Call List:</b><br> 
+        <b>Call History:</b><br> 
         <span id=callList></span>
     </p>
     <script>
@@ -24,6 +39,7 @@
         let commandTextbox = document.getElementById('command');
         let messageSpan = document.getElementById('message');
         let callListSpan = document.getElementById('callList');
+        let allCallsSpan = document.getElementById('allCalls');
 
         // Values for dancers based on their dancer number 
         const colors = ["red", "green", "cyan", "yellow", "violet", "blue" ];
@@ -41,6 +57,7 @@
         commands["vl"] = doVeerLeft;
         commands["btl"] = doBendTheLine;
         commands["srt"] = doStarThru;
+        commands["sl"] = doStarThru;
         commands["pt"] = doPassThru;
         commands["tb"] = doTradeBy;
         commands["stw"] = doStepToAWave;
@@ -59,6 +76,15 @@
         commands["fw"] = doFerrisWheel;
         commands["cpt"] = doCentersPassThru;
         commands["csq3"] = doCentersSquareThru3;
+        commands["ptc"] = doPassToTheCenter;
+
+	// tell the user all the call available. 
+	let allCalls = []
+	for(let key in commands)
+	   allCalls.push(key);
+	allCalls.sort();
+	allCallsSpan.innerHTML = allCalls.join(", ");
+
 
         // Values for dancer.rotation
         const NORTH = 0;
@@ -118,6 +144,27 @@
                 }
             }
         }
+
+        function doPassToTheCenter(floor) {
+
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
+
+		srtDancers = sortForPartners(floor)
+		for(let dancer of srtDancers)
+                    stepForward(dancer, 2);
+
+		// remember you have to use the STARTING index 
+                trade(srtDancers[2], srtDancers[3]);
+                trade(srtDancers[8], srtDancers[9]);
+	    }
+	    else
+		throw "Formation Wrong for Pass To The Center";
+	}
 
         function doCentersPassThru(floor) {
 
