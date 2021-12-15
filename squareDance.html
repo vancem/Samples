@@ -56,6 +56,9 @@
         commands["tq"] = doTouchAQuarter;
         commands["circ"] = doCirculate;
         commands["hinge"] = doHinge;
+        commands["fw"] = doFerrisWheel;
+        commands["cpt"] = doCentersPassThru;
+        commands["csq3"] = doCentersSquareThru3;
 
         // Values for dancer.rotation
         const NORTH = 0;
@@ -114,6 +117,78 @@
                     rotateCCW(bell, 1);
                 }
             }
+        }
+
+        function doCentersPassThru(floor) {
+
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
+
+		srtDancers = sortForPartners(floor)
+		for(let i = 2; i < 10; i++)
+                    stepForward(srtDancers[i], 2);
+	    }
+	    else
+		throw "Formation Wrong for Centers pass thru";
+	}
+
+        function doCentersSquareThru3(floor) {
+
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
+
+		srtDancers = sortForPartners(floor)
+		for(let i = 2; i < 10; i += 2)
+                    trade(srtDancers[i], srtDancers[i+1]);
+	    }
+	    else 
+		throw "Formation Wrong for Centers Square Thru 3";
+	}
+
+        function doFerrisWheel(floor) {
+
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 3 && srtDancers[0].rotation == 1)  {
+
+		// boys facing out of square
+		for(let beau of [srtDancers[0], srtDancers[11]]) {
+		    stepForward(beau)
+		    slideRight(beau, 4);
+		    rotateCCW(beau, 2);
+		}
+		// girls facing out of square
+		for(let bell of [srtDancers[3], srtDancers[8]]) {
+		    stepForward(bell)
+		    rotateCCW(bell, 2);
+		}
+
+		// boys facing in
+		for(let beau of [srtDancers[9], srtDancers[10], srtDancers[2], srtDancers[1], ]) {
+		    stepForward(beau, 3)
+		    slideRight(beau, 4);
+		    rotateCCW(beau, 2);
+		}
+		// girls facing in
+		for(let bell of [srtDancers[6], srtDancers[7], srtDancers[5], srtDancers[4]]) {
+		    stepForward(bell, 3)
+		    rotateCCW(bell, 2);
+		}
+                return;
+            }
+	    else 
+		throw "Formation Wrong for Ferris Wheel";
         }
 
         function doBoysRun(floor) {
@@ -658,6 +733,13 @@
 
         function doCall(call) {
             console.log("doCall", call);
+	    if (call == "reset") {
+		callListSpan.innerHTML = "";
+                resetFloor(floor);
+		drawFloor(floor);
+		messageSpan.innerHTML = "Reset!";
+		return;
+	    }
 
             let cmdFtn = commands[call];
             if (cmdFtn == undefined) {
