@@ -44,6 +44,12 @@
         // Values for dancers based on their dancer number 
         const colors = ["red", "green", "cyan", "yellow", "violet", "blue" ];
 
+        // Values for dancer.rotation
+        const NORTH = 0;
+        const WEST = 1;
+        const SOUTH = 2;
+        const EAST = 3;
+
         let commands = {};
         commands["st"] = doSwingThru;
         commands["sq4"] = doSquareThru4;
@@ -85,86 +91,29 @@
 	allCalls.sort();
 	allCallsSpan.innerHTML = allCalls.join(", ");
 
-
-        // Values for dancer.rotation
-        const NORTH = 0;
-        const WEST = 1;
-        const SOUTH = 2;
-        const EAST = 3;
+	// 
         let floor = resetFloor();
 
-        function doHinge(floor) {
-            let srtDancers = sortForPartners(floor)
+
+	/********************************************************************/
+	/* square dance calls that operate on the whole floor */
+
+        function doHome(floor) {
+            resetFloor(floor);
+        }
+
+	/*******************************/
+	/* Basic 1 calls */
+
+        function doHeadsSquareThru4(floor) {
+
+            moveHeadsInIfNecessary(floor);
+
             for(let dancer of floor.dancers) {
-                stepForward(dancer, 1);
-                slideRight(dancer, 1);
-                rotateCCW(dancer, -1);
+                if (isHeads(dancer))
+                    rotateCCW(dancer, dancer.isBoy?1:-1);
             }
         }
-
-        function doTouchAQuarter(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPos(box[0], box[3]);
-                swapPos(box[1], box[2]);
-                for(let dancer of box)
-                    rotateCCW(dancer, -1);
-            }
-        }
-
-        function doFlutterWheel(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPosAndDir(box[0], box[2]);
-            }
-        }
-
-        function doReverseFlutterWheel(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPosAndDir(box[1], box[3]);
-            }
-        }
-
-
-        function doPassTheOcean(floor) {
-            for(let box of getBoxes(floor)) 
-                passTheOcean(box);
-        }
-
-        function doChainDownTheLine(floor) {
-            for(let line of getLinesOf4(floor)) {
-                for(let beau of [line[0], line[3]])  {
-                    stepForward(beau);
-                    slideRight(beau, 2);
-                    rotateCCW(beau, -1);
-                }
-                
-                for(let bell of [line[1], line[2]])  {
-                    stepForward(bell);
-                    slideRight(bell, 2);
-                    rotateCCW(bell, 1);
-                }
-            }
-        }
-
-        function doPassToTheCenter(floor) {
-
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
-
-		srtDancers = sortForPartners(floor)
-		for(let dancer of srtDancers)
-                    stepForward(dancer, 2);
-
-		// remember you have to use the STARTING index 
-                trade(srtDancers[2], srtDancers[3]);
-                trade(srtDancers[8], srtDancers[9]);
-	    }
-	    else
-		throw "Formation Wrong for Pass To The Center";
-	}
 
         function doCentersPassThru(floor) {
 
@@ -199,6 +148,263 @@
 	    else 
 		throw "Formation Wrong for Centers Square Thru 3";
 	}
+
+        function doRightAndLeftThru(floor) {
+            for(let box of getBoxes(floor)) {
+                swapPosAndDir(box[0], box[2]);
+                swapPosAndDir(box[1], box[3]);
+            }
+        }
+
+        function doCirculate(floor) {
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 3 && isFacingSides(srtDancers[0]))  {        // Three vertical lines
+                let minX = srtDancers[0].gridX;
+                let maxX = srtDancers[11].gridX;
+                let delta = (maxX - minX) / 2;
+                
+                for(let dancer of srtDancers) {
+                    let inc = (dancer.rotation == 1) ? -delta : delta;
+
+                    if (dancer.gridX == minX  && dancer.rotation == 1 ||   // min heading left
+                        dancer.gridX == maxX  && dancer.rotation == 3) {   // max heading right
+                        rotateCCW(dancer, 2);
+                        dancer.gridY = -dancer.gridY;
+                    }
+                    else
+                        dancer.gridX += inc;
+                }
+            }
+            else if (horzLen == 2 && isFacingHeads(srtDancers[0]))  {     // colums
+                let minY = srtDancers[0].gridY;
+                let maxY = srtDancers[11].gridY;
+                let delta = (maxY - minY) / (12/horzLen - 1);
+                
+                for(let dancer of srtDancers) {
+                    let inc = (dancer.rotation == 2) ? -delta : delta;
+
+                    if (dancer.gridY == minY  && dancer.rotation == 2 ||   // min heading down
+                        dancer.gridY == maxY  && dancer.rotation == 0) {   // max heading up
+                        rotateCCW(dancer, 2);
+                        dancer.gridX = -dancer.gridX;
+                    }
+                    else
+                        dancer.gridY += inc;
+                }
+            }
+            else 
+                throw "Expected lines";        // TODO handle other cases
+        }
+
+        function doVeerLeft(floor) {
+            for(let dancer of floor.dancers) {
+                stepForward(dancer);
+                slideRight(dancer, -2);
+            }
+        }
+
+        function doSquareThru4(floor) {
+            for(let box of getBoxes(floor)) 
+                squareThru4(box);
+        }
+
+        function doChainDownTheLine(floor) {
+            for(let line of getLinesOf4(floor)) {
+                for(let beau of [line[0], line[3]])  {
+                    stepForward(beau);
+                    slideRight(beau, 2);
+                    rotateCCW(beau, -1);
+                }
+                
+                for(let bell of [line[1], line[2]])  {
+                    stepForward(bell);
+                    slideRight(bell, 2);
+                    rotateCCW(bell, 1);
+                }
+            }
+        }
+
+        function doTurnBack(floor) {
+            for(let dancer of floor.dancers)
+                rotateCCW(dancer, 2);
+        }
+
+	/*******************************/
+	/* Basic  2 calls */
+
+        function doHeadsPassTheOcean(floor) {
+            moveHeadsInIfNecessary(floor);
+            
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+
+            passTheOcean([srtDancers[1], srtDancers[2], srtDancers[8], srtDancers[7]]);
+            passTheOcean([srtDancers[3], srtDancers[4], srtDancers[10], srtDancers[9]]);
+        }
+
+        function doExtend(floor) {
+
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+
+            let horzLen = horzLineLen(srtDancers)
+            let horzLen2 = horzLineLen(srtDancers, 2);
+            if (horzLen == 2 && horzLen2 == 4) {
+                srtDancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY));
+
+                for(let i = 0; i < srtDancers.length; i++) { 
+                    stepForward(srtDancers[i], (i <= 1 || 10 <= i) ? 1 : 2);
+                    if (i == 0 || i == srtDancers.length-1)
+                        slideRight(srtDancers[i], -2);
+                }
+            }
+            else 
+                throw "Expected QuarterTag";
+        }
+
+        function doFlutterWheel(floor) {
+            for(let box of getBoxes(floor)) {
+                swapPosAndDir(box[0], box[2]);
+            }
+        }
+
+        function doReverseFlutterWheel(floor) {
+            for(let box of getBoxes(floor)) {
+                swapPosAndDir(box[1], box[3]);
+            }
+        }
+
+        function doPassTheOcean(floor) {
+            for(let box of getBoxes(floor)) 
+                passTheOcean(box);
+        }
+
+        function doBoysRun(floor) {
+            let srtDancers = sortForPartners(floor)
+            for(let i = 0; i < 12; i+=2) {
+                swapPos(srtDancers[i], srtDancers[i+1]);
+                if (srtDancers[i].isBoy)
+                    rotateCCW(srtDancers[i], 2);
+                else
+                    rotateCCW(srtDancers[i+1], 2);
+            }
+        }
+
+        function doStepToAWave(floor) {
+            let boxes = getBoxes(floor);
+
+            for(let dancer of floor.dancers) {
+                stepForward(dancer);
+            }
+
+            for(let box of boxes) {
+                slideRight(box[0], -2);
+                slideRight(box[2], -2);
+            }
+        }
+
+        function doStarThru(floor) {
+            for(let box of getBoxes(floor)) {
+                swapPos(box[0], box[3]);
+                swapPos(box[1], box[2])
+                
+                for(let dancer of box) 
+                    rotateCCW(dancer, dancer.isBoy?-1:1);
+            }
+        }
+
+        function doPassThru(floor) {
+            for(let box of getBoxes(floor)) {
+                swapPos(box[0], box[3]);
+                swapPos(box[1], box[2]);
+            }
+        }
+
+        function doTradeBy(floor) {
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 2)  {
+                srtDancers.sort((a, b) => cmpOrder(b.gridX-a.gridX, a.gridY-b.gridY));
+            }
+            else if (horzLen != 6)
+                throw "Expected Trade By formation"
+            
+            trade(srtDancers[0], srtDancers[6]);
+
+            swapPos(srtDancers[1], srtDancers[2]);
+            swapPos(srtDancers[7], srtDancers[8]);
+
+            swapPos(srtDancers[3], srtDancers[4]);
+            swapPos(srtDancers[9], srtDancers[10]);
+
+            trade(srtDancers[5], srtDancers[11]);
+        }
+
+        function doBendTheLine(floor) {
+
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 3)  {        // Three vertical lines
+                for(let line of getLinesOf4(floor)) {
+                    for(let end of [line[0], line[3]]) {
+                        stepForward(end)
+                        slideRight(end, 1);         // TODO handle left handed two faced lines
+                        rotateCCW(end, -1);
+                        stepForward(end);
+                    }
+                    for(let center of [line[1], line[2]]) {
+                        stepForward(center, -1)
+                        slideRight(center, -1);
+                        rotateCCW(center, -1);
+                        stepForward(center);
+                    }
+                }
+                return;
+            }
+            else if (horzLen == 6 && srtDancers[0].rotation == 2) { // facing out toward heads
+                _bendNormalizedLineOf6(srtDancers, 1);
+            }
+            else if (horzLen == 2 && srtDancers[0].rotation == 1) {            // facing out toward sides
+                srtDancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY));
+                _bendNormalizedLineOf6(srtDancers, -1);
+            }
+            else 
+                throw "Expected lines";
+        }
+
+        function _bendNormalizedLineOf6(dancers, reflectBase) {
+            let ctr = 0;
+            for(let dancer of dancers) {
+                let reflect = reflectBase * ((3 <= ctr && ctr < 9) ? -1 : 1);
+                ctr++;
+
+                let temp = dancer.gridX;
+                dancer.gridX = dancer.gridY * reflect;
+                dancer.gridY = temp * reflect;
+                rotateCCW(dancer, reflectBase * reflect);
+            }
+        }
+
+        function doTouchAQuarter(floor) {
+            for(let box of getBoxes(floor)) {
+                swapPos(box[0], box[3]);
+                swapPos(box[1], box[2]);
+                for(let dancer of box)
+                    rotateCCW(dancer, -1);
+            }
+        }
 
         function doFerrisWheel(floor) {
 
@@ -238,21 +444,40 @@
 		throw "Formation Wrong for Ferris Wheel";
         }
 
-        function doBoysRun(floor) {
+	/*******************************/
+	/* MainStream calls */
+
+        function doHinge(floor) {
             let srtDancers = sortForPartners(floor)
-            for(let i = 0; i < 12; i+=2) {
-                swapPos(srtDancers[i], srtDancers[i+1]);
-                if (srtDancers[i].isBoy)
-                    rotateCCW(srtDancers[i], 2);
-                else
-                    rotateCCW(srtDancers[i+1], 2);
+            for(let dancer of floor.dancers) {
+                stepForward(dancer, 1);
+                slideRight(dancer, 1);
+                rotateCCW(dancer, -1);
             }
         }
 
-        function doTurnBack(floor) {
-            for(let dancer of floor.dancers)
-                rotateCCW(dancer, 2);
-        }
+        function doPassToTheCenter(floor) {
+
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
+
+		srtDancers = sortForPartners(floor)
+		for(let dancer of srtDancers)
+                    stepForward(dancer, 2);
+
+		// remember you have to use the STARTING index 
+                trade(srtDancers[2], srtDancers[3]);
+                trade(srtDancers[8], srtDancers[9]);
+	    }
+	    else
+		throw "Formation Wrong for Pass To The Center";
+	}
+
+        /***********************************************************************/
 
         function sortForPartners(floor) {
             let srtDancers = floor.dancers.slice();
@@ -281,10 +506,6 @@
             }
         }
 
-        function doHome(floor) {
-            resetFloor(floor);
-        }
-
         function stepForward(dancer, delta = 1) {
             if (dancer.rotation == SOUTH || dancer.rotation == WEST)
                 delta = -delta;
@@ -300,7 +521,6 @@
             stepForward(dancer, delta);
             rotateCCW(dancer, 1);
         }
-
 
         function rotateCCW(dancer, numCCWQuarter) {
              if (numCCWQuarter < 0)
@@ -459,21 +679,6 @@
                     stepForward(dancer, 2);
         }
 
-        function doHeadsSquareThru4(floor) {
-
-            moveHeadsInIfNecessary(floor);
-
-            for(let dancer of floor.dancers) {
-                if (isHeads(dancer))
-                    rotateCCW(dancer, dancer.isBoy?1:-1);
-            }
-        }
-
-        function doSquareThru4(floor) {
-            for(let box of getBoxes(floor)) 
-                squareThru4(box);
-        }
-
         function squareThru4(box) {
             rotateCCW(box[0], 1);
             rotateCCW(box[1], -1);
@@ -481,195 +686,17 @@
             rotateCCW(box[3], -1);
         }
 
-        function doHeadsPassTheOcean(floor) {
-            moveHeadsInIfNecessary(floor);
-            
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
 
-            passTheOcean([srtDancers[1], srtDancers[2], srtDancers[8], srtDancers[7]]);
-            passTheOcean([srtDancers[3], srtDancers[4], srtDancers[10], srtDancers[9]]);
-        }
+	/********************************************************************/
+	// GUI Drawing support
 
-        function doExtend(floor) {
+        // puts the orgin in the center and makes y grow up not down
+        function setOrginInCenter() {
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
 
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-
-            let horzLen = horzLineLen(srtDancers)
-            let horzLen2 = horzLineLen(srtDancers, 2);
-            if (horzLen == 2 && horzLen2 == 4) {
-                srtDancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY));
-
-                for(let i = 0; i < srtDancers.length; i++) { 
-                    stepForward(srtDancers[i], (i <= 1 || 10 <= i) ? 1 : 2);
-                    if (i == 0 || i == srtDancers.length-1)
-                        slideRight(srtDancers[i], -2);
-                }
-            }
-            else 
-                throw "Expected QuarterTag";
-        }
-
-        function doRightAndLeftThru(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPosAndDir(box[0], box[2]);
-                swapPosAndDir(box[1], box[3]);
-            }
-        }
-
-        function doCirculate(floor) {
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 3 && isFacingSides(srtDancers[0]))  {        // Three vertical lines
-                let minX = srtDancers[0].gridX;
-                let maxX = srtDancers[11].gridX;
-                let delta = (maxX - minX) / 2;
-                
-                for(let dancer of srtDancers) {
-                    let inc = (dancer.rotation == 1) ? -delta : delta;
-
-                    if (dancer.gridX == minX  && dancer.rotation == 1 ||   // min heading left
-                        dancer.gridX == maxX  && dancer.rotation == 3) {   // max heading right
-                        rotateCCW(dancer, 2);
-                        dancer.gridY = -dancer.gridY;
-                    }
-                    else
-                        dancer.gridX += inc;
-                }
-            }
-            else if (horzLen == 2 && isFacingHeads(srtDancers[0]))  {     // colums
-                let minY = srtDancers[0].gridY;
-                let maxY = srtDancers[11].gridY;
-                let delta = (maxY - minY) / (12/horzLen - 1);
-                
-                for(let dancer of srtDancers) {
-                    let inc = (dancer.rotation == 2) ? -delta : delta;
-
-                    if (dancer.gridY == minY  && dancer.rotation == 2 ||   // min heading down
-                        dancer.gridY == maxY  && dancer.rotation == 0) {   // max heading up
-                        rotateCCW(dancer, 2);
-                        dancer.gridX = -dancer.gridX;
-                    }
-                    else
-                        dancer.gridY += inc;
-                }
-            }
-            else 
-                throw "Expected lines";        // TODO handle other cases
-        }
-
-        function doVeerLeft(floor) {
-            for(let dancer of floor.dancers) {
-                stepForward(dancer);
-                slideRight(dancer, -2);
-            }
-        }
-
-        function doStepToAWave(floor) {
-            let boxes = getBoxes(floor);
-
-            for(let dancer of floor.dancers) {
-                stepForward(dancer);
-            }
-
-            for(let box of boxes) {
-                slideRight(box[0], -2);
-                slideRight(box[2], -2);
-            }
-        }
-
-        function doStarThru(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPos(box[0], box[3]);
-                swapPos(box[1], box[2])
-                
-                for(let dancer of box) 
-                    rotateCCW(dancer, dancer.isBoy?-1:1);
-            }
-        }
-
-        function doPassThru(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPos(box[0], box[3]);
-                swapPos(box[1], box[2]);
-            }
-        }
-
-        function doTradeBy(floor) {
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 2)  {
-                srtDancers.sort((a, b) => cmpOrder(b.gridX-a.gridX, a.gridY-b.gridY));
-            }
-            else if (horzLen != 6)
-                throw "Expected Trade By formation"
-            
-            trade(srtDancers[0], srtDancers[6]);
-
-            swapPos(srtDancers[1], srtDancers[2]);
-            swapPos(srtDancers[7], srtDancers[8]);
-
-            swapPos(srtDancers[3], srtDancers[4]);
-            swapPos(srtDancers[9], srtDancers[10]);
-
-            trade(srtDancers[5], srtDancers[11]);
-        }
-
-        function doBendTheLine(floor) {
-
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 3)  {        // Three vertical lines
-                for(let line of getLinesOf4(floor)) {
-                    for(let end of [line[0], line[3]]) {
-                        stepForward(end)
-                        slideRight(end, 1);         // TODO handle left handed two faced lines
-                        rotateCCW(end, -1);
-                        stepForward(end);
-                    }
-                    for(let center of [line[1], line[2]]) {
-                        stepForward(center, -1)
-                        slideRight(center, -1);
-                        rotateCCW(center, -1);
-                        stepForward(center);
-                    }
-                }
-                return;
-            }
-            else if (horzLen == 6 && srtDancers[0].rotation == 2) { // facing out toward heads
-                bendNormalizedLineOf6(srtDancers, 1);
-            }
-            else if (horzLen == 2 && srtDancers[0].rotation == 1) {            // facing out toward sides
-                srtDancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY));
-                bendNormalizedLineOf6(srtDancers, -1);
-            }
-            else 
-                throw "Expected lines";
-        }
-
-        function bendNormalizedLineOf6(dancers, reflectBase) {
-            let ctr = 0;
-            for(let dancer of dancers) {
-                let reflect = reflectBase * ((3 <= ctr && ctr < 9) ? -1 : 1);
-                ctr++;
-
-                let temp = dancer.gridX;
-                dancer.gridX = dancer.gridY * reflect;
-                dancer.gridY = temp * reflect;
-                rotateCCW(dancer, reflectBase * reflect);
-            }
+            canvasContext.translate (centerX, centerY);
+            canvasContext.scale(1, -1);
         }
 
         function drawFloor(floor) {
@@ -705,16 +732,6 @@
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
         }
 
-        // puts the orgin in the center and makes y grow up not down
-        function setOrginInCenter() {
-            let centerX = canvas.width / 2;
-            let centerY = canvas.height / 2;
-
-            canvasContext.translate (centerX, centerY);
-            canvasContext.scale(1, -1);
-        }
-
-
         function drawDancer(dancer) {
             setOrginInCenter();
 
@@ -746,6 +763,10 @@
 
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
         }
+
+
+	/********************************************************************/
+	// GUI Main Loop
 
         function resetFloor(floor) {
             if (floor == undefined)
