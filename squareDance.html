@@ -1009,14 +1009,14 @@
             let cmdFtn = commands[call];
             if (cmdFtn == undefined) {
                 if (0 <= call.indexOf(" ")) {
-        	    let calls = call.split(/\s+/);
-        	    for(let i = 0; i < calls.length; i++) {
-        		let subCall = calls[i];
-        		// h sq4 to work by recognising that h space is part of the next command
-        		if (subCall == "h" && i+1 < calls.length) {
-        		    subCall += " " + calls[i+1];
-        		    i++;
-        		}
+                    let calls = call.split(/\s+/);
+                    for(let i = 0; i < calls.length; i++) {
+                        let subCall = calls[i];
+                        // h sq4 to work by recognising that h space is part of the next command
+                        if (subCall == "h" && i+1 < calls.length) {
+                            subCall += " " + calls[i+1];
+                            i++;
+                        }
                         if (!doCall(subCall))
                             return false;
                     }
