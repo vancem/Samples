@@ -108,6 +108,7 @@
         commands["cpt"] = doCentersPassThru;
         commands["csq3"] = doCentersSquareThru3;
         commands["ptc"] = doPassToTheCenter;
+        commands["rec"] = doRecycle;
 
         // tell the user all the calls available. 
         let allCalls = []
@@ -864,6 +865,19 @@
             }
             else
                 throw "Formation Wrong for Pass To The Center";
+        }
+
+        function doRecycle(floor) {
+            for(let line of getLinesOf4(floor)) {
+                for(let beau of [line[0], line[3]]) {
+                    stepForward(beau)
+                    slideRight(beau, 4);
+                    rotateCCW(beau, 2);
+                }
+                for(let belle of [line[1], line[2]]) {
+                    stepForward(belle, -1)
+                }
+            }
         }
 
         function doTrade(floor) {
