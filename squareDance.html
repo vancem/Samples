@@ -3,6 +3,8 @@
 
 <body>
     <!-- *********************************************************************** -->
+    <!-- The body section describes the visual layout of the page -->
+
     <p> This is a program that sequences square dance calls for a 6 couple rectangle.
 	calls are tive very short abbreviations that are mostly the fist letter of 
         each word in the call.   
@@ -28,10 +30,12 @@
         <b>Call History:</b><br> 
         <span id=callList></span>
     </p>
+    <!-- *************************** END OF HTML ******************************* -->
+
     <script>
         /***********************************************************************/
-        // Global variables 
-        "use strict";
+        // Global CONSTANTS 
+        "use strict";		// do extra error checking at load time
 
         // get GUI objects needed
         const canvas = document.getElementById('canvas');
@@ -44,7 +48,7 @@
         // Values for dancers based on their dancer number 
         const colors = ["red", "green", "cyan", "yellow", "violet", "blue" ];
 
-        // Values for dancer.rotation
+        // Values for dancer.rotation.  These work like map directions
         const NORTH = 0;
         const WEST = 1;
         const SOUTH = 2;
@@ -54,6 +58,7 @@
 	// SETUP of intial view 
 
 	// commands maps call names to the method that performs it
+	// used in doCall
         const commands = {};
         commands["st"] = doSwingThru;
         commands["sq4"] = doSquareThru4;
@@ -88,14 +93,20 @@
         commands["csq3"] = doCentersSquareThru3;
         commands["ptc"] = doPassToTheCenter;
 
-	// tell the user all the call available. 
+	// tell the user all the calls available. 
 	let allCalls = []
 	for(let key in commands)
 	   allCalls.push(key);
 	allCalls.sort();
 	allCallsSpan.innerHTML = allCalls.join(", ");
 
-	// create the initial floor
+	/****************************************/
+	// Global MUTABLE state (the model)
+	// This is basically just the floor (a set of dancers)
+	// all other globl state is in GUI object which 
+	// we don't consider to be part of the model
+	
+	// create the initial floor.  
         let floor = resetFloor();
 
         // draw the initial floor
@@ -109,6 +120,7 @@
 
 	/********************************************************************/
 	// operations on the floor
+	// the floor consists of a set of (in our case 12) dancers 
 
         function resetFloor(floor) {
             if (floor == undefined)
@@ -137,7 +149,7 @@
         }
 
 	/********************************************************************/
-	// operations on a single dancer
+	// operations on a single dancer (note deltas can be negative to move in the opposite direction)
 
         function stepForward(dancer, delta = 1) {
             if (dancer.rotation == SOUTH || dancer.rotation == WEST)
@@ -230,6 +242,10 @@
             return ret;
         }
 
+	// returns a list of dancers such that they are 'parnered up' in that
+	// the even entries are beaus (left side dancer of a couple) and the 
+        // odd entries are the belles (right side dancer of a couple) 
+	// This lets you do calls that only involve a couple (like partner trade)
         function sortForPartners(floor) {
             let srtDancers = floor.dancers.slice();
             if (isFacingHeads(srtDancers[0]))
@@ -321,10 +337,10 @@
                 rotateCCW(beau, -1);
             }
             
-            for(let bell of [box[1], box[3]])  {
-                stepForward(bell, 2);
-                slideRight(bell, -1);
-                rotateCCW(bell, 1);
+            for(let belle of [box[1], box[3]])  {
+                stepForward(belle, 2);
+                slideRight(belle, -1);
+                rotateCCW(belle, 1);
             }
         }
 
@@ -468,10 +484,10 @@
                     rotateCCW(beau, -1);
                 }
                 
-                for(let bell of [line[1], line[2]])  {
-                    stepForward(bell);
-                    slideRight(bell, 2);
-                    rotateCCW(bell, 1);
+                for(let belle of [line[1], line[2]])  {
+                    stepForward(belle);
+                    slideRight(belle, 2);
+                    rotateCCW(belle, 1);
                 }
             }
         }
@@ -682,9 +698,9 @@
 		    rotateCCW(beau, 2);
 		}
 		// girls facing out of square
-		for(let bell of [srtDancers[3], srtDancers[8]]) {
-		    stepForward(bell)
-		    rotateCCW(bell, 2);
+		for(let belle of [srtDancers[3], srtDancers[8]]) {
+		    stepForward(belle)
+		    rotateCCW(belle, 2);
 		}
 
 		// boys facing in
@@ -694,9 +710,9 @@
 		    rotateCCW(beau, 2);
 		}
 		// girls facing in
-		for(let bell of [srtDancers[6], srtDancers[7], srtDancers[5], srtDancers[4]]) {
-		    stepForward(bell, 3)
-		    rotateCCW(bell, 2);
+		for(let belle of [srtDancers[6], srtDancers[7], srtDancers[5], srtDancers[4]]) {
+		    stepForward(belle, 3)
+		    rotateCCW(belle, 2);
 		}
                 return;
             }
@@ -847,7 +863,7 @@
 
             let cmdFtn = commands[call];
             if (cmdFtn == undefined) {
-                if (call.indexOf(" ")) {
+                if (0 <= call.indexOf(" ")) {
                     for(let subCall of call.split(/\s+/)) {
                         if (!doCall(subCall))
                             return false;
