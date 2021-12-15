@@ -25,12 +25,20 @@
         </li>
         <li> Message: <span id=message></span> </li>
     </ul>
-    <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
-    <canvas id=prev style="border:2px solid red;background-color:lightgray" height=400 width=400> </canvas>
-    <p>
-        <b>Call History:</b><br> 
-        <span id=callList></span>
-    </p>
+    <div style="display:flex"> 
+        <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
+        <div style="background-color:lightgray"> 
+            <p style="margin:10px">
+                <b>Call History</b><br> 
+                <span id=callList></span>
+            </p>
+        </div> 
+        <div style="background-color:#dfedf5"> 
+            <div style="text-align:center;margin:10px;font-size:x-large;font-weight:bold">Previous Dancer Positions</div>
+            <canvas id=prev style="border:2px solid red;background-color:lightgray;vertical-align:bottom" height=400 width=400> </canvas>
+        </div>
+    </div> 
+
     <!-- *************************** END OF HTML ******************************* -->
 
     <script>
@@ -1001,7 +1009,14 @@
             let cmdFtn = commands[call];
             if (cmdFtn == undefined) {
                 if (0 <= call.indexOf(" ")) {
-                    for(let subCall of call.split(/\s+/)) {
+        	    let calls = call.split(/\s+/);
+        	    for(let i = 0; i < calls.length; i++) {
+        		let subCall = calls[i];
+        		// h sq4 to work by recognising that h space is part of the next command
+        		if (subCall == "h" && i+1 < calls.length) {
+        		    subCall += " " + calls[i+1];
+        		    i++;
+        		}
                         if (!doCall(subCall))
                             return false;
                     }
