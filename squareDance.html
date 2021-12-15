@@ -70,17 +70,18 @@
         // commands maps call names to the method that performs it
         // used in doCall
         const commands = {};
-        commands["st"] = doSwingThru;
-        commands["ct"] = doCentersTrade;
-        commands["sq4"] = doSquareThru4;
-        commands["hsq4"] = doHeadsSquareThru4;
-        commands["hpto"] = doHeadsPassTheOcean;
         commands["h pto"] = doHeadsPassTheOcean;
-        commands["hlr"] = doHeadsLeadRight;
         commands["h lr"] = doHeadsLeadRight;
         commands["h pto"] = doHeadsPassTheOcean;
-        commands["ex"] = doExtend;
         commands["h sq4"] = doHeadsSquareThru4;
+        commands["c circ"] = doCentersCirculate;
+        commands["e circ"] = doEndsCirculate;
+        commands["c pt"] = doCentersPassThru;
+        commands["c sq3"] = doCentersSquareThru3;
+        commands["c td"] = doCentersTrade;
+        commands["st"] = doSwingThru;
+        commands["sq4"] = doSquareThru4;
+        commands["ex"] = doExtend;
         commands["home"] = doHome;
         commands["rlt"] = doRightAndLeftThru;
         commands["vl"] = doVeerLeft;
@@ -101,12 +102,8 @@
         commands["rfl"] = doReverseFlutterWheel;
         commands["tq"] = doTouchAQuarter;
         commands["circ"] = doCirculate;
-        commands["ccirc"] = doCentersCirculate;
-        commands["ecirc"] = doEndsCirculate;
         commands["hinge"] = doHinge;
         commands["fw"] = doFerrisWheel;
-        commands["cpt"] = doCentersPassThru;
-        commands["csq3"] = doCentersSquareThru3;
         commands["ptc"] = doPassToTheCenter;
         commands["rec"] = doRecycle;
 
@@ -511,7 +508,7 @@
                 let maxX = srtDancers[11].gridX;
                 let delta = (maxX - minX) / 2;
                 
-                for(let i = 0; i < strDancers.length; i++) {
+                for(let i = 0; i < srtDancers.length; i++) {
                     if (3 <= i && i < 9)
                         continue;
                     let dancer = srtDancers[i];
@@ -1027,7 +1024,7 @@
                     for(let i = 0; i < calls.length; i++) {
                         let subCall = calls[i];
                         // h sq4 to work by recognising that h space is part of the next command
-                        if (subCall == "h" && i+1 < calls.length) {
+                        if (subcall.length == 1 && "hsbgce".includes(subCall) && i+1 < calls.length) {
                             subCall += " " + calls[i+1];
                             i++;
                         }
