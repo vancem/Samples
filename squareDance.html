@@ -6,26 +6,27 @@
     <!-- The body section describes the visual layout of the page -->
 
     <p> This is a program that sequences square dance calls for a 6 couple rectangle.
-	calls are tive very short abbreviations that are mostly the fist letter of 
+        calls are tive very short abbreviations that are mostly the fist letter of 
         each word in the call.   
     </p> <p>
- 	Reset is the command that starts over (you can also refresh the web page).
+         Reset is the command that starts over (you can also refresh the web page).
         The error handling is rudimentary at best. It has also only been
         tested in 'simple' cases, but it does seem to work.   The whole program is
         in a single file, squareDance.html, so you can make your own modifications 
         easily if you need anything fixed.   
     </p> <p>
-	You can start with  'hsq4 rlt ptc csq3' to see how it works.  You currently have 
+        You can start with  'hsq4 rlt ptc csq3' to see how it works.  You currently have 
         to explicty call step to a wave (stw) from facing couples before calling a
         ocean wave move.   You can type multiple calls at one time, and in particular 
         you can cut the call history an paste it into the input box to 'rerun' a sequence (or some prefix).   
     </p>
     <ul>
-	<li> Calls Available: <span id=allCalls></span> </li>
+        <li> Calls Available: <span id=allCalls></span> </li>
         <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()"> </li>
         <li> Message: <span id=message></span> </li>
     </ul>
-    <canvas id="canvas" tabindex="1" style="border:2px solid red" height="500" width="500"> </canvas>
+    <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
+    <canvas id=prev style="border:2px solid red;background-color:lightgray" height=400 width=400> </canvas>
     <p>
         <b>Call History:</b><br> 
         <span id=callList></span>
@@ -35,11 +36,12 @@
     <script>
         /***********************************************************************/
         // Global CONSTANTS 
-        "use strict";		// do extra error checking at load time
+        "use strict";                // do extra error checking at load time
 
         // get GUI objects needed
-        const canvas = document.getElementById('canvas');
-        const canvasContext = canvas.getContext('2d');
+        const mainCanvas = document.getElementById('main');
+        const prevCanvas = document.getElementById('prev');
+
         const commandTextbox = document.getElementById('command');
         const messageSpan = document.getElementById('message');
         const callListSpan = document.getElementById('callList');
@@ -54,11 +56,11 @@
         const SOUTH = 2;
         const EAST = 3;
 
-	/********************************************************************/
-	// SETUP of intial view 
+        /********************************************************************/
+        // SETUP of intial view 
 
-	// commands maps call names to the method that performs it
-	// used in doCall
+        // commands maps call names to the method that performs it
+        // used in doCall
         const commands = {};
         commands["st"] = doSwingThru;
         commands["sq4"] = doSquareThru4;
@@ -93,34 +95,37 @@
         commands["csq3"] = doCentersSquareThru3;
         commands["ptc"] = doPassToTheCenter;
 
-	// tell the user all the calls available. 
-	let allCalls = []
-	for(let key in commands)
-	   allCalls.push(key);
-	allCalls.sort();
-	allCallsSpan.innerHTML = allCalls.join(", ");
+        // tell the user all the calls available. 
+        let allCalls = []
+        for(let key in commands)
+           allCalls.push(key);
+        allCalls.sort();
+        allCallsSpan.innerHTML = allCalls.join(", ");
 
-	/****************************************/
-	// Global MUTABLE state (the model)
-	// This is basically just the floor (a set of dancers)
-	// all other globl state is in GUI object which 
-	// we don't consider to be part of the model
-	
-	// create the initial floor.  
+        /****************************************/
+        // Global MUTABLE state (the model)
+        // This is basically just the floor (a set of dancers)
+        // all other globl state is in GUI object which 
+        // we don't consider to be part of the model
+        
+        // create the initial floor.  
         let floor = resetFloor();
+        
+        // keeps track of calls we made
+        let callHistory = [];
 
         // draw the initial floor
-        drawFloor(floor);
+        drawFloor(floor, mainCanvas);
 
-	/*******************************************************************/
-	// END OF STARTUP CODE.   
-	// The rest of this code is function declrations that have no
+        /*******************************************************************/
+        // END OF STARTUP CODE.   
+        // The rest of this code is function declrations that have no
         // obvious affect at the time the are scanned by javascript.
-	/*******************************************************************/
+        /*******************************************************************/
 
-	/********************************************************************/
-	// operations on the floor
-	// the floor consists of a set of (in our case 12) dancers 
+        /********************************************************************/
+        // operations on the floor
+        // the floor consists of a set of (in our case 12) dancers 
 
         function resetFloor(floor) {
             if (floor == undefined)
@@ -136,6 +141,15 @@
             return floor;
         }
 
+        // makes a deep copy of the floor.  
+        function copyFloor(floor) {
+            let ret = {}
+            ret.dancers = [];
+            for(let dancer of floor.dancers)
+                ret.dancers.push(copyDancer(dancer));
+            return ret;
+        }
+
         function makeCouple(dancers, number, gridX, gridY, rotation) {
 
             // Create the boy dancer
@@ -147,9 +161,14 @@
 
             dancers.push(girl);
         }
+        
+        /********************************************************************/
+        // operations on a single dancer (note deltas can be negative to move in the opposite direction)
 
-	/********************************************************************/
-	// operations on a single dancer (note deltas can be negative to move in the opposite direction)
+        // a deep copy (which is also a shallow copy) of the floor.
+        function copyDancer(dancer) {
+            return Object.assign({}, dancer);
+        }
 
         function stepForward(dancer, delta = 1) {
             if (dancer.rotation == SOUTH || dancer.rotation == WEST)
@@ -187,8 +206,8 @@
             return dancer.rotation % 2 == 1;
         }
 
-	/*******************************************************************/
-	// operations on two dancers 
+        /*******************************************************************/
+        // operations on two dancers 
 
         function swapPosAndDir(dancer1, dancer2) {
             swapPos(dancer1, dancer2);
@@ -208,8 +227,8 @@
             dancer2.gridY = temp;
         }
 
-	/*******************************************************************/
-	/* other operations that are not square dance calls */
+        /*******************************************************************/
+        /* other operations that are not square dance calls */
 
         function moveHeadsInIfNecessary(floor) {
         
@@ -228,7 +247,7 @@
         }
 
         /***********************************************************************/
-	// Operations for figuring out what formation you have
+        // Operations for figuring out what formation you have
 
         function horzLineLen(srtDancers, start = 0) {
             console.assert(srtDancers.length == 12);
@@ -242,10 +261,10 @@
             return ret;
         }
 
-	// returns a list of dancers such that they are 'parnered up' in that
-	// the even entries are beaus (left side dancer of a couple) and the 
+        // returns a list of dancers such that they are 'parnered up' in that
+        // the even entries are beaus (left side dancer of a couple) and the 
         // odd entries are the belles (right side dancer of a couple) 
-	// This lets you do calls that only involve a couple (like partner trade)
+        // This lets you do calls that only involve a couple (like partner trade)
         function sortForPartners(floor) {
             let srtDancers = floor.dancers.slice();
             if (isFacingHeads(srtDancers[0]))
@@ -324,11 +343,11 @@
             return ret;
         }
 
-	/*******************************************************************/
-	/*                        SQUARE DANCE CALLS                       */
+        /*******************************************************************/
+        /*                        SQUARE DANCE CALLS                       */
 
-	/********************************************************************/
-	// square dance calls that operate on boxes or lines  or couples ...
+        /********************************************************************/
+        // square dance calls that operate on boxes or lines  or couples ...
 
         function passTheOcean(box) {
             for(let beau of [box[0], box[2]])  {
@@ -358,16 +377,16 @@
         }
 
 
-	/********************************************************************/
-	// square dance calls that operate on the whole floor 
-	/********************************************************************/
+        /********************************************************************/
+        // square dance calls that operate on the whole floor 
+        /********************************************************************/
 
         function doHome(floor) {
             resetFloor(floor);
         }
 
-	/*******************************/
-	/* Basic 1 calls */
+        /*******************************/
+        /* Basic 1 calls */
 
         function doHeadsSquareThru4(floor) {
 
@@ -388,13 +407,13 @@
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 6 && srtDancers[0].rotation == 3)  {
 
-		srtDancers = sortForPartners(floor)
-		for(let i = 2; i < 10; i++)
+                srtDancers = sortForPartners(floor)
+                for(let i = 2; i < 10; i++)
                     stepForward(srtDancers[i], 2);
-	    }
-	    else
-		throw "Formation Wrong for Centers pass thru";
-	}
+            }
+            else
+                throw "Formation Wrong for Centers pass thru";
+        }
 
         function doCentersSquareThru3(floor) {
 
@@ -405,13 +424,13 @@
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 6 && srtDancers[0].rotation == 3)  {
 
-		srtDancers = sortForPartners(floor)
-		for(let i = 2; i < 10; i += 2)
+                srtDancers = sortForPartners(floor)
+                for(let i = 2; i < 10; i += 2)
                     trade(srtDancers[i], srtDancers[i+1]);
-	    }
-	    else 
-		throw "Formation Wrong for Centers Square Thru 3";
-	}
+            }
+            else 
+                throw "Formation Wrong for Centers Square Thru 3";
+        }
 
         function doRightAndLeftThru(floor) {
             for(let box of getBoxes(floor)) {
@@ -497,8 +516,8 @@
                 rotateCCW(dancer, 2);
         }
 
-	/*******************************/
-	/* Basic 2 calls */
+        /*******************************/
+        /* Basic 2 calls */
 
         function doHeadsPassTheOcean(floor) {
             moveHeadsInIfNecessary(floor);
@@ -691,37 +710,37 @@
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 3 && srtDancers[0].rotation == 1)  {
 
-		// boys facing out of square
-		for(let beau of [srtDancers[0], srtDancers[11]]) {
-		    stepForward(beau)
-		    slideRight(beau, 4);
-		    rotateCCW(beau, 2);
-		}
-		// girls facing out of square
-		for(let belle of [srtDancers[3], srtDancers[8]]) {
-		    stepForward(belle)
-		    rotateCCW(belle, 2);
-		}
+                // boys facing out of square
+                for(let beau of [srtDancers[0], srtDancers[11]]) {
+                    stepForward(beau)
+                    slideRight(beau, 4);
+                    rotateCCW(beau, 2);
+                }
+                // girls facing out of square
+                for(let belle of [srtDancers[3], srtDancers[8]]) {
+                    stepForward(belle)
+                    rotateCCW(belle, 2);
+                }
 
-		// boys facing in
-		for(let beau of [srtDancers[9], srtDancers[10], srtDancers[2], srtDancers[1], ]) {
-		    stepForward(beau, 3)
-		    slideRight(beau, 4);
-		    rotateCCW(beau, 2);
-		}
-		// girls facing in
-		for(let belle of [srtDancers[6], srtDancers[7], srtDancers[5], srtDancers[4]]) {
-		    stepForward(belle, 3)
-		    rotateCCW(belle, 2);
-		}
+                // boys facing in
+                for(let beau of [srtDancers[9], srtDancers[10], srtDancers[2], srtDancers[1], ]) {
+                    stepForward(beau, 3)
+                    slideRight(beau, 4);
+                    rotateCCW(beau, 2);
+                }
+                // girls facing in
+                for(let belle of [srtDancers[6], srtDancers[7], srtDancers[5], srtDancers[4]]) {
+                    stepForward(belle, 3)
+                    rotateCCW(belle, 2);
+                }
                 return;
             }
-	    else 
-		throw "Formation Wrong for Ferris Wheel";
+            else 
+                throw "Formation Wrong for Ferris Wheel";
         }
 
-	/*******************************/
-	/* MainStream calls */
+        /*******************************/
+        /* MainStream calls */
 
         function doHinge(floor) {
             let srtDancers = sortForPartners(floor)
@@ -741,17 +760,17 @@
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 6 && srtDancers[0].rotation == 3)  {
 
-		srtDancers = sortForPartners(floor)
-		for(let dancer of srtDancers)
+                srtDancers = sortForPartners(floor)
+                for(let dancer of srtDancers)
                     stepForward(dancer, 2);
 
-		// remember you have to use the STARTING index 
+                // remember you have to use the STARTING index 
                 trade(srtDancers[2], srtDancers[3]);
                 trade(srtDancers[8], srtDancers[9]);
-	    }
-	    else
-		throw "Formation Wrong for Pass To The Center";
-	}
+            }
+            else
+                throw "Formation Wrong for Pass To The Center";
+        }
 
         function doTrade(floor) {
             let srtDancers = sortForPartners(floor)
@@ -760,15 +779,16 @@
         }
 
         /********************************************************************/
-	// END OF SQUARE DANCE CALLS
+        // END OF SQUARE DANCE CALLS
         /********************************************************************/
 
-	/********************************************************************/
-	// GUI Drawing support
+        /********************************************************************/
+        // GUI Drawing support
 
         // puts the orgin in the center and makes y grow up not down
-	// Thus it acts like how you would set up x,y in math class. 
-        function setOrginInCenter() {
+        // Thus it acts like how you would set up x,y in math class. 
+        function setOriginInCenter(canvas, canvasContext) {
+        
             let centerX = canvas.width / 2;
             let centerY = canvas.height / 2;
 
@@ -776,75 +796,78 @@
             canvasContext.scale(1, -1);
         }
 
-        function drawFloor(floor) {
-            console.log("Entering drawFloor", floor);
+        function drawFloor(floor, canvas) {
+            const canvasContext = canvas.getContext('2d');
         
             canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
+            // number of pixels between dancer position grid
+            // for width == 500 -> gridSize == 40
+            const gridSize = canvas.width / 12.5;
+
             // Draw a grid of dots
-            setOrginInCenter();
+            setOriginInCenter(canvas, canvasContext);
             canvasContext.fillStyle = "black";
             for(let x = -6; x <= 6; x++) {
                 for(let y = -6; y <= 6; y++) {
                     canvasContext.beginPath();
-                    canvasContext.arc(x * 40, y * 40, 2, 0, 2 * Math.PI); 
+                    canvasContext.arc(x * gridSize, y * gridSize, 2, 0, 2 * Math.PI); 
                     canvasContext.fill();        
                 }
             }
                 // draw a cross on the origin
             canvasContext.beginPath();
-            canvasContext.moveTo(40, 0);
-            canvasContext.lineTo(-40, 0);
-            canvasContext.moveTo(0, 40);
-            canvasContext.lineTo(0, -40);
+            canvasContext.moveTo(gridSize, 0);
+            canvasContext.lineTo(-gridSize, 0);
+            canvasContext.moveTo(0, gridSize);
+            canvasContext.lineTo(0, -gridSize);
             canvasContext.stroke();
             
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
 
                // draw Dancers
             for(let dancer of floor.dancers) {
-                 drawDancer(dancer, floor)
+                 drawDancer(dancer, canvas, canvasContext, gridSize)
             }
 
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
         }
 
-        function drawDancer(dancer) {
-            setOrginInCenter();
+        function drawDancer(dancer, canvas, canvasContext, gridSize) {
+            setOriginInCenter(canvas, canvasContext);
 
-                // TODO scale 40 based on canvas size.  
-            canvasContext.translate (dancer.gridX * 40 , dancer.gridY * 40);
+            canvasContext.translate (dancer.gridX * gridSize , dancer.gridY * gridSize);
 
             canvasContext.rotate(Math.PI / 2.0 * dancer.rotation)
             canvasContext.fillStyle = colors[dancer.number-1];
 
                 // draw boy or girl
             if (dancer.isBoy) 
-                canvasContext.fillRect(-15, -15, 30, 30);
+                canvasContext.fillRect(-0.35*gridSize, -0.35*gridSize, 0.7*gridSize, 0.7*gridSize);
             else  {
                 canvasContext.beginPath();
-                canvasContext.arc(0, 0, 16, 0, 2 * Math.PI); 
+                canvasContext.arc(0, 0, 0.4*gridSize, 0, 2 * Math.PI); 
                 canvasContext.fill();        
             }
                 // draw bulge
             canvasContext.beginPath();
-            canvasContext.arc(0, 15, 8, 0, 2 * Math.PI); 
+            canvasContext.arc(0, 0.38*gridSize, 0.2*gridSize, 0, 2 * Math.PI); 
             canvasContext.fill();        
         
                 // draw the couple number
             canvasContext.rotate(-Math.PI / 2.0 * dancer.rotation)
             canvasContext.scale(1, -1);
-            canvasContext.font = "20px Arial";
+            canvasContext.font =  (gridSize / 2) + "px Arial";
             canvasContext.fillStyle = "black";
-            canvasContext.fillText(dancer.number, -6, 8);
+            canvasContext.fillText(dancer.number, -gridSize*0.15, gridSize*0.2);
 
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
         }
 
-	/********************************************************************/
-	// logic for handling GUI callbacks 
+        /********************************************************************/
+        // logic for handling GUI callbacks 
 
-	// called when textbox changes (someone hits enter or paste in it)
+        // called when textbox changes (someone hits enter or paste in it)
         function doCommandOnChange() {
             let call = commandTextbox.value;        
             commandTextbox.value = "";
@@ -853,13 +876,14 @@
 
         function doCall(call) {
             console.log("doCall", call);
-	    if (call == "reset") {
-		callListSpan.innerHTML = "";
+            if (call == "reset") {
+                callListSpan.innerHTML = "";
                 resetFloor(floor);
-		drawFloor(floor);
-		messageSpan.innerHTML = "Reset!";
-		return;
-	    }
+                drawFloor(floor, mainCanvas);
+                drawFloor({dancers:[]}, prevCanvas);
+                messageSpan.innerHTML = "Reset!";
+                return;
+            }
 
             let cmdFtn = commands[call];
             if (cmdFtn == undefined) {
@@ -876,25 +900,35 @@
                 }
             }
 
+            let startFloor;
+            if (0 < callHistory.length)
+                startFloor = callHistory[callHistory.length-1].end;
+            else 
+                startFloor = copyFloor(floor);
+
             try {
                 cmdFtn(floor);
             } catch(err) {
                  logError("Error Executing Call: " + err);
                  return false;
             }
-            drawFloor(floor);
+            drawFloor(floor, mainCanvas);
             messageSpan.innerHTML = "Finished Call: " + call;
+            
+            callHistory.push({ start:startFloor, call:call, end:copyFloor(floor) });
+            drawFloor(startFloor, prevCanvas);
+
             callListSpan.innerHTML += call + "<br>";
             return true;
         }
 
         function logError(message) {
             beep();
-            messageSpan.innerHTML = message;
+            messageSpan.innerHTML = "<b>" + message + "</b>";
         }
 
-	/********************************************************************/
-	// support for sound (beeps)    
+        /********************************************************************/
+        // support for sound (beeps)
 
         function beep() { tone(50, 440); }
 
