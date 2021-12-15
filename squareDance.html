@@ -9,20 +9,20 @@
         calls are tive very short abbreviations that are mostly the fist letter of 
         each word in the call.   
     </p> <p>
-         Reset is the command that starts over (you can also refresh the web page).
         The error handling is rudimentary at best. It has also only been
-        tested in 'simple' cases, but it does seem to work.   The whole program is
-        in a single file, squareDance.html, so you can make your own modifications 
-        easily if you need anything fixed.   
+        tested in 'simple' cases, but it does seem to work.   
     </p> <p>
         You can start with  'hsq4 rlt ptc csq3' to see how it works.  You currently have 
-        to explicty call step to a wave (stw) from facing couples before calling a
+        to explictly call step to a wave (stw) from facing couples before calling a
         ocean wave move.   You can type multiple calls at one time, and in particular 
         you can cut the call history an paste it into the input box to 'rerun' a sequence (or some prefix).   
     </p>
     <ul>
         <li> Calls Available: <span id=allCalls></span> </li>
-        <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()"> </li>
+        <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()"> 
+             <button onClick="doCall('reset')">reset</button>
+             <button onClick="doCall('undo')">undo</button>
+        </li>
         <li> Message: <span id=message></span> </li>
     </ul>
     <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
@@ -63,9 +63,13 @@
         // used in doCall
         const commands = {};
         commands["st"] = doSwingThru;
+        commands["ct"] = doCentersTrade;
         commands["sq4"] = doSquareThru4;
         commands["hsq4"] = doHeadsSquareThru4;
         commands["hpto"] = doHeadsPassTheOcean;
+        commands["h pto"] = doHeadsPassTheOcean;
+        commands["hlr"] = doHeadsLeadRight;
+        commands["h lr"] = doHeadsLeadRight;
         commands["h pto"] = doHeadsPassTheOcean;
         commands["ex"] = doExtend;
         commands["h sq4"] = doHeadsSquareThru4;
@@ -89,6 +93,8 @@
         commands["rfl"] = doReverseFlutterWheel;
         commands["tq"] = doTouchAQuarter;
         commands["circ"] = doCirculate;
+        commands["ccirc"] = doCentersCirculate;
+        commands["ecirc"] = doEndsCirculate;
         commands["hinge"] = doHinge;
         commands["fw"] = doFerrisWheel;
         commands["cpt"] = doCentersPassThru;
@@ -99,6 +105,8 @@
         let allCalls = []
         for(let key in commands)
            allCalls.push(key);
+        allCalls.push("reset");        // add meta-calls
+        allCalls.push("undo");
         allCalls.sort();
         allCallsSpan.innerHTML = allCalls.join(", ");
 
@@ -116,6 +124,8 @@
 
         // draw the initial floor
         drawFloor(floor, mainCanvas);
+        // draw the prev floor`
+        drawFloor(undefined, prevCanvas);
 
         /*******************************************************************/
         // END OF STARTUP CODE.   
@@ -388,6 +398,21 @@
         /*******************************/
         /* Basic 1 calls */
 
+        function doHeadsLeadRight(floor) {
+
+            moveHeadsInIfNecessary(floor);
+
+            for(let dancer of floor.dancers) {
+                if (isHeads(dancer)) {
+                    if (dancer.isBoy) {
+                        stepForward(dancer, 2);
+                        slideRight(dancer, 2);
+                    }                
+                    rotateCCW(dancer, -1);
+                }
+            }
+        }
+
         function doHeadsSquareThru4(floor) {
 
             moveHeadsInIfNecessary(floor);
@@ -436,6 +461,61 @@
             for(let box of getBoxes(floor)) {
                 swapPosAndDir(box[0], box[2]);
                 swapPosAndDir(box[1], box[3]);
+            }
+        }
+
+
+        function doCentersCirculate(floor) {
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 3 && isFacingSides(srtDancers[0]))  {        // Three vertical lines
+                let minX = srtDancers[0].gridX;
+                let maxX = srtDancers[11].gridX;
+                let delta = (maxX - minX) / 2;
+                
+                for(let i = 3; i < 9; i++) {
+                    let dancer = srtDancers[i];
+                    let inc = (dancer.rotation == 1) ? -delta : delta;
+
+                    if (dancer.gridX == minX  && dancer.rotation == 1 ||   // min heading left
+                        dancer.gridX == maxX  && dancer.rotation == 3) {   // max heading right
+                        rotateCCW(dancer, 2);
+                        dancer.gridY = -dancer.gridY;
+                    }
+                    else
+                        dancer.gridX += inc;
+                }
+            }
+        }
+
+        function doEndsCirculate(floor) {
+            // sort bottom first to top then left to right
+            let srtDancers = floor.dancers.slice();
+            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+        
+            let horzLen = horzLineLen(srtDancers)
+            if (horzLen == 3 && isFacingSides(srtDancers[0]))  {        // Three vertical lines
+                let minX = srtDancers[0].gridX;
+                let maxX = srtDancers[11].gridX;
+                let delta = (maxX - minX) / 2;
+                
+                for(let i = 0; i < strDancers.length; i++) {
+                    if (3 <= i && i < 9)
+                        continue;
+                    let dancer = srtDancers[i];
+                    let inc = (dancer.rotation == 1) ? -delta : delta;
+
+                    if (dancer.gridX == minX  && dancer.rotation == 1 ||   // min heading left
+                        dancer.gridX == maxX  && dancer.rotation == 3) {   // max heading right
+                        rotateCCW(dancer, 2);
+                        dancer.gridY = -dancer.gridY;
+                    }
+                    else
+                        dancer.gridX += inc;
+                }
             }
         }
 
@@ -577,6 +657,12 @@
                 // centers trade (note that we have to use the ORIGINAL indexes
                 // to fetch people now in the center
                 swapPosAndDir(line[0], line[3]);
+            }
+        }
+
+        function doCentersTrade(floor) {
+            for(let line of getLinesOf4(floor)) {
+                swapPosAndDir(line[1], line[2]);
             }
         }
 
@@ -823,6 +909,9 @@
             canvasContext.lineTo(0, -gridSize);
             canvasContext.stroke();
             
+            if (floor === undefined)
+                return;
+
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
 
                // draw Dancers
@@ -879,9 +968,33 @@
             if (call == "reset") {
                 callListSpan.innerHTML = "";
                 resetFloor(floor);
+                callHistory = [];
                 drawFloor(floor, mainCanvas);
-                drawFloor({dancers:[]}, prevCanvas);
+                drawFloor(undefined, prevCanvas);
                 messageSpan.innerHTML = "Reset!";
+                return;
+            }
+            else if (call == "undo") {
+                if (0 < callHistory.length) {
+                    let prev = callHistory.pop();
+                    floor = copyFloor(prev.start);
+                    messageSpan.innerHTML = "Undid: <b>" + prev.call + "</b>";
+                        
+                    callListSpan.innerHTML = "";
+                    for(let callHistoryElem of callHistory) 
+                        callListSpan.innerHTML += callHistoryElem.call + "<br>";
+                    
+                    drawFloor(floor, mainCanvas);
+                        
+                    if (0 < callHistory.length) {
+                        drawFloor(callHistory[callHistory.length-1].start, prevCanvas);
+                        messageSpan.innerHTML += " last call now: <b>" + callHistory[callHistory.length-1].call + "</b>";
+                    }
+                    else 
+                        drawFloor(undefined, prevCanvas);
+                }
+                else 
+                    logError("Nothing to undo");
                 return;
             }
 
