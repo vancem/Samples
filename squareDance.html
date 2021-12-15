@@ -5,20 +5,22 @@
     <!-- *********************************************************************** -->
     <!-- The body section describes the visual layout of the page -->
 
-    <p> This is a program that sequences square dance calls for a 6 couple rectangle.
-        calls are tive very short abbreviations that are mostly the fist letter of 
-        each word in the call.   
+    <p> This is a program that simulates square dance calls for a 6 couple rectangle.
     </p> <p>
         The error handling is rudimentary at best. It has also only been
-        tested in 'simple' cases, but it does seem to work.   
-    </p> <p>
-        You can start with  'hsq4 rlt ptc csq3' to see how it works.  You currently have 
-        to explictly call step to a wave (stw) from facing couples before calling a
-        ocean wave move.   You can type multiple calls at one time, and in particular 
-        you can cut the call history an paste it into the input box to 'rerun' a sequence (or some prefix).   
-    </p>
+        tested in 'simple' cases, but it does seem to work if you stick to 
+        valid call sequences.   
     <ul>
+        <li> Calls are given very short abbreviations that are mostly the first letter of 
+             each word in the call (exeptions below).  Couple circulate is just circulate.
+        <li> h=heads, c=centers, e=ends, fl=flutterwheel srt=star thru,
+             st=swing thru, td=trade, sl=slide thru</li>
         <li> Calls Available: <span id=allCalls></span> </li>
+
+        <li> Must explicitly call step to a wave (stw) from facing couples.
+        <li> You can paste multiple commands (sep by space) into textbox.
+        
+    </ul> <ul>
         <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()"> 
              <button onClick="doCall('reset')">reset</button>
              <button onClick="doCall('undo')">undo</button>
@@ -106,6 +108,7 @@
         commands["fw"] = doFerrisWheel;
         commands["ptc"] = doPassToTheCenter;
         commands["rec"] = doRecycle;
+        commands["ht"] = doHalfTag;
 
         // tell the user all the calls available. 
         let allCalls = []
@@ -864,6 +867,12 @@
                 throw "Formation Wrong for Pass To The Center";
         }
 
+        function doTrade(floor) {
+            let srtDancers = sortForPartners(floor)
+            for(let i = 0; i < 12; i+=2)
+                trade(srtDancers[i], srtDancers[i+1]);
+        }
+
         function doRecycle(floor) {
             for(let line of getLinesOf4(floor)) {
                 for(let beau of [line[0], line[3]]) {
@@ -877,10 +886,19 @@
             }
         }
 
-        function doTrade(floor) {
-            let srtDancers = sortForPartners(floor)
-            for(let i = 0; i < 12; i+=2)
-                trade(srtDancers[i], srtDancers[i+1]);
+        function doHalfTag(floor) {
+            for(let line of getLinesOf4(floor)) {
+                for(let beau of [line[0], line[3]]) {
+                    stepForward(beau);
+                    rotateCCW(beau, -1);
+                    stepForward(beau)
+                }
+                for(let belle of [line[1], line[2]]) {
+                    stepForward(belle, 1);
+                    rotateCCW(belle, -1);
+                    stepForward(belle, 3)
+                }
+            }
         }
 
         /********************************************************************/
