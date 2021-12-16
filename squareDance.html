@@ -52,8 +52,8 @@
         "use strict";                // do extra error checking at load time
 
         /***********************************************************************/
-	// STARTUP code.   This initializes global constants, GUI constants, 
-	// and the model for the program (the dance floor)
+        // STARTUP code.   This initializes global constants, GUI constants, 
+        // and the model for the program (the dance floor)
 
         // Global CONSTANTS 
         // get GUI objects needed
@@ -118,7 +118,7 @@
         // tell the user all the calls available. 
         let allCalls = []
         for(let key in commands)
-           allCalls.push(key);
+            allCalls.push(key);
         allCalls.push("reset");        // add meta-calls
         allCalls.push("undo");
         allCalls.sort();
@@ -140,14 +140,14 @@
         drawFloor(floor, mainCanvas);
         // draw the prev floor`
         drawFloor(undefined, prevCanvas);
-	// The call History is already fine the way it is 
+        // The call History is already fine the way it is 
 
-	// Some importnat invariants of floor
-	//   * gridX and gridY are always small INTEGERS less than 6 in absolute value
-	//   * The origin of this grid is the very center of the rectangle of dancers 
+        // Some importnat invariants of floor
+        //   * gridX and gridY are always small INTEGERS less than 6 in absolute value
+        //   * The origin of this grid is the very center of the rectangle of dancers 
         //     in the GUI the origin is marked with a cross
         //   * X grows to the right, Y grows up (like in Math, NOT like in graphics)
-	//   * a dancer's rotation is alwasy a number 0-3 (see NORTH, SOUTH, EAST, WEST)
+        //   * a dancer's rotation is alwasy a number 0-3 (see NORTH, SOUTH, EAST, WEST)
 
         /*******************************************************************/
         // END OF STARTUP CODE.   
@@ -158,50 +158,50 @@
         /********************************************************************/
         // operations on a single dancer (note deltas can be negative to move in the opposite direction)
 
-	// moves a dancer in a given direction and changes its rotiation.
-	// parameters can be negative 
+        // moves a dancer in a given direction and changes its rotiation.
+        // parameters can be negative 
         function dancerMove(dancer, forwardDelta, slideRightDelta, rotateCCWDelta) {
-	    console.assert(dancer.gridX == Math.floor(dancer.gridX));	// integer value
-	    console.assert(dancer.gridY == Math.floor(dancer.gridY));	// integer value
-		
+            console.assert(dancer.gridX == Math.floor(dancer.gridX));        // integer value
+            console.assert(dancer.gridY == Math.floor(dancer.gridY));        // integer value
+                
             if (dancer.rotation == NORTH) {
-		dancer.gridY += forwardDelta;
-		dancer.gridX += slideRightDelta;
-	    }
-	    else if (dancer.rotation == WEST) {
-		dancer.gridY += slideRightDelta;
-		dancer.gridX -= forwardDelta;
-	    }
-	    else if (dancer.rotation == SOUTH) {
-		dancer.gridY -= forwardDelta;
-		dancer.gridX -= slideRightDelta;
-	    }
+                dancer.gridY += forwardDelta;
+                dancer.gridX += slideRightDelta;
+            }
+            else if (dancer.rotation == WEST) {
+                dancer.gridY += slideRightDelta;
+                dancer.gridX -= forwardDelta;
+            }
+            else if (dancer.rotation == SOUTH) {
+                dancer.gridY -= forwardDelta;
+                dancer.gridX -= slideRightDelta;
+            }
 
-	    else if (dancer.rotation == EAST) {
-		dancer.gridY -= slideRightDelta;
-		dancer.gridX += forwardDelta;
-	    }
+            else if (dancer.rotation == EAST) {
+                dancer.gridY -= slideRightDelta;
+                dancer.gridX += forwardDelta;
+            }
 
-	     // spin the given amount
-	     rotateCCWDelta += 4;
+             // spin the given amount
+             rotateCCWDelta += 4;
              dancer.rotation = (dancer.rotation + rotateCCWDelta) % 4;
-	}
+        }
 
-	// gets the coordinate of dancer (gridX or gridY) in its facing direction
-	function dancerGetFacingCoordinate(dancer) {
-	    if (isFacingHeads(dancer))
-		return dancer.gridX;
-	    else 
-		return dancer.gridY;
-	}
+        // gets the coordinate of dancer (gridX or gridY) in its facing direction
+        function dancerGetFacingCoordinate(dancer) {
+            if (isFacingHeads(dancer))
+                return dancer.gridX;
+            else 
+                return dancer.gridY;
+        }
 
-	// gets the coordinate of dancer (gridX or gridY) in its left-right direction
-	function dancerGetCrossCoordinate(dancer) {
-	    if (isFacingHeads(dancer))
-		return dancer.gridY;
-	    else 
-		return dancer.gridX;
-	}
+        // gets the coordinate of dancer (gridX or gridY) in its left-right direction
+        function dancerGetCrossCoordinate(dancer) {
+            if (isFacingHeads(dancer))
+                return dancer.gridY;
+            else 
+                return dancer.gridX;
+        }
 
         // a deep copy (which is also a shallow copy) of a dancer (used to make a deep copy of the floor)
         function copyDancer(dancer) {
@@ -321,15 +321,16 @@
         }
 
         // returns a list of dancers such that they are 'partnered up' 
-	// this means that ever even entry A is standing next to A+1
-	// If they are facing a positive direction (HORTH or EAST) then 
-	// it is also the case that the even entries oare the BEAUs and the odd the BELLEs
+        // this means that ever even entry A is standing next to A+1
+        // If they are facing a positive direction (HORTH or EAST) then 
+        // it is also the case that the even entries oare the BEAUs and the odd the BELLEs
         function floorSortForPartners(floor) {
-            if (isFacingHeads(srtDancers[0]))
+            if (isFacingHeads(floor.dancers[0]))
                 floor.dancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX)); // sort by Y A->Z then X A->Z
             else 
                 floor.dancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY)); // sort by X A->Z then Y Z->A
-	    floor.sorted=true;
+            floor.sorted=true;
+	    return floor.dancers;	// TODO remove ultimately
         }
 
         function cmpOrder(val1, val2) {
@@ -339,8 +340,8 @@
         }
 
         function floorLineLen(floor, start = 0) {
-	    console.assert(floor.sorted);
-	
+            console.assert(floor.sorted);
+        
             let gridY = dancerFacingDirection(floor.dancers[start]);
             let ret = 1;
             for(let i = start+1; i < srtDancers.length; i++) {
@@ -441,7 +442,7 @@
 
         function passTheOcean(box) {
             for(let beau of [box[0], box[2]])  {
-		moveDancer(beau, 4, 1, -1);
+                dancerMove(beau, 4, 1, -1);
             }
             
             for(let belle of [box[1], box[3]])  {
@@ -510,7 +511,7 @@
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 6 && srtDancers[0].rotation == 3)  {
 
-                srtDancers = sortForPartners(floor)
+                srtDancers = floorSortForPartners(floor)
                 for(let i = 2; i < 10; i++)
                     stepForward(srtDancers[i], 2);
             }
@@ -527,7 +528,7 @@
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 6 && srtDancers[0].rotation == 3)  {
 
-                srtDancers = sortForPartners(floor)
+                srtDancers = floorSortForPartners(floor)
                 for(let i = 2; i < 10; i += 2)
                     trade(srtDancers[i], srtDancers[i+1]);
             }
@@ -763,7 +764,7 @@
         }
 
         function doBoysRun(floor) {
-            let srtDancers = sortForPartners(floor)
+            let srtDancers = floorSortForPartners(floor)
             for(let i = 0; i < 12; i+=2) {
                 swapPos(srtDancers[i], srtDancers[i+1]);
                 if (srtDancers[i].isBoy)
@@ -925,7 +926,7 @@
         /* MainStream calls */
 
         function doHinge(floor) {
-            let srtDancers = sortForPartners(floor)
+            let srtDancers = floorSortForPartners(floor)
             for(let dancer of floor.dancers) {
                 stepForward(dancer, 1);
                 slideRight(dancer, 1);
@@ -942,7 +943,7 @@
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 6 && srtDancers[0].rotation == 3)  {
 
-                srtDancers = sortForPartners(floor)
+                srtDancers = floorSortForPartners(floor)
                 for(let dancer of srtDancers)
                     stepForward(dancer, 2);
 
@@ -955,7 +956,7 @@
         }
 
         function doTrade(floor) {
-            let srtDancers = sortForPartners(floor)
+            let srtDancers = floorSortForPartners(floor)
             for(let i = 0; i < 12; i+=2)
                 trade(srtDancers[i], srtDancers[i+1]);
         }
@@ -1089,6 +1090,10 @@
 
         function doCall(call) {
             console.log("doCall", call);
+            if (call == "t") {
+                 doTest();
+                 return;
+            }
             if (call == "reset") {
                 callListSpan.innerHTML = "";
                 resetFloor(floor);
@@ -1190,6 +1195,14 @@
         };
         let audioCtx;
 
+        /********************************************************************/
+        /********************************************************************/
+        // TESTING    Called by the 't' command to allow quick unit testing
+
+        function doTest() {
+            doCall("reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt");
+            messageSpan.innerHTML = "<b>" + "Finished Testing" + "</b>";
+        }
     </script>
 </body>
 
