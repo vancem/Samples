@@ -83,7 +83,6 @@
         calls["h sq4"] = doHeadsSquareThru4;
         calls["c circ"] = doCentersCirculate;
         calls["e circ"] = doEndsCirculate;
-        calls["c pt"] = doCentersPassThru;
         calls["c sq3"] = doCentersSquareThru3;
         calls["c td"] = doCentersTrade;
         calls["st"] = doSwingThru;
@@ -544,23 +543,6 @@
             }
         }
 
-        function doCentersPassThru(floor) {
-
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
-
-                srtDancers = floorSortForPartners(floor)
-                for(let i = 2; i < 10; i++)
-                    stepForward(srtDancers[i], 2);
-            }
-            else
-                throw "Formation Wrong for Centers pass thru";
-        }
-
         function doCentersSquareThru3(floor) {
 
             // sort bottom first to top then left to right
@@ -578,10 +560,10 @@
                 throw "Formation Wrong for Centers Square Thru 3";
         }
 
-        function doRightAndLeftThru(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPosAndDir(box[0], box[2]);
-                swapPosAndDir(box[1], box[3]);
+        function doRightAndLeftThru(floor, dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+                swapPosAndDir(box[0], box[3]);
+                swapPosAndDir(box[1], box[2]);
             }
         }
 
@@ -835,14 +817,9 @@
             }
         }
 
-        function doStarThru(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPos(box[0], box[3]);
-                swapPos(box[1], box[2])
-                
-                for(let dancer of box) 
-                    rotateCCW(dancer, dancer.isBoy?-1:1);
-            }
+        function doStarThru(floor, dancers) {
+            for (let dancer of dancers) 
+                dancerMove(dancer, 2, 0, dancer.isBoy ? -1 : 1);
         }
 
         function doPassThru(floor, dancers) {
@@ -1007,10 +984,10 @@
                 throw "Formation Wrong for Pass To The Center";
         }
 
-        function doTrade(floor) {
-            let srtDancers = floorSortForPartners(floor)
-            for(let i = 0; i < 12; i+=2)
-                trade(srtDancers[i], srtDancers[i+1]);
+        function doTrade(floor, dancers) {
+            for(let i = 0; i < dancers.length; i+=2)  {
+                trade(dancers[i], dancers[i+1]);
+            }
         }
 
         function doRecycle(floor) {
@@ -1224,7 +1201,7 @@
                     
                 let callFtn = calls[call];
                 if (!callFtn) {
-                     logError("Error Executing Call: " + err);
+                     logError("Error, Unknownn call : " + call);
                      return false;
                 }
 
