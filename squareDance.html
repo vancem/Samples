@@ -187,6 +187,11 @@
              dancer.rotation = (dancer.rotation + rotateCCWDelta) % 4;
         }
 
+	// returns the amount to add (+1 or -1) to step forward
+	function dancerForwardValue(dancer) {
+            return (dancer.rotation == NORTH || dancer.rotation == EAST) ? 1 : -1;
+	}
+
         // gets the coordinate of dancer (gridX or gridY) in its facing direction
         function dancerGetFacingCoordinate(dancer) {
             if (isFacingHeads(dancer))
@@ -329,9 +334,21 @@
                 floor.dancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX)); // sort by Y A->Z then X A->Z
             else 
                 floor.dancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY)); // sort by X A->Z then Y Z->A
-            floor.sorted=true;
-	    return floor.dancers;	// TODO remove ultimately
+            return floor.dancers;    // TODO remove ultimately
         }
+
+	// returns true if the dancer is facing out of the entire formation
+	function floorFacingOut(floor, dancer) {
+	    // bounds of the formation in the facing direction
+	    let minFacing = dancerGetFacingCoordinate(dancers[0]);
+	    let maxFacing = dancerGetFacingCoordinate(dancers[dancers.length-1]);
+
+	    // step forward tentatively
+	    let stepForward = dancerGetFacingCoordinate(dancer) + dancerForwardValue(dancer);
+
+	    // did we leave the formation?
+	    return stepforward < minFacing || maxFacing < stepForward;
+	}
 
         function cmpOrder(val1, val2) {
             if (val1 != 0)
@@ -352,13 +369,21 @@
             return ret;
         }
 
+	// given a designatore (e.g. c = centers, e = ends, v = very centers, h = heads, s = sides) 
+        // return an array of those dancers
+	function floorGetDancers(designator) {
+            console.assert(srtDancers.length == 12);
+	}
+
+
         // get boxes from the floor.  A box is an array that orders 
         // its elements like this
         //    3 2
         //    0 1
         // where the dancers are facing north or south (never east or west)
         function getBoxes(floor) {
-
+	    floorSortForPartners(floor); 
+ 
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
             srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
@@ -392,7 +417,9 @@
 
         // returns dancers in 3 lines of 4.   First line is at the bottom
         function getLinesOf4(floor) {
+	    floorSortForPartners(floor); 
 
+	
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
             srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
@@ -884,6 +911,29 @@
             }
         }
 
+        function doStretchFerrisWheel(floor) {
+            let lines = getLinesOf4(floor);
+	    for(let line of lines) {
+	        require2Faced(line);
+                for(let beau of [line[0], line[3]]) {
+		     if (floorFacingOut(floor, beau)) {
+			
+		     }
+		     else {
+			
+		     }
+		}
+                for(let belle of [line[1], line[2]]) {
+		     if (floorFacingOut(floor, belle)) {
+			
+		     }
+		     else {
+		     }
+		}
+		
+	    }
+	}
+
         function doFerrisWheel(floor) {
 
             // sort bottom first to top then left to right
@@ -892,7 +942,6 @@
         
             let horzLen = horzLineLen(srtDancers)
             if (horzLen == 3 && srtDancers[0].rotation == 1)  {
-
                 // boys facing out of square
                 for(let beau of [srtDancers[0], srtDancers[11]]) {
                     stepForward(beau)
