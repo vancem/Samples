@@ -1009,7 +1009,7 @@
                 drawFloor(floor, mainCanvas);
                 drawFloor(undefined, prevCanvas);
                 messageSpan.innerHTML = "Reset!";
-                return;
+                return true
             }
             else if (call == "undo") {
                 if (0 < callHistory.length) {
@@ -1030,31 +1030,28 @@
                     else 
                         drawFloor(undefined, prevCanvas);
                 }
-                else 
+                else {
                     logError("Nothing to undo");
-                return;
+                    return false;
+                }
+                return true;
             }
 
             let cmdFtn = commands[call];
             if (cmdFtn == undefined) {
-                if (0 <= call.indexOf(" ")) {
-                    let calls = call.split(/\s+/);
-                    for(let i = 0; i < calls.length; i++) {
-                        let subCall = calls[i];
-                        // h sq4 to work by recognising that h space is part of the next command
-                        if (subcall.length == 1 && "hsbgce".includes(subCall) && i+1 < calls.length) {
-                            subCall += " " + calls[i+1];
-                            i++;
-                        }
-                        if (!doCall(subCall))
+                // map spaces to ~ in things like "h sq4" so they look like a single call.
+                let calls = call.replace(/\b([hsbgce]) /g, "$1~").split(/\s+/);
+                if (1 < calls.length) {
+                    for(let subCall of calls) {
+                        if (!doCall(subCall.replace(/~/g, " ")))  // remove the ~ we used to rep a space
                             return false;
                     }
-                    return true;
                 }
                 else {
                     logError("Unrecognised Call: " + call);
                     return false;
                 }
+                return true;
             }
 
             let startFloor;
