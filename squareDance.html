@@ -27,8 +27,8 @@
         
     </ul> <ul>
         <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()"> 
-             <button onClick="doCall('reset')">reset</button>
-             <button onClick="doCall('undo')">undo</button>
+             <button onClick="doCommand('reset')">reset</button>
+             <button onClick="doCommand('undo')">undo</button>
         </li>
         <li> Message: <span id=message></span> </li>
     </ul>
@@ -75,50 +75,50 @@
         const EAST = 3;
 
         // commands maps call names to the method that performs it
-        // used in doCall
-        const commands = {};
-        commands["h pto"] = doHeadsPassTheOcean;
-        commands["h lr"] = doHeadsLeadRight;
-        commands["h pto"] = doHeadsPassTheOcean;
-        commands["h sq4"] = doHeadsSquareThru4;
-        commands["c circ"] = doCentersCirculate;
-        commands["e circ"] = doEndsCirculate;
-        commands["c pt"] = doCentersPassThru;
-        commands["c sq3"] = doCentersSquareThru3;
-        commands["c td"] = doCentersTrade;
-        commands["st"] = doSwingThru;
-        commands["sq4"] = doSquareThru4;
-        commands["ex"] = doExtend;
-        commands["home"] = doHome;
-        commands["rlt"] = doRightAndLeftThru;
-        commands["vl"] = doVeerLeft;
-        commands["btl"] = doBendTheLine;
-        commands["srt"] = doStarThru;
-        commands["sl"] = doStarThru;
-        commands["pt"] = doPassThru;
-        commands["tb"] = doTradeBy;
-        commands["stw"] = doStepToAWave;
-        commands["br"] = doBoysRun;
-        commands["ptd"] = doTrade;
-        commands["sb"] = doTrade;;
-        commands["sq3"] = doTrade;;
-        commands["utb"] = doTurnBack;
-        commands["cdtl"] = doChainDownTheLine;
-        commands["pto"] = doPassTheOcean;
-        commands["fl"] = doFlutterWheel;
-        commands["rfl"] = doReverseFlutterWheel;
-        commands["tq"] = doTouchAQuarter;
-        commands["circ"] = doCirculate;
-        commands["hinge"] = doHinge;
-        commands["fw"] = doFerrisWheel;
-        commands["sfw"] = doStretchFerrisWheel;
-        commands["ptc"] = doPassToTheCenter;
-        commands["rec"] = doRecycle;
-        commands["ht"] = doHalfTag;
+        // used in doCommand
+        const calls = {};
+        calls["h pto"] = doHeadsPassTheOcean;
+        calls["h lr"] = doHeadsLeadRight;
+        calls["h pto"] = doHeadsPassTheOcean;
+        calls["h sq4"] = doHeadsSquareThru4;
+        calls["c circ"] = doCentersCirculate;
+        calls["e circ"] = doEndsCirculate;
+        calls["c pt"] = doCentersPassThru;
+        calls["c sq3"] = doCentersSquareThru3;
+        calls["c td"] = doCentersTrade;
+        calls["st"] = doSwingThru;
+        calls["sq4"] = doSquareThru4;
+        calls["ex"] = doExtend;
+        calls["home"] = doHome;
+        calls["rlt"] = doRightAndLeftThru;
+        calls["vl"] = doVeerLeft;
+        calls["btl"] = doBendTheLine;
+        calls["srt"] = doStarThru;
+        calls["sl"] = doStarThru;
+        calls["pt"] = doPassThru;
+        calls["tb"] = doTradeBy;
+        calls["stw"] = doStepToAWave;
+        calls["br"] = doBoysRun;
+        calls["ptd"] = doTrade;
+        calls["sb"] = doTrade;;
+        calls["sq3"] = doTrade;;
+        calls["utb"] = doTurnBack;
+        calls["cdtl"] = doChainDownTheLine;
+        calls["pto"] = doPassTheOcean;
+        calls["fl"] = doFlutterWheel;
+        calls["rfl"] = doReverseFlutterWheel;
+        calls["tq"] = doTouchAQuarter;
+        calls["circ"] = doCirculate;
+        calls["hinge"] = doHinge;
+        calls["fw"] = doFerrisWheel;
+        calls["sfw"] = doStretchFerrisWheel;
+        calls["ptc"] = doPassToTheCenter;
+        calls["rec"] = doRecycle;
+        calls["ht"] = doHalfTag;
 
         // tell the user all the calls available. 
         let allCalls = []
-        for(let key in commands)
+        for(let key in calls)
             allCalls.push(key);
         allCalls.push("reset");        // add meta-calls
         allCalls.push("undo");
@@ -339,14 +339,14 @@
 
             floor.minFacing = dancerGetFacingCoordinate(floor.dancers[0]);
             floor.maxFacing = dancerGetFacingCoordinate(floor.dancers[floor.dancers.length-1]);
-            floor.sorted = true;
 
+            floor.isSorted = true;
             return floor.dancers;    // TODO remove ultimately
         }
 
         // returns true if the dancer is facing out of the entire formation
         function floorFacingOut(floor, dancer) {
-            console.assert(floor.sorted);
+            console.assert(floor.isSorted);
 
             // step forward tentatively
             let stepForward = dancerGetFacingCoordinate(dancer) + dancerForwardValue(dancer);
@@ -361,25 +361,45 @@
             return val2;
         }
 
-        function floorLineLen(floor, start = 0) {
-            console.assert(floor.sorted);
-        
-            let gridY = dancerFacingDirection(floor.dancers[start]);
-            let ret = 1;
-            for(let i = start+1; i < srtDancers.length; i++) {
-                if (dancerFacingDirection(floor.dancers[0]) != gridY)
+        function dancersLineLen(dancers, start = 0) {
+            console.assert(floor.isSorted);
+
+            let gridY = dancerGetFacingCoordinate(dancers[start]);
+            let i;
+            for(i = start+1; i < dancers.length; i++) {
+                if (dancerGetFacingCoordinate(dancers[i]) != gridY)
                     break;
-                ret++;
             }
-            return ret;
+            return i;
         }
 
         // given a designatore (e.g. c = centers, e = ends, v = very centers, h = heads, s = sides) 
         // return an array of those dancers
-        function floorGetDancers(designator) {
-            console.assert(srtDancers.length == 12);
+        function floorGetDancers(floor, designator) {
+            floorSortForPartners(floor); 
+
+            // This is one of the few places we care that we have 12 dancers
+            console.assert(floor.dancers.length == 12);
+        
+            // TODO fail if the formations are wrong for the designator (currently we blindly apply) 
+            if (designator == "v")
+                return floor.dancers.slice(4, 8);
+            if (designator == "c")
+                return floor.dancers.slice(2, 10);
+
+            return floor.dancers;
         }
 
+        function dancersGetBoxes(dancers) {
+            let lineLen = dancersLineLen(dancers);
+            
+            let ret = []
+            for(let boxI = 0; boxI < dancers.length;  boxI += 2 * lineLen) {
+                for(let i = 0; i < lineLen; i += 2)
+                    ret.push([dancers[i+boxI], dancers[i+1+boxI], dancers[lineLen+i+boxI], dancers[lineLen+i+1+boxI]]);
+            }
+            return ret;
+        }
 
         // get boxes from the floor.  A box is an array that orders 
         // its elements like this
@@ -387,7 +407,6 @@
         //    0 1
         // where the dancers are facing north or south (never east or west)
         function getBoxes(floor) {
-            floorSortForPartners(floor); 
  
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
@@ -422,8 +441,6 @@
 
         // returns dancers in 3 lines of 4.   First line is at the bottom
         function getLinesOf4(floor) {
-            floorSortForPartners(floor); 
-
         
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
@@ -490,13 +507,6 @@
             rotateCCW(dancer2, 2);
         }
         
-        function squareThru4(box) {
-            rotateCCW(box[0], 1);
-            rotateCCW(box[1], -1);
-            rotateCCW(box[2], 1);
-            rotateCCW(box[3], -1);
-        }
-
 
         /********************************************************************/
         // square dance calls that operate on the whole floor 
@@ -699,9 +709,13 @@
             }
         }
 
-        function doSquareThru4(floor) {
-            for(let box of getBoxes(floor)) 
-                squareThru4(box);
+        function doSquareThru4(floor, dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+                dancerMove(box[0], 0, 0, 1);
+                dancerMove(box[1], 0, 0, -1);
+                dancerMove(box[2], 0, 0, -1);
+                dancerMove(box[3], 0, 0, 1);
+            }
         }
 
         function doChainDownTheLine(floor) {
@@ -760,15 +774,17 @@
                 throw "Expected QuarterTag";
         }
 
-        function doFlutterWheel(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPosAndDir(box[0], box[2]);
+        function doFlutterWheel(floor, dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+                dancerMove(box[0], 2, 2, 2);
+                dancerMove(box[3], 2, 2, 2);
             }
         }
 
-        function doReverseFlutterWheel(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPosAndDir(box[1], box[3]);
+        function doReverseFlutterWheel(floor, dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+                dancerMove(box[1], 2, -2, 2);
+                dancerMove(box[2], 2, -2, 2);
             }
         }
 
@@ -829,10 +845,9 @@
             }
         }
 
-        function doPassThru(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPos(box[0], box[3]);
-                swapPos(box[1], box[2]);
+        function doPassThru(floor, dancers) {
+            for(let dancer of dancers) {
+                dancerMove(dancer, 2, 0, 0);
             }
         }
 
@@ -1122,17 +1137,36 @@
         function doCommandOnChange() {
             let call = commandTextbox.value;        
             commandTextbox.value = "";
-            doCall(call)
+            doCommand(call)
         }
 
-        function doCall(call) {
-            floor.sorted=false; 
-            console.log("doCall", call);
-            if (call == "t") {
+        function doCommand(command) {
+            console.log("doCommand", command);
+
+            if (command == "t") {
                  doTest();
                  return;
             }
-            if (call == "reset") {
+
+            while(true) {
+                let match = command.match(/^(([hsbgcev]) )?(\S+)\s*(.*)$/);
+                if (!match) 
+                    break;
+             
+                let designator = match[2];
+                let call = match[3];
+                command = match[4];
+
+                if (checkForCommand(floor, call))
+                    continue;
+
+                if (!doCall(floor, call, designator))
+                    return false;
+            }
+        }
+
+        function checkForCommand(floor, command) {
+            if (command == "reset") {
                 callListSpan.innerHTML = "";
                 floorReset(floor);
                 callHistory = [];
@@ -1141,7 +1175,8 @@
                 messageSpan.innerHTML = "Reset!";
                 return true
             }
-            else if (call == "undo") {
+
+            if (command == "undo") {
                 if (0 < callHistory.length) {
                     let prev = callHistory.pop();
                     floor = floorCopy(prev.start);
@@ -1162,28 +1197,16 @@
                 }
                 else {
                     logError("Nothing to undo");
-                    return false;
+                    return true;
                 }
                 return true;
             }
+        
+            return false;
+        }
 
-            let cmdFtn = commands[call];
-            if (cmdFtn == undefined) {
-                // map spaces to ~ in things like "h sq4" so they look like a single call.
-                let calls = call.replace(/\b([hsbgce]) /g, "$1~").split(/\s+/);
-                if (1 < calls.length) {
-                    for(let subCall of calls) {
-                        if (!doCall(subCall.replace(/~/g, " ")))  // remove the ~ we used to rep a space
-                            return false;
-                    }
-                }
-                else {
-                    logError("Unrecognised Call: " + call);
-                    return false;
-                }
-                return true;
-            }
-
+        function doCall(floor, call, designator) {
+            // Remember the starting point for the floor
             let startFloor;
             if (0 < callHistory.length)
                 startFloor = callHistory[callHistory.length-1].end;
@@ -1191,11 +1214,28 @@
                 startFloor = floorCopy(floor);
 
             try {
-                cmdFtn(floor);
+                let dancers = floorGetDancers(floor, designator);
+
+                    // TODO REMOVE after we dont have desginators in the calls
+                if (designator && calls[designator + " " + call]) {
+                    call = designator + " " + call;
+                    designator = undefined;
+                }
+                    
+                let callFtn = calls[call];
+                if (!callFtn) {
+                     logError("Error Executing Call: " + err);
+                     return false;
+                }
+
+                callFtn(floor, dancers);
+                floor.isSorted = false;
+
             } catch(err) {
                  logError("Error Executing Call: " + err);
                  return false;
             }
+
             drawFloor(floor, mainCanvas);
             messageSpan.innerHTML = "Finished Call: " + call;
             
@@ -1238,7 +1278,7 @@
         // TESTING    Called by the 't' command to allow quick unit testing
 
         function doTest() {
-            doCall("reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt");
+            doCommand("reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt");
             messageSpan.innerHTML = "<b>" + "Finished Testing" + "</b>";
         }
     </script>
