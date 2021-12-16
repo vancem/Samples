@@ -160,7 +160,7 @@
 
 	// moves a dancer in a given direction and changes its rotiation.
 	// parameters can be negative 
-        function moveDancer(dancer, forwardDelta, slideRightDelta, rotateCCWDelta) {
+        function dancerMove(dancer, forwardDelta, slideRightDelta, rotateCCWDelta) {
 	    console.assert(dancer.gridX == Math.floor(dancer.gridX));	// integer value
 	    console.assert(dancer.gridY == Math.floor(dancer.gridY));	// integer value
 		
@@ -185,6 +185,22 @@
 	     // spin the given amount
 	     rotateCCWDelta += 4;
              dancer.rotation = (dancer.rotation + rotateCCWDelta) % 4;
+	}
+
+	// gets the coordinate of dancer (gridX or gridY) in its facing direction
+	function dancerGetFacingCoordinate(dancer) {
+	    if (isFacingHeads(dancer))
+		return dancer.gridX;
+	    else 
+		return dancer.gridY;
+	}
+
+	// gets the coordinate of dancer (gridX or gridY) in its left-right direction
+	function dancerGetCrossCoordinate(dancer) {
+	    if (isFacingHeads(dancer))
+		return dancer.gridY;
+	    else 
+		return dancer.gridX;
 	}
 
         // a deep copy (which is also a shallow copy) of a dancer (used to make a deep copy of the floor)
@@ -304,23 +320,35 @@
             return ret;
         }
 
-        // returns a list of dancers such that they are 'parnered up' in that
-        // the even entries are beaus (left side dancer of a couple) and the 
-        // odd entries are the belles (right side dancer of a couple) 
-        // This lets you do calls that only involve a couple (like partner trade)
-        function sortForPartners(floor) {
-            let srtDancers = floor.dancers.slice();
+        // returns a list of dancers such that they are 'partnered up' 
+	// this means that ever even entry A is standing next to A+1
+	// If they are facing a positive direction (HORTH or EAST) then 
+	// it is also the case that the even entries oare the BEAUs and the odd the BELLEs
+        function floorSortForPartners(floor) {
             if (isFacingHeads(srtDancers[0]))
-                srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
+                floor.dancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX)); // sort by Y A->Z then X A->Z
             else 
-                srtDancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY));
-            return srtDancers;
+                floor.dancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY)); // sort by X A->Z then Y Z->A
+	    floor.sorted=true;
         }
 
         function cmpOrder(val1, val2) {
             if (val1 != 0)
                 return val1;
             return val2;
+        }
+
+        function floorLineLen(floor, start = 0) {
+	    console.assert(floor.sorted);
+	
+            let gridY = dancerFacingDirection(floor.dancers[start]);
+            let ret = 1;
+            for(let i = start+1; i < srtDancers.length; i++) {
+                if (dancerFacingDirection(floor.dancers[0]) != gridY)
+                    break;
+                ret++;
+            }
+            return ret;
         }
 
         // get boxes from the floor.  A box is an array that orders 
