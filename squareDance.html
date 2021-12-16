@@ -131,7 +131,7 @@
         // we don't consider to be part of the model
         
         // create the initial floor (squared set)
-        let floor = resetFloor();
+        let floor = floorReset();
         
         // keeps track of calls we made, it is the model for the 'Call History' part of the GUI
         let callHistory = [];
@@ -270,7 +270,7 @@
         // operations on the floor
         // the floor consists of a set of (in our case 12) dancers 
 
-        function resetFloor(floor) {
+        function floorReset(floor) {
             if (floor == undefined)
                  floor = {};
             floor.dancers = [];
@@ -285,7 +285,7 @@
         }
 
         // makes a deep copy of the floor.  
-        function copyFloor(floor) {
+        function floorCopy(floor) {
             let ret = {}
             ret.dancers = [];
             for(let dancer of floor.dancers)
@@ -471,7 +471,7 @@
         /********************************************************************/
 
         function doHome(floor) {
-            resetFloor(floor);
+            floorReset(floor);
         }
 
         /*******************************/
@@ -1096,7 +1096,7 @@
             }
             if (call == "reset") {
                 callListSpan.innerHTML = "";
-                resetFloor(floor);
+                floorReset(floor);
                 callHistory = [];
                 drawFloor(floor, mainCanvas);
                 drawFloor(undefined, prevCanvas);
@@ -1106,7 +1106,7 @@
             else if (call == "undo") {
                 if (0 < callHistory.length) {
                     let prev = callHistory.pop();
-                    floor = copyFloor(prev.start);
+                    floor = floorCopy(prev.start);
                     messageSpan.innerHTML = "Undid: <b>" + prev.call + "</b>";
                         
                     callListSpan.innerHTML = "";
@@ -1150,7 +1150,7 @@
             if (0 < callHistory.length)
                 startFloor = callHistory[callHistory.length-1].end;
             else 
-                startFloor = copyFloor(floor);
+                startFloor = floorCopy(floor);
 
             try {
                 cmdFtn(floor);
@@ -1161,7 +1161,7 @@
             drawFloor(floor, mainCanvas);
             messageSpan.innerHTML = "Finished Call: " + call;
             
-            callHistory.push({ start:startFloor, call:call, end:copyFloor(floor) });
+            callHistory.push({ start:startFloor, call:call, end:floorCopy(floor) });
             drawFloor(startFloor, prevCanvas);
 
             callListSpan.innerHTML += call + "<br>";
