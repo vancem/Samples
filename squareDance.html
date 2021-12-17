@@ -184,28 +184,6 @@
             return ret;
         }
 
-        function stepForward(dancer, delta = 1) {
-            if (dancer.rotation == SOUTH || dancer.rotation == WEST)
-                delta = -delta;
-
-            if (dancer.rotation == NORTH || dancer.rotation == SOUTH)
-                dancer.gridY += delta;
-            else 
-                dancer.gridX += delta;
-        }
-
-        function slideRight(dancer, delta = 1) {
-            rotateCCW(dancer, -1);
-            stepForward(dancer, delta);
-            rotateCCW(dancer, 1);
-        }
-
-        function rotateCCW(dancer, numCCWQuarter) {
-             if (numCCWQuarter < 0)
-                 numCCWQuarter += 4;
-             dancer.rotation = (dancer.rotation + numCCWQuarter) % 4;
-        }
-
         function isSides(dancer) {
             return dancer.number == 3 || dancer.number == 6;
         }
@@ -240,6 +218,14 @@
             dancer1.gridY = dancer2.gridY;
             dancer2.gridY = temp;
         }
+
+        function trade(dancer1, dancer2) {
+            swapPos(dancer1, dancer2)
+            moveDancer(dancer1, 0, 0, 2);
+            moveDancer(dancer2, 0, 0, 2);
+        }
+
+
 
         /********************************************************************/
         /********************************************************************/
@@ -289,39 +275,13 @@
 
             // create the girl dancer
             let girl = { isBoy:false, number:number, rotation:rotation, gridX:gridX, gridY:gridY };
-            slideRight(girl, 2);
+            dancerMove(girl, 0, 2, 0);
 
             dancers.push(girl);
         }
 
         /***********************************************************************/
         // Operations for figuring out what formation you have
-
-        function horzLineLen(srtDancers, start = 0) {
-            console.assert(srtDancers.length == 12);
-            let gridY = srtDancers[start].gridY
-            let ret = 1;
-            for(let i = start+1; i < srtDancers.length; i++) {
-                if (srtDancers[i].gridY != gridY)
-                    break;
-                ret++;
-            }
-            return ret;
-        }
-
-        // returns a list of dancers such that they are 'partnered up' 
-        // this means that ever even entry A is standing next to A+1
-        // If they are facing a positive direction (HORTH or EAST) then 
-        // it is also the case that the even entries oare the BEAUs and the odd the BELLEs
-        function floorSortForPartners(floor) {
-            if (isFacingHeads(floor.dancers[0]))
-                floor.dancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX)); // sort by Y A->Z then X A->Z
-            else 
-                floor.dancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY)); // sort by X A->Z then Y Z->A
-
-            floor.minFacing = dancerGetFacingCoordinate(floor.dancers[0]);
-            floor.maxFacing = dancerGetFacingCoordinate(floor.dancers[floor.dancers.length-1]);
-        }
 
         // returns true if the dancer is facing out of the entire formation
         function floorFacingOut(floor, dancer) {
@@ -353,59 +313,83 @@
         // given a designatore (e.g. c = centers, e = ends, v = very centers, h = heads, s = sides) 
         // return an array of those dancers
         function floorGetDancers(floor, designator) {
-            floorSortForPartners(floor); 
 
-            if (!designator)
-                return floor.dancers;
+            let dancers = floor.dancers;
+            let isDesignatedHeadsOrSides = false;
+
+            if (designator == "h") {
+                dancers = [];
+                for(let dancer of floor.dancers) {
+                    if (isHeads(dancer)) {
+                        dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
+                        dancers.push(dancer)
+                    }
+                }
+                isDesignatedHeadsOrSides = true;
+            }
+            else if (designator == "s") {
+                dancers = [];
+                for(let dancer of floor.dancers) {
+                    if (isSides(dancer)) {
+                        dancer.gridX += (0 < dancer.gridX) ? -4 : 4;
+                        dancers.push(dancer)
+                    }
+                }
+                isDesignatedHeadsOrSides = true;
+            }
+
+            // Sort the dancers so that all couples are next to each other.  couples go from FLOOR left to right
+            // (thus sashayed couples might be surprising)
+            
+            if (isFacingHeads(dancers[0]))
+                dancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX)); // sort by Y A->Z then X A->Z
+            else 
+                dancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY)); // sort by X A->Z then Y Z->A
+
+            floor.minFacing = dancerGetFacingCoordinate(dancers[0]);
+            floor.maxFacing = dancerGetFacingCoordinate(dancers[dancers.length-1]);
+                
+            if (isDesignatedHeadsOrSides || !designator)
+                return dancers;
 
             // This is one of the places we care that we have 12 dancers
-            console.assert(floor.dancers.length == 12);
+            console.assert(dancers.length == 12);
 
             // TODO fail if the formations are wrong for the designator (currently we blindly apply) 
 
-            let lineLen = dancersLineLen(floor.dancers);
+            let lineLen = dancersLineLen(dancers);
             if (designator == "v") {
                 if (lineLen == 2)
-                    return floor.dancers.slice(4, 8);
+                    return dancers.slice(4, 8);
                 else
                     throw "Can't Determine Very Centers.";
             }
             if (designator == "c") {
                 if (lineLen == 2)
-                    return floor.dancers.slice(2, 10);
+                    return dancers.slice(2, 10);
                 else if (lineLen == 4)
-                    return [ floor.dancers[1], floor.dancers[2], floor.dancers[5], floor.dancers[6], floor.dancers[9], floor.dancers[10] ];
+                    return [ dancers[1], dancers[2], dancers[5], dancers[6], dancers[9], dancers[10] ];
                 else if (lineLen == 6) 
-                    return floor.dancers.slice(1, 5).concat(floor.dancers.slice(7, 11));
+                    return dancers.slice(1, 5).concat(dancers.slice(7, 11));
                 else
                     throw "Can't Determine Centers.";
             }
             if (designator == "e") {
                 if (lineLen == 2)
-                    return [ floor.dancers[0], floor.dancers[1], floor.dancers[10], floor.dancers[11] ];
+                    return [ dancers[0], dancers[1], dancers[10], dancers[11] ];
                 else if (lineLen == 4)
-                    return [ floor.dancers[0], floor.dancers[3], floor.dancers[4], floor.dancers[7], floor.dancers[8], floor.dancers[11] ];
+                    return [ dancers[0], dancers[3], dancers[4], dancers[7], dancers[8], dancers[11] ];
                 else if (lineLen == 6)
-                    return [ floor.dancers[0], floor.dancers[5], floor.dancers[6], floor.dancers[11]];
+                    return [ dancers[0], dancers[5], dancers[6], dancers[11]];
                 else
                     throw "Can't Determine Ends.";
-            }
-            if (designator == "h") {
-                let ret = []        
-                for(let dancer of floor.dancers) {
-                    if (isHeads(dancer)) {
-                        dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
-                        ret.push(dancer)
-                    }
-                }
-                return ret;
             }
             throw "Unsupported Designator " + designator;
         }
 
         function dancersGetBoxes(dancers) {
             let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2 && lineLen != 6)
+            if (lineLen % 2 != 0 || dancers.length % (lineLen * 2) != 0)
                 throw "Bad formation (can't find boxes).";
             
             let ret = []
@@ -425,42 +409,8 @@
         }
 
         /*******************************************************************/
-        /* other operations that are not square dance calls */
-
-        function moveHeadsInIfNecessary(floor) {
-        
-            for(let dancer of floor.dancers) 
-                if (isHeads(dancer) && Math.abs(dancer.gridY) == 3)
-                    stepForward(dancer, 2);
-        }
-
-        /*******************************************************************/
         /*                        SQUARE DANCE CALLS                       */
 
-        /********************************************************************/
-        // square dance calls that operate on boxes or lines  or couples ...
-
-        function passTheOcean(box) {
-            for(let beau of [box[0], box[2]])  {
-                dancerMove(beau, 4, 1, -1);
-            }
-            
-            for(let belle of [box[1], box[3]])  {
-                stepForward(belle, 2);
-                slideRight(belle, -1);
-                rotateCCW(belle, 1);
-            }
-        }
-
-        function trade(dancer1, dancer2) {
-            swapPos(dancer1, dancer2)
-            rotateCCW(dancer1, 2);
-            rotateCCW(dancer2, 2);
-        }
-        
-
-        /********************************************************************/
-        // square dance calls that operate on the whole floor 
         /********************************************************************/
 
         function doHome(floor) {
@@ -471,25 +421,10 @@
         /* Basic 1 calls */
 
         function doLeadRight(floor, dancers) {
-            for(let dancer of dancers) {
-                if (isHeads(dancer)) {
-                    // TODO this is incorrect but we are starting from squared sets so it should work
-                    if (dancer.isBoy) {
-                        stepForward(dancer, 2);
-                        slideRight(dancer, 2);
-                    }                
-                    rotateCCW(dancer, -1);
-                }
-            }
-        }
-
-        function doHeadsSquareThru4(floor) {
-
-            moveHeadsInIfNecessary(floor);
-
-            for(let dancer of floor.dancers) {
-                if (isHeads(dancer))
-                    rotateCCW(dancer, dancer.isBoy?1:-1);
+            for(let i = 0; i < dancers.length; i++) {
+                let dancer = dancers[i];
+                let beauFactor = (dancer.isBoy ? 1 : 0)           // TODO this should not be sex base.
+                dancerMove(dancers[i], 2*beauFactor, 2*beauFactor, -1);
             }
         }
 
@@ -553,49 +488,17 @@
         /*******************************/
         /* Basic 2 calls */
 
-        function doHeadsPassTheOcean(floor) {
-            moveHeadsInIfNecessary(floor);
-            
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-
-            passTheOcean([srtDancers[1], srtDancers[2], srtDancers[8], srtDancers[7]]);
-            passTheOcean([srtDancers[3], srtDancers[4], srtDancers[10], srtDancers[9]]);
-        }
-
         function doExtend(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
             let lineLen2 = dancersLineLen(dancers, 2);
             if (lineLen == 2 && lineLen2 == 4) {
                 for(let i = 0; i < dancers.length; i++) { 
                     dancerMove(dancers[i], 
-        		((i <= 1 || 10 <= i) ? 1 : 2),                    // every but ends move forward
+                        ((i <= 1 || 10 <= i) ? 1 : 2),                    // every but ends move forward
                         ((i == 0 || i == dancers.length-1) ? -2 : 0), 0);  // only end on the left slides over 2
                 }
             }
             else
-                throw "Expected QuarterTag";
-        }
-
-        function doExtendOLD(floor) {
-
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-
-            let horzLen = horzLineLen(srtDancers)
-            let horzLen2 = horzLineLen(srtDancers, 2);
-            if (horzLen == 2 && horzLen2 == 4) {
-                srtDancers.sort((a, b) => cmpOrder(a.gridX-b.gridX, b.gridY-a.gridY));
-
-                for(let i = 0; i < srtDancers.length; i++) { 
-                    stepForward(srtDancers[i], (i <= 1 || 10 <= i) ? 1 : 2);
-                    if (i == 0 || i == srtDancers.length-1)
-                        slideRight(srtDancers[i], -2);
-                }
-            }
-            else 
                 throw "Expected QuarterTag";
         }
 
@@ -755,7 +658,7 @@
                 swapPos(box[0], box[2]);
                 swapPos(box[1], box[3]);
                 for(let dancer of box)
-		    dancerMove(dancer, 0, 0, -1);
+                    dancerMove(dancer, 0, 0, -1);
             }
         }
 
@@ -1073,8 +976,6 @@
         function getCallFtns() {
             let ret = {};
             ret["lr"] = doLeadRight;
-            ret["h pto"] = doHeadsPassTheOcean;
-            ret["h sq4"] = doHeadsSquareThru4;
             ret["st"] = doSwingThru;
             ret["sq4"] = doSquareThru4;
             ret["ex"] = doExtend;
