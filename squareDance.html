@@ -936,10 +936,10 @@
             }
         }
 
-        function doTouchAQuarter(floor) {
-            for(let box of getBoxes(floor)) {
-                swapPos(box[0], box[3]);
-                swapPos(box[1], box[2]);
+        function doTouchAQuarter(floor, dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+                swapPos(box[0], box[2]);
+                swapPos(box[1], box[3]);
                 for(let dancer of box)
                     rotateCCW(dancer, -1);
             }
@@ -950,9 +950,9 @@
             let lines = dancersGetLinesOf4(dancers) 
             for(let i = 0; i < lines.length; i++)  {
                 let line = lines[i];
-        	let dancerStretch = stretch;
-        	if (stretch == 5 && i == 1)	// For stretch ferris wheel, the middle group is not stretched.
-        	    dancerStretch = 3;
+                let dancerStretch = stretch;
+                if (stretch == 5 && i == 1)        // For stretch ferris wheel, the middle group is not stretched.
+                    dancerStretch = 3;
 
                 for(let beau of [line[0], line[3]]) {
                     if (floorFacingOut(floor, beau)) 
@@ -978,26 +978,6 @@
         }
         function doWheelAndDeal(floor, dancers) {
             doWheelFamily(floor, dancers, 1);
-        }
-
-        function doFerrisWheelOld(floor, dancers) {
-            let lines = dancersGetLinesOf4(dancers) 
-            for(let line of lines) {
-                // require2Faced(line);
-                for(let beau of [line[0], line[3]]) {
-                    if (floorFacingOut(floor, beau)) 
-                        dancerMove(beau, 1, 4, 2);
-                    else 
-                        dancerMove(beau, 3, 4, 2);
-                }
-                for(let belle of [line[1], line[2]]) {
-                    if (floorFacingOut(floor, belle))
-                        dancerMove(belle, 1, 0, 2);
-                    else 
-                        dancerMove(belle, 3, 0, 2);
-                }
-            }
-           floor.sweepCCW = -1;        // only for centers
         }
 
         /*******************************/
