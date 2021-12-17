@@ -392,7 +392,7 @@
                 let ret = []        
                 for(let dancer of floor.dancers) {
                     if (isHeads(dancer)) {
-        		dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
+                        dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
                         ret.push(dancer)
                     }
                 }
@@ -503,26 +503,10 @@
         /*******************************/
         /* Basic 1 calls */
 
-        function doHeadsLeadRight(floor) {
-
-            moveHeadsInIfNecessary(floor);
-
-            for(let dancer of floor.dancers) {
-                if (isHeads(dancer)) {
-        	    // TODO this is incorrect but we are starting from squared sets so it should work
-                    if (dancer.isBoy) {
-                        stepForward(dancer, 2);
-                        slideRight(dancer, 2);
-                    }                
-                    rotateCCW(dancer, -1);
-                }
-            }
-        }
-
         function doLeadRight(floor, dancers) {
             for(let dancer of dancers) {
                 if (isHeads(dancer)) {
-        	    // TODO this is incorrect but we are starting from squared sets so it should work
+                    // TODO this is incorrect but we are starting from squared sets so it should work
                     if (dancer.isBoy) {
                         stepForward(dancer, 2);
                         slideRight(dancer, 2);
@@ -669,7 +653,7 @@
 
         function doVeerLeft(floor, dancers) {
             for(let dancer of dancers) 
-        	dancerMove(dancer, 1, -2, 0);
+                dancerMove(dancer, 1, -2, 0);
         }
 
         function doSquareThru4(floor, dancers) {
@@ -691,9 +675,9 @@
             floor.sweepCCW = 1;
         }
 
-        function doTurnBack(floor) {
-            for(let dancer of floor.dancers)
-                rotateCCW(dancer, 2);
+        function doTurnBack(floor, dancers) {
+            for(let dancer of dancers)
+                dancerMove(dancer, 0, 0, 2);
         }
 
         /*******************************/
@@ -975,7 +959,7 @@
             
             // everyone passes through
             for(let dancer of dancers) 
-        	dancerMove(dancer, 2, 0, 0);
+                dancerMove(dancer, 2, 0, 0);
 
             // The ends need to partner trade 
             // remember you have to use the STARTING index 
