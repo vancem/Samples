@@ -321,8 +321,6 @@
 
             floor.minFacing = dancerGetFacingCoordinate(floor.dancers[0]);
             floor.maxFacing = dancerGetFacingCoordinate(floor.dancers[floor.dancers.length-1]);
-
-            return floor.dancers;    // TODO remove ultimately
         }
 
         // returns true if the dancer is facing out of the entire formation
@@ -534,62 +532,27 @@
             floor.sweepCCW = 1;
         }
 
+        function doCirculate(floor, dancers) {
 
-        function doCentersCirculate(floor) {
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 3 && isFacingSides(srtDancers[0]))  {        // Three vertical lines
-                let minX = srtDancers[0].gridX;
-                let maxX = srtDancers[11].gridX;
-                let delta = (maxX - minX) / 2;
-                
-                for(let i = 3; i < 9; i++) {
-                    let dancer = srtDancers[i];
-                    let inc = (dancer.rotation == 1) ? -delta : delta;
+            // figure out how far to walk forward
+            let lineLen = dancersLineLen(dancers);
+            let peopleInLine = dancers.length / lineLen;
+            let delta = Math.abs(floor.maxFacing - floor.minFacing) / (peopleInLine-1);
 
-                    if (dancer.gridX == minX  && dancer.rotation == 1 ||   // min heading left
-                        dancer.gridX == maxX  && dancer.rotation == 3) {   // max heading right
-                        rotateCCW(dancer, 2);
-                        dancer.gridY = -dancer.gridY;
-                    }
-                    else
-                        dancer.gridX += inc;
-                }
+            for(let dancer of dancers) {
+        	if (floorFacingOut(floor, dancer)) {
+        	    if (isFacingHeads(dancer)) 
+        		dancer.gridX = -dancer.gridX; 	// flip the other side
+        	    else 
+        		dancer.gridY = -dancer.gridY; 	// flip the other side
+        	    dancerMove(dancer, 0, 0, 2);	// flip direction
+        	}
+        	else 
+        	    dancerMove(dancer, delta, 0, 0);
             }
         }
 
-        function doEndsCirculate(floor) {
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 3 && isFacingSides(srtDancers[0]))  {        // Three vertical lines
-                let minX = srtDancers[0].gridX;
-                let maxX = srtDancers[11].gridX;
-                let delta = (maxX - minX) / 2;
-                
-                for(let i = 0; i < srtDancers.length; i++) {
-                    if (3 <= i && i < 9)
-                        continue;
-                    let dancer = srtDancers[i];
-                    let inc = (dancer.rotation == 1) ? -delta : delta;
-
-                    if (dancer.gridX == minX  && dancer.rotation == 1 ||   // min heading left
-                        dancer.gridX == maxX  && dancer.rotation == 3) {   // max heading right
-                        rotateCCW(dancer, 2);
-                        dancer.gridY = -dancer.gridY;
-                    }
-                    else
-                        dancer.gridX += inc;
-                }
-            }
-        }
-
-        function doCirculate(floor) {
+        function doCirculateOLD(floor) {
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
             srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
@@ -1210,8 +1173,6 @@
             ret["lr"] = doLeadRight;
             ret["h pto"] = doHeadsPassTheOcean;
             ret["h sq4"] = doHeadsSquareThru4;
-            ret["c circ"] = doCentersCirculate;
-            ret["e circ"] = doEndsCirculate;
             ret["st"] = doSwingThru;
             ret["sq4"] = doSquareThru4;
             ret["ex"] = doExtend;
