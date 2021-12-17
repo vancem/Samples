@@ -806,11 +806,8 @@
                     dancerScaleFacingCoordinate(dancer, 2);
             }
 
-            for(let dancer of floor.dancers) {
-                stepForward(dancer, 1);
-                slideRight(dancer, 1);
-                rotateCCW(dancer, -1);
-            }
+            for(let dancer of floor.dancers) 
+                dancerMove(dancer, 1, 1, -1);
 
             // if we started with 3 lines of 4 we end up with two lines of 6, contract it down
             if (lineLen == 4) {
