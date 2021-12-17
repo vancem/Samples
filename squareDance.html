@@ -434,15 +434,6 @@
                     stepForward(dancer, 2);
         }
 
-        function rotateBoxCW(box) {
-            console.assert(box.length == 4);
-            let temp = box[0];
-            box[0] = box[3];
-            box[3] = box[2];
-            box[2] = box[1];
-            box[1] = temp;
-        }
-
         /*******************************************************************/
         /*                        SQUARE DANCE CALLS                       */
 
@@ -528,68 +519,6 @@
                 else 
                     dancerMove(dancer, delta, 0, 0);
             }
-        }
-
-        function doCirculateOLD(floor) {
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 3 && isFacingSides(srtDancers[0]))  {        // Three vertical lines
-                let minX = srtDancers[0].gridX;
-                let maxX = srtDancers[11].gridX;
-                let delta = (maxX - minX) / 2;
-                
-                for(let dancer of srtDancers) {
-                    let inc = (dancer.rotation == 1) ? -delta : delta;
-
-                    if (dancer.gridX == minX  && dancer.rotation == 1 ||   // min heading left
-                        dancer.gridX == maxX  && dancer.rotation == 3) {   // max heading right
-                        rotateCCW(dancer, 2);
-                        dancer.gridY = -dancer.gridY;
-                    }
-                    else
-                        dancer.gridX += inc;
-                }
-            }
-            else if (horzLen == 2 && isFacingHeads(srtDancers[0]))  {     // columns
-                let minY = srtDancers[0].gridY;
-                let maxY = srtDancers[11].gridY;
-                let delta = (maxY - minY) / (12/horzLen - 1);
-                
-                for(let dancer of srtDancers) {
-                    let inc = (dancer.rotation == 2) ? -delta : delta;
-
-                    if (dancer.gridY == minY  && dancer.rotation == SOUTH ||   // min heading down
-                        dancer.gridY == maxY  && dancer.rotation == NORTH) {   // max heading up
-                        rotateCCW(dancer, 2);
-                        dancer.gridX = -dancer.gridX;
-                    }
-                    else
-                        dancer.gridY += inc;
-                }
-            }
-            else if (horzLen == 6 && isFacingSides(srtDancers[0]))  {     // columns
-                let minX = srtDancers[0].gridX;
-                let maxX = srtDancers[11].gridX;
-                let delta = (maxX - minX) / (horzLen - 1);
-                
-                for(let dancer of srtDancers) {
-                    let inc = (dancer.rotation == 1) ? -delta : delta;
-
-                    if (dancer.gridX == minX  && dancer.rotation == WEST ||
-                        dancer.gridX == maxX  && dancer.rotation == EAST) {
-                        rotateCCW(dancer, 2);
-                        dancer.gridY = -dancer.gridY;
-                    }
-                    else
-                        dancer.gridX += inc;
-                }
-            }
-
-            else 
-                throw "Expected lines";        // TODO handle other cases
         }
 
         function doVeerLeft(floor, dancers) {
@@ -826,7 +755,7 @@
                 swapPos(box[0], box[2]);
                 swapPos(box[1], box[3]);
                 for(let dancer of box)
-                    rotateCCW(dancer, -1);
+		    dancerMove(dancer, 0, 0, -1);
             }
         }
 
