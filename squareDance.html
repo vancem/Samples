@@ -347,7 +347,7 @@
                 if (dancerGetFacingCoordinate(dancers[i]) != gridY)
                     break;
             }
-            return i;
+            return i-start;
         }
 
         // given a designatore (e.g. c = centers, e = ends, v = very centers, h = heads, s = sides) 
@@ -422,32 +422,6 @@
                 throw "Bad formation (can't find lines of 4).";
             
             return [ dancers.slice(0,4), dancers.slice(4,8), dancers.slice(8,12) ];
-        }
-
-
-        // returns dancers in 3 lines of 4.   First line is at the bottom
-        function getLinesOf4(floor) {
-        
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-
-            let ret;
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 4) {  // 3 horizontal lines of 4
-                ret = [[srtDancers[0], srtDancers[1], srtDancers[2], srtDancers[3]],
-                       [srtDancers[4], srtDancers[5], srtDancers[6], srtDancers[7]],
-                       [srtDancers[8], srtDancers[9], srtDancers[10], srtDancers[11]] ];
-            }
-            else if (horzLen == 3) {
-                ret = [[srtDancers[9], srtDancers[6], srtDancers[3], srtDancers[0]],
-                       [srtDancers[10], srtDancers[7], srtDancers[4], srtDancers[1]],
-                       [srtDancers[11], srtDancers[8], srtDancers[5], srtDancers[2]]];
-            }
-            else 
-                throw "Expected 3 lines of 4";
-
-            return ret;
         }
 
         /*******************************************************************/
@@ -661,7 +635,21 @@
             passTheOcean([srtDancers[3], srtDancers[4], srtDancers[10], srtDancers[9]]);
         }
 
-        function doExtend(floor) {
+        function doExtend(floor, dancers) {
+            let lineLen = dancersLineLen(dancers);
+            let lineLen2 = dancersLineLen(dancers, 2);
+            if (lineLen == 2 && lineLen2 == 4) {
+                for(let i = 0; i < dancers.length; i++) { 
+                    dancerMove(dancers[i], 
+        		((i <= 1 || 10 <= i) ? 1 : 2),                    // every but ends move forward
+                        ((i == 0 || i == dancers.length-1) ? -2 : 0), 0);  // only end on the left slides over 2
+                }
+            }
+            else
+                throw "Expected QuarterTag";
+        }
+
+        function doExtendOLD(floor) {
 
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
