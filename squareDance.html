@@ -162,6 +162,14 @@
                 return dancer.gridX;
         }
 
+        function dancerScaleFacingCoordinate(dancer, factor) {
+            if (isFacingHeads(dancer))
+                dancer.gridY *= factor;
+            else 
+                dancer.gridX *= factor;
+        }
+
+
         // gets the coordinate of dancer (gridX or gridY) in its left-right direction
         function dancerGetCrossCoordinate(dancer) {
             if (isFacingHeads(dancer))
@@ -385,6 +393,8 @@
 
         function dancersGetBoxes(dancers) {
             let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2 && lineLen != 6)
+                throw "Bad formation (can't find boxes).";
             
             let ret = []
             for(let boxI = 0; boxI < dancers.length;  boxI += 2 * lineLen) {
@@ -393,6 +403,15 @@
             }
             return ret;
         }
+
+        function dancersGetLinesOf4(dancers) {
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 4)
+                throw "Bad formation (can't find lines of 4).";
+            
+            return [ dancers.slice(0,4), dancers.slice(4,8), dancers.slice(8,12) ];
+        }
+
 
         // get boxes from the floor.  A box is an array that orders 
         // its elements like this
@@ -926,33 +945,43 @@
             }
         }
 
-        function doStretchFerrisWheel(floor) {
-            let lines = getLinesOf4(floor);
+        // Handles Wheel+Deal (stretch=1), Ferris Wheel(stretch=3) and Stretch Ferris Wheel (stretch=5)
+        function doWheelFamily(floor, dancers, stretch) {
+            let lines = dancersGetLinesOf4(dancers) 
             for(let i = 0; i < lines.length; i++)  {
                 let line = lines[i];
-                let stretch = 3;        // This is the amount for a normal ferris wheel
-                if (i != 1)
-                    stretch +=2;        // People on the outside lines (0, 2) go more. 
+        	let dancerStretch = stretch;
+        	if (stretch == 5 && i == 1)	// For stretch ferris wheel, the middle group is not stretched.
+        	    dancerStretch = 3;
 
-                // require2Faced(line);
                 for(let beau of [line[0], line[3]]) {
                     if (floorFacingOut(floor, beau)) 
                         dancerMove(beau, 1, 4, 2);
                     else 
-                        dancerMove(beau, stretch, 4, 2);
+                        dancerMove(beau, dancerStretch, 4, 2);
                 }
                 for(let belle of [line[1], line[2]]) {
                     if (floorFacingOut(floor, belle))
                         dancerMove(belle, 1, 0, 2);
                     else 
-                        dancerMove(belle, stretch, 0, 2);
+                        dancerMove(belle, dancerStretch, 0, 2);
                 }
             }
            floor.sweepCCW = -1;        // only for centers
         }
 
-        function doFerrisWheel(floor) {
-            let lines = getLinesOf4(floor);
+        function doStretchFerrisWheel(floor, dancers) {
+            doWheelFamily(floor, dancers, 5);
+        }
+        function doFerrisWheel(floor, dancers) {
+            doWheelFamily(floor, dancers, 3);
+        }
+        function doWheelAndDeal(floor, dancers) {
+            doWheelFamily(floor, dancers, 1);
+        }
+
+        function doFerrisWheelOld(floor, dancers) {
+            let lines = dancersGetLinesOf4(dancers) 
             for(let line of lines) {
                 // require2Faced(line);
                 for(let beau of [line[0], line[3]]) {
@@ -974,12 +1003,24 @@
         /*******************************/
         /* MainStream calls */
 
-        function doHinge(floor) {
-            let srtDancers = floorSortForPartners(floor)
+        function doHinge(floor, dancers) { 
+
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen == 6) {
+                for(let dancer of dancers) 
+                    dancerScaleFacingCoordinate(dancer, 2);
+            }
+
             for(let dancer of floor.dancers) {
                 stepForward(dancer, 1);
                 slideRight(dancer, 1);
                 rotateCCW(dancer, -1);
+            }
+
+            // if we started with 3 lines of 4 we end up with two lines of 6
+            if (lineLen == 4) {
+                 for(let dancer of dancers) 
+                     dancerScaleFacingCoordinate(dancer, 0.5);
             }
         }
 
@@ -1024,17 +1065,17 @@
             floor.sweepCCW = -1;
         }
 
-        function doHalfTag(floor) {
-            for(let line of getLinesOf4(floor)) {
-                for(let beau of [line[0], line[3]]) {
-                    stepForward(beau);
-                    rotateCCW(beau, -1);
-                    stepForward(beau)
+        function doHalfTag(floor, dancers) {
+            let lines = dancersGetLinesOf4(dancers);
+            console.log("got lines", lines);
+            for(let line of lines) {
+                console.log("got line", line);
+                for(let beau of [line[0], line[3]])  {
+                     console.log("got dancer", beau);
+                    dancerMove(beau, 1, 2, -1)
                 }
                 for(let belle of [line[1], line[2]]) {
-                    stepForward(belle, 1);
-                    rotateCCW(belle, -1);
-                    stepForward(belle, 3)
+                    dancerMove(belle, 1, 2, -1)
                 }
             }
         }
@@ -1288,6 +1329,7 @@
             ret["tq"] = doTouchAQuarter;
             ret["circ"] = doCirculate;
             ret["hinge"] = doHinge;
+            ret["whd"] = doWheelAndDeal;
             ret["fw"] = doFerrisWheel;
             ret["sfw"] = doStretchFerrisWheel;
             ret["ptc"] = doPassToTheCenter;
