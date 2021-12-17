@@ -376,15 +376,15 @@
                 if (lineLen == 2)
                     return floor.dancers.slice(2, 10);
                 else if (lineLen == 4)
-                    return [ dancers[1], dancers[2], dancers[5], dancers[6], dancers[9], dancers[10] ];
+                    return [ floor.dancers[1], floor.dancers[2], floor.dancers[5], floor.dancers[6], floor.dancers[9], floor.dancers[10] ];
                 else
                     throw "Can't Determine Centers.";
             }
             if (designator == "e") {
                 if (lineLen == 2)
-                    return [ dancers[0], dancers[1], dancers[10], dancers[11] ];
+                    return [ floor.dancers[0], floor.dancers[1], floor.dancers[10], floor.dancers[11] ];
                 else if (lineLen == 4)
-                    return [ dancers[0], dancers[3], dancers[4], dancers[7], dancers[8], dancers[11] ];
+                    return [ floor.dancers[0], floor.dancers[3], floor.dancers[4], floor.dancers[7], floor.dancers[8], floor.dancers[11] ];
                 else
                     throw "Can't Determine Ends.";
             }
@@ -829,27 +829,22 @@
             }
         }
 
-        function doBoysRun(floor) {
-            let srtDancers = floorSortForPartners(floor)
+        function doBoysRun(floor, dancers) {
             for(let i = 0; i < 12; i+=2) {
-                swapPos(srtDancers[i], srtDancers[i+1]);
-                if (srtDancers[i].isBoy)
-                    rotateCCW(srtDancers[i], 2);
+                swapPos(dancers[i], dancers[i+1]);
+                if (dancers[i].isBoy)
+                    dancerMove(dancers[i], 0, 0, 2);
                 else
-                    rotateCCW(srtDancers[i+1], 2);
+                    dancerMove(dancers[i+1], 0, 0, 2);
             }
         }
 
-        function doStepToAWave(floor) {
-            let boxes = getBoxes(floor);
-
-            for(let dancer of floor.dancers) {
-                stepForward(dancer);
-            }
-
-            for(let box of boxes) {
-                slideRight(box[0], -2);
-                slideRight(box[2], -2);
+        function doStepToAWave(floor,dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+		dancerMove(box[0], 1, -2, 0);
+		dancerMove(box[1], 1, 0, 0);
+		dancerMove(box[2], 1, 0, 0);
+		dancerMove(box[3], 1, -2, 0);
             }
         }
 
@@ -864,7 +859,24 @@
             }
         }
 
-        function doTradeBy(floor) {
+        function doTradeBy(floor, dancers) {
+		
+            let lineLen = dancersLineLen(dancers);
+	    if (lineLen != 2)
+                throw "Expected Trade By formation"
+
+            trade(dancers[0], dancers[1]);
+
+            swapPos(dancers[2], dancers[4]);
+            swapPos(dancers[3], dancers[5]);
+
+            swapPos(dancers[6], dancers[8]);
+            swapPos(dancers[7], dancers[9]);
+
+            trade(dancers[10], dancers[11]);
+/*
+
+	    
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
             srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
@@ -885,6 +897,7 @@
             swapPos(srtDancers[9], srtDancers[10]);
 
             trade(srtDancers[5], srtDancers[11]);
+*/
         }
 
         function doBendTheLine(floor) {
@@ -984,8 +997,9 @@
         /* MainStream calls */
 
         function doHinge(floor, dancers) { 
-
             let lineLen = dancersLineLen(dancers);
+
+            // we have a line of 6 we need to expand it out before doing the hinge to make space
             if (lineLen == 6) {
                 for(let dancer of dancers) 
                     dancerScaleFacingCoordinate(dancer, 2);
@@ -997,7 +1011,7 @@
                 rotateCCW(dancer, -1);
             }
 
-            // if we started with 3 lines of 4 we end up with two lines of 6
+            // if we started with 3 lines of 4 we end up with two lines of 6, contract it down
             if (lineLen == 4) {
                  for(let dancer of dancers) 
                      dancerScaleFacingCoordinate(dancer, 0.5);
@@ -1281,8 +1295,8 @@
             ret["h sq4"] = doHeadsSquareThru4;
             ret["c circ"] = doCentersCirculate;
             ret["e circ"] = doEndsCirculate;
-            ret["c sq3"] = doCentersSquareThru3;
-            ret["c td"] = doCentersTrade;
+            // ret["c sq3"] = doCentersSquareThru3;
+            // ret["c td"] = doCentersTrade;
             ret["st"] = doSwingThru;
             ret["sq4"] = doSquareThru4;
             ret["ex"] = doExtend;
@@ -1298,6 +1312,7 @@
             ret["br"] = doBoysRun;
             ret["ptd"] = doTrade;
             ret["sb"] = doTrade;;
+            ret["td"] = doTrade;;
             ret["sq3"] = doTrade;;
             ret["utb"] = doTurnBack;
             ret["cdtl"] = doChainDownTheLine;
