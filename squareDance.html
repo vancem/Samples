@@ -284,7 +284,7 @@
         // Operations for figuring out what formation you have
 
         // returns true if the dancer is facing out of the entire formation
-        function floorFacingOut(floor, dancer) {
+        function floorIsFacingOut(floor, dancer) {
 
             // step forward tentatively
             let stepForward = dancerGetFacingCoordinate(dancer) + dancerForwardValue(dancer);
@@ -444,7 +444,7 @@
             let delta = Math.abs(floor.maxFacing - floor.minFacing) / (peopleInLine-1);
 
             for(let dancer of dancers) {
-                if (floorFacingOut(floor, dancer)) {
+                if (floorIsFacingOut(floor, dancer)) {
                     if (isFacingHeads(dancer)) 
                         dancer.gridX = -dancer.gridX;         // flip the other side
                     else 
@@ -632,7 +632,7 @@
                 }
                 floor.sweepCCW = -1; // only for 2 faced, but that is the only kind possible here  TODO handle left handed
             }
-            else if (lineLen == 6 && floorFacingOut(floor, dancers[0])) {
+            else if (lineLen == 6 && floorIsFacingOut(floor, dancers[0])) {
 
                 // group them into groups of 3, in a box, box3 is the box of the groups of 3
                 // boxes are in the order
@@ -672,13 +672,13 @@
                     dancerStretch = 3;
 
                 for(let beau of [line[0], line[3]]) {
-                    if (floorFacingOut(floor, beau)) 
+                    if (floorIsFacingOut(floor, beau)) 
                         dancerMove(beau, 1, 4, 2);
                     else 
                         dancerMove(beau, dancerStretch, 4, 2);
                 }
                 for(let belle of [line[1], line[2]]) {
-                    if (floorFacingOut(floor, belle))
+                    if (floorIsFacingOut(floor, belle))
                         dancerMove(belle, 1, 0, 2);
                     else 
                         dancerMove(belle, dancerStretch, 0, 2);
