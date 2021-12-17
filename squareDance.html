@@ -388,6 +388,16 @@
                 else
                     throw "Can't Determine Ends.";
             }
+            if (designator == "h") {
+                let ret = []        
+                for(let dancer of floor.dancers) {
+                    if (isHeads(dancer)) {
+			dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
+                        ret.push(dancer)
+                    }
+                }
+                return ret;
+            }
             throw "Unsupported Designator " + designator;
         }
 
@@ -808,23 +818,39 @@
 
         function doPassTheOcean(floor, dancers) {
             for(let box of dancersGetBoxes(dancers)) {
-                for(let beau of [box[0], box[3]])  
+                for(let beau of [box[0], box[3]]) 
                     dancerMove(beau, 4, 1, -1);
-                for(let belle of [box[1], box[2]])  
+                for(let belle of [box[1], box[2]])
                     dancerMove(belle, 2, -1, 1);
-           }
+            }
         }
 
-        function doSwingThru(floor) {
-            for(let line of getLinesOf4(floor)) {
-                // ends and centers trade
-                swapPosAndDir(line[0], line[1]);
-                swapPosAndDir(line[2], line[3]);
+        function doSwingThru(floor, dancers) {
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen == 4) {
+                for(let start = 0; start < dancers.length; start += lineLen) {
+                    swapPosAndDir(dancers[start], dancers[start+1]);
+                    swapPosAndDir(dancers[start+2], dancers[start+3]);
 
-                // centers trade (note that we have to use the ORIGINAL indexes
-                // to fetch people now in the center
-                swapPosAndDir(line[0], line[3]);
+                    // centers trade (note that we have to use the ORIGINAL indexes
+                    // to fetch people now in the center
+                    swapPosAndDir(dancers[start], dancers[start+3]);
+                }
             }
+            else if (lineLen == 6) {
+                for(let start = 0; start < dancers.length; start += lineLen) {
+                    swapPosAndDir(dancers[start], dancers[start+1]);
+                    swapPosAndDir(dancers[start+2], dancers[start+3]);
+                    swapPosAndDir(dancers[start+4], dancers[start+5]);
+
+                    // centers trade (note that we have to use the ORIGINAL indexes
+                    // to fetch people now in the center
+                    swapPosAndDir(dancers[start], dancers[start+3]);
+                    swapPosAndDir(dancers[start+2], dancers[start+5]);
+                }
+            }
+            else
+                throw "Error: Expected ocean waves.";
         }
 
         function doBoysRun(floor, dancers) {
