@@ -375,6 +375,8 @@
                     return floor.dancers.slice(2, 10);
                 else if (lineLen == 4)
                     return [ floor.dancers[1], floor.dancers[2], floor.dancers[5], floor.dancers[6], floor.dancers[9], floor.dancers[10] ];
+                else if (lineLen == 6) 
+                    return floor.dancers.slice(1, 5).concat(floor.dancers.slice(7, 11));
                 else
                     throw "Can't Determine Centers.";
             }
@@ -383,6 +385,8 @@
                     return [ floor.dancers[0], floor.dancers[1], floor.dancers[10], floor.dancers[11] ];
                 else if (lineLen == 4)
                     return [ floor.dancers[0], floor.dancers[3], floor.dancers[4], floor.dancers[7], floor.dancers[8], floor.dancers[11] ];
+                else if (lineLen == 6)
+                    return [ floor.dancers[0], floor.dancers[5], floor.dancers[6], floor.dancers[11]];
                 else
                     throw "Can't Determine Ends.";
             }
@@ -540,15 +544,15 @@
             let delta = Math.abs(floor.maxFacing - floor.minFacing) / (peopleInLine-1);
 
             for(let dancer of dancers) {
-        	if (floorFacingOut(floor, dancer)) {
-        	    if (isFacingHeads(dancer)) 
-        		dancer.gridX = -dancer.gridX; 	// flip the other side
-        	    else 
-        		dancer.gridY = -dancer.gridY; 	// flip the other side
-        	    dancerMove(dancer, 0, 0, 2);	// flip direction
-        	}
-        	else 
-        	    dancerMove(dancer, delta, 0, 0);
+                if (floorFacingOut(floor, dancer)) {
+                    if (isFacingHeads(dancer)) 
+                        dancer.gridX = -dancer.gridX;         // flip the other side
+                    else 
+                        dancer.gridY = -dancer.gridY;         // flip the other side
+                    dancerMove(dancer, 0, 0, 2);        // flip direction
+                }
+                else 
+                    dancerMove(dancer, delta, 0, 0);
             }
         }
 
