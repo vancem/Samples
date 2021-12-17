@@ -806,9 +806,13 @@
            floor.sweepCCW = 1;
         }
 
-        function doPassTheOcean(floor) {
-            for(let box of getBoxes(floor)) 
-                passTheOcean(box);
+        function doPassTheOcean(floor, dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+                for(let beau of [box[0], box[3]])  
+                    dancerMove(beau, 4, 1, -1);
+                for(let belle of [box[1], box[2]])  
+                    dancerMove(belle, 2, -1, 1);
+           }
         }
 
         function doSwingThru(floor) {
@@ -820,12 +824,6 @@
                 // centers trade (note that we have to use the ORIGINAL indexes
                 // to fetch people now in the center
                 swapPosAndDir(line[0], line[3]);
-            }
-        }
-
-        function doCentersTrade(floor) {
-            for(let line of getLinesOf4(floor)) {
-                swapPosAndDir(line[1], line[2]);
             }
         }
 
@@ -841,10 +839,10 @@
 
         function doStepToAWave(floor,dancers) {
             for(let box of dancersGetBoxes(dancers)) {
-        	dancerMove(box[0], 1, -2, 0);
-        	dancerMove(box[1], 1, 0, 0);
-        	dancerMove(box[2], 1, 0, 0);
-        	dancerMove(box[3], 1, -2, 0);
+                dancerMove(box[0], 1, -2, 0);
+                dancerMove(box[1], 1, 0, 0);
+                dancerMove(box[2], 1, 0, 0);
+                dancerMove(box[3], 1, -2, 0);
             }
         }
 
@@ -860,7 +858,6 @@
         }
 
         function doTradeBy(floor, dancers) {
-        	
             let lineLen = dancersLineLen(dancers);
             if (lineLen != 2)
                 throw "Expected Trade By formation"
@@ -874,30 +871,6 @@
             swapPos(dancers[7], dancers[9]);
 
             trade(dancers[10], dancers[11]);
-/*
-
-            
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 2)  {
-                srtDancers.sort((a, b) => cmpOrder(b.gridX-a.gridX, a.gridY-b.gridY));
-            }
-            else if (horzLen != 6)
-                throw "Expected Trade By formation"
-            
-            trade(srtDancers[0], srtDancers[6]);
-
-            swapPos(srtDancers[1], srtDancers[2]);
-            swapPos(srtDancers[7], srtDancers[8]);
-
-            swapPos(srtDancers[3], srtDancers[4]);
-            swapPos(srtDancers[9], srtDancers[10]);
-
-            trade(srtDancers[5], srtDancers[11]);
-*/
         }
 
         function doBendTheLine(floor) {
@@ -1045,32 +1018,22 @@
             }
         }
 
-        function doRecycle(floor) {
-            for(let line of getLinesOf4(floor)) {
-                for(let beau of [line[0], line[3]]) {
-                    stepForward(beau)
-                    slideRight(beau, 4);
-                    rotateCCW(beau, 2);
-                }
-                for(let belle of [line[1], line[2]]) {
-                    stepForward(belle, -1)
-                }
+        function doRecycle(floor, dancers) {
+            for(let line of dancersGetLinesOf4(dancers)) {
+                for(let beau of [line[0], line[3]]) 
+                    dancerMove(beau, 1, 4, 2)
+                for(let belle of [line[1], line[2]]) 
+                    dancerMove(belle, -1, 0, 0)
             }
             floor.sweepCCW = -1;
         }
 
         function doHalfTag(floor, dancers) {
-            let lines = dancersGetLinesOf4(dancers);
-            console.log("got lines", lines);
-            for(let line of lines) {
-                console.log("got line", line);
-                for(let beau of [line[0], line[3]])  {
-                     console.log("got dancer", beau);
+            for(let line of dancersGetLinesOf4(dancers)) {
+                for(let beau of [line[0], line[3]])  
                     dancerMove(beau, 1, 2, -1)
-                }
-                for(let belle of [line[1], line[2]]) {
+                for(let belle of [line[1], line[2]]) 
                     dancerMove(belle, 1, 2, -1)
-                }
             }
         }
 
@@ -1295,8 +1258,6 @@
             ret["h sq4"] = doHeadsSquareThru4;
             ret["c circ"] = doCentersCirculate;
             ret["e circ"] = doEndsCirculate;
-            // ret["c sq3"] = doCentersSquareThru3;
-            // ret["c td"] = doCentersTrade;
             ret["st"] = doSwingThru;
             ret["sq4"] = doSquareThru4;
             ret["ex"] = doExtend;
