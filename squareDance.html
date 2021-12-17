@@ -392,7 +392,7 @@
                 let ret = []        
                 for(let dancer of floor.dancers) {
                     if (isHeads(dancer)) {
-			dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
+        		dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
                         ret.push(dancer)
                     }
                 }
@@ -422,44 +422,6 @@
             return [ dancers.slice(0,4), dancers.slice(4,8), dancers.slice(8,12) ];
         }
 
-
-        // get boxes from the floor.  A box is an array that orders 
-        // its elements like this
-        //    3 2
-        //    0 1
-        // where the dancers are facing north or south (never east or west)
-        function getBoxes(floor) {
- 
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-
-            let ret;
-            let needRotate;
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 6) {  
-                // Assume 2 lines of 6 facing heads
-                ret = [[srtDancers[0], srtDancers[1], srtDancers[7], srtDancers[6]],
-                              [srtDancers[2], srtDancers[3], srtDancers[9], srtDancers[8]],
-                           [srtDancers[4], srtDancers[5], srtDancers[11], srtDancers[10]] ];
-                needRotate = isFacingSides(srtDancers[0]);  // In this case it is columns or triple box
-            }
-            else if (horzLen == 2 && horzLineLen(srtDancers, 2) == 2) {
-                // Assume colums facing heads
-                ret = [[srtDancers[0], srtDancers[1], srtDancers[3], srtDancers[2]],
-                              [srtDancers[4], srtDancers[5], srtDancers[7], srtDancers[6]],
-                           [srtDancers[8], srtDancers[9], srtDancers[11], srtDancers[10]]];
-                needRotate = isFacingSides(srtDancers[0]); // 2 lines of 6
-            }
-            else 
-                throw "Expected Boxes";
-
-            if (needRotate) {
-                for(let box of ret) 
-                   rotateBoxCW(box)
-            }
-            return ret;
-        }
 
         // returns dancers in 3 lines of 4.   First line is at the bottom
         function getLinesOf4(floor) {
@@ -547,6 +509,20 @@
 
             for(let dancer of floor.dancers) {
                 if (isHeads(dancer)) {
+        	    // TODO this is incorrect but we are starting from squared sets so it should work
+                    if (dancer.isBoy) {
+                        stepForward(dancer, 2);
+                        slideRight(dancer, 2);
+                    }                
+                    rotateCCW(dancer, -1);
+                }
+            }
+        }
+
+        function doLeadRight(floor, dancers) {
+            for(let dancer of dancers) {
+                if (isHeads(dancer)) {
+        	    // TODO this is incorrect but we are starting from squared sets so it should work
                     if (dancer.isBoy) {
                         stepForward(dancer, 2);
                         slideRight(dancer, 2);
@@ -564,23 +540,6 @@
                 if (isHeads(dancer))
                     rotateCCW(dancer, dancer.isBoy?1:-1);
             }
-        }
-
-        function doCentersSquareThru3(floor) {
-
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
-
-                srtDancers = floorSortForPartners(floor)
-                for(let i = 2; i < 10; i += 2)
-                    trade(srtDancers[i], srtDancers[i+1]);
-            }
-            else 
-                throw "Formation Wrong for Centers Square Thru 3";
         }
 
         function doRightAndLeftThru(floor, dancers) {
@@ -708,11 +667,9 @@
                 throw "Expected lines";        // TODO handle other cases
         }
 
-        function doVeerLeft(floor) {
-            for(let dancer of floor.dancers) {
-                stepForward(dancer);
-                slideRight(dancer, -2);
-            }
+        function doVeerLeft(floor, dancers) {
+            for(let dancer of dancers) 
+        	dancerMove(dancer, 1, -2, 0);
         }
 
         function doSquareThru4(floor, dancers) {
@@ -724,21 +681,14 @@
             }
         }
 
-        function doChainDownTheLine(floor) {
-            for(let line of getLinesOf4(floor)) {
-                for(let beau of [line[0], line[3]])  {
-                    stepForward(beau);
-                    slideRight(beau, 2);
-                    rotateCCW(beau, -1);
-                }
-                
-                for(let belle of [line[1], line[2]])  {
-                    stepForward(belle);
-                    slideRight(belle, 2);
-                    rotateCCW(belle, 1);
-                }
+        function doChainDownTheLine(floor, dancers) {
+            for(let line of dancersGetLinesOf4(dancers)) {
+                for(let beau of [line[0], line[3]])  
+                    dancerMove(beau, 1, 2, -1);
+                for(let belle of [line[1], line[2]])  
+                    dancerMove(belle, 1, 2, 1);
             }
-           floor.sweepCCW = 1;
+            floor.sweepCCW = 1;
         }
 
         function doTurnBack(floor) {
@@ -1017,25 +967,20 @@
             }
         }
 
-        function doPassToTheCenter(floor) {
+        function doPassToTheCenter(floor, dancers) {
 
-            // sort bottom first to top then left to right
-            let srtDancers = floor.dancers.slice();
-            srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
-        
-            let horzLen = horzLineLen(srtDancers)
-            if (horzLen == 6 && srtDancers[0].rotation == 3)  {
-
-                srtDancers = floorSortForPartners(floor)
-                for(let dancer of srtDancers)
-                    stepForward(dancer, 2);
-
-                // remember you have to use the STARTING index 
-                trade(srtDancers[2], srtDancers[3]);
-                trade(srtDancers[8], srtDancers[9]);
-            }
-            else
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2)
                 throw "Formation Wrong for Pass To The Center";
+            
+            // everyone passes through
+            for(let dancer of dancers) 
+        	dancerMove(dancer, 2, 0, 0);
+
+            // The ends need to partner trade 
+            // remember you have to use the STARTING index 
+            trade(dancers[2], dancers[3]);
+            trade(dancers[8], dancers[9]);
         }
 
         function doTrade(floor, dancers) {
@@ -1278,8 +1223,7 @@
 
         function getCallFtns() {
             let ret = {};
-            ret["h pto"] = doHeadsPassTheOcean;
-            ret["h lr"] = doHeadsLeadRight;
+            ret["lr"] = doLeadRight;
             ret["h pto"] = doHeadsPassTheOcean;
             ret["h sq4"] = doHeadsSquareThru4;
             ret["c circ"] = doCentersCirculate;
