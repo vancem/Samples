@@ -841,10 +841,10 @@
 
         function doStepToAWave(floor,dancers) {
             for(let box of dancersGetBoxes(dancers)) {
-		dancerMove(box[0], 1, -2, 0);
-		dancerMove(box[1], 1, 0, 0);
-		dancerMove(box[2], 1, 0, 0);
-		dancerMove(box[3], 1, -2, 0);
+        	dancerMove(box[0], 1, -2, 0);
+        	dancerMove(box[1], 1, 0, 0);
+        	dancerMove(box[2], 1, 0, 0);
+        	dancerMove(box[3], 1, -2, 0);
             }
         }
 
@@ -860,9 +860,9 @@
         }
 
         function doTradeBy(floor, dancers) {
-		
+        	
             let lineLen = dancersLineLen(dancers);
-	    if (lineLen != 2)
+            if (lineLen != 2)
                 throw "Expected Trade By formation"
 
             trade(dancers[0], dancers[1]);
@@ -876,7 +876,7 @@
             trade(dancers[10], dancers[11]);
 /*
 
-	    
+            
             // sort bottom first to top then left to right
             let srtDancers = floor.dancers.slice();
             srtDancers.sort((a, b) => cmpOrder(a.gridY-b.gridY, a.gridX-b.gridX));
