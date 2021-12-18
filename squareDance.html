@@ -21,9 +21,9 @@
         <li> h=heads, c=centers, e=ends, v = very centers, fl=flutterwheel srt=star thru, sfw = stretch ferris wheel
              st=swing thru, td=trade, sl=slide thru</li>
         <li> Calls Available: <span id=allCalls></span> </li>
-
         <li> Must explicitly call step to a wave (stw) from facing couples.
         <li> You can paste multiple commands (sep by space) into textbox.
+        <li> To try it out, type the following (without commas): h pto,ex,st,br,fw,c sq3
         
     </ul> <ul>
         <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()"> 
@@ -721,6 +721,7 @@
             if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
                 throw "Bad Formation for Zoom";
             
+	     // these are arranged in twos up the central column
              for(let i = 0; i < dancers.length; i++) {
                 if (4 <= i && i < 8)                  // Very Centers roll back
                     dancerMove(dancers[i], -4, 0, 0);
@@ -729,6 +730,35 @@
              }
         }
 
+        function doTriplePassThru(floor, dancers) {
+
+	     // these are arranged in twos up the central column
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
+                throw "Bad Formation for Triple Pass Thru";
+
+             for(let dancer of dancers)
+		dancerMove(dancer, 6, 0, 0);
+        }
+
+        function doCloverleaf(floor, dancers) {
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
+                throw "Bad Formation for Cloverleaf";
+            
+		// Reflect by swapping x and y
+             for(let dancer of dancers) {
+		let temp = dancer.gridX;
+		dancer.gridX = dancer.gridY;
+		dancer.gridY = temp;
+
+		dancerMove(dancer, 0, 0, -1); // and rotate clockwise 1/4
+	     }
+	     
+		// swap the positions of the first and last in line
+             for(let i = 0; i < 4; i++) 
+		 swapPos(dancers[i], dancers[i + 2]);
+	}
 
         function doFaceIn(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
@@ -828,6 +858,15 @@
                     dancerMove(beau, 0, 1, 1);
                 for(let belle of [box[1], box[2]])
                     dancerMove(belle, 4, -1, 1);
+            }
+        }
+
+        function doWalkAndDodge(floor, dancers) {
+            for(let box of dancersGetBoxes(dancers)) {
+                for(let beau of [box[0], box[3]]) 
+                    dancerMove(beau, 2, 0, 0);
+                for(let belle of [box[1], box[2]])
+                    dancerMove(belle, 0, 2, 0);
             }
         }
 
@@ -1084,6 +1123,9 @@
             ret["ht"] = doHalfTag;
             ret["fi"] = doFaceIn;
             ret["dx"] = doDixieStyle;
+            ret["wad"] = doWalkAndDodge;
+            ret["cl"] = doCloverleaf;
+            ret["tpt"] = doTriplePassThru;
             return ret;
         }
 
