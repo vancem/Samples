@@ -1,0 +1,20 @@
+<p> This program allows you to convert from Fahrenheit to Celsius</p>
+
+<input type="text" onchange="doFtoCClick()" id="FInput"> Fahrenheit is the same as <span id="COutput">unknown</span> Celsius<br>
+
+<!-- ******************** JAVASCRIPT CODE ********************* -->
+<script>
+
+// initialize HTML elements we need to refer to
+let FInput = document.getElementById("FInput");
+console.log("Initialized Variable FInput to ", FInput);
+let COutput = document.getElementById("COutput");
+
+// called when C to F button pushed
+function doFtoCClick() {
+    let FTemp = parseInt(FInput.value);
+    console.log("Entering doFtoCClick FTemp = ", FTemp);
+    COutput.innerHTML = (FTemp - 32.0) * 5 / 9;
+}
+</script>
+

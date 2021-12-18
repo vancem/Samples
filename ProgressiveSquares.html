@@ -1,0 +1,344 @@
+<html>
+
+<body>
+	<div id="output">Start<br></div>
+	<script>
+		"use strict";
+
+		function initialFloor() {
+			let squares = [];
+			for (let i = 1; i <= 4; i++)
+				squares.push(initialSquare(i));
+			let ret = { squares: squares, isLeftToRight: true, numHorz: 2, numVert: 2 };
+			validateFloor(ret);
+			return ret;
+		}
+		function initialSquare(squareNum) {
+			let line1 = [];
+			for (const color of ["red", "yellow"])
+				for (const boy of [true, false])
+					line1.push({ origSquareNum: squareNum, pointingIn: true, isBoy: boy, color: color });
+
+			let line2 = [];
+			for (const color of ["green", "blue"])
+				for (const boy of [false, true])
+					line2.push({ origSquareNum: squareNum, pointingIn: true, isBoy: boy, color: color });
+
+
+			return { line1: line1, line2, line2 }
+		}
+
+		function printFloor(floor) {
+			if (floor.isLeftToRight) {
+				for (let row = 0; row < floor.numVert; row++) {
+					for (let i = 0; i < 4; i++) {
+						let line = "   ";
+						for (let col = 0; col < floor.numHorz; col++) {
+							let squareIdx = row * floor.numHorz + col
+							let square = floor.squares[squareIdx];
+
+							if (col != 0)
+								line += "  |  ";
+							line += dancerDesignation(square.line1[i], true);
+							line += "  ";
+							line += dancerDesignation(square.line2[i], false);
+						}
+						console.log(line);
+					}
+					console.log("");
+				}
+			}
+			else {
+				for (let row = 0; row < floor.numVert; row++) {
+
+					for (const isFirstLine of [true, false]) {
+						let line = "   ";
+						for (let col = 0; col < floor.numHorz; col++) {
+							let squareIdx = row * floor.numHorz + col
+							let square = floor.squares[squareIdx];
+							if (col != 0)
+								line += " |  ";
+
+							const dancerLine = isFirstLine ? square.line1 : square.line2;
+							if (dancerLine[0].pointingIn && isFirstLine || !dancerLine[0].pointingIn && !isFirstLine)
+								line += "v ";
+							else
+								line += "^ ";
+							for (let i = 3; 0 <= i; --i) {
+								const dancer = dancerLine[i];
+								line += dancer.origSquareNum + dancerLetter(dancer) + " ";
+							}
+						}
+						console.log(line);
+					}
+					console.log("");
+				}
+			}
+		}
+
+		function dancerLetter(dancer) {
+			let letter = dancer.color.substring(0, 1);
+			if (dancer.isBoy)
+				letter = letter.toUpperCase();
+			return letter;
+		}
+
+		function dancerDesignation(dancer, isFirstLine) {
+			let prefix = "";
+			let suffix = ""
+			if (isFirstLine) {
+				if (dancer.pointingIn)
+					suffix = ">";
+				else
+					prefix = "<";
+			} else {
+				if (dancer.pointingIn)
+					prefix = "<";
+				else
+					suffix = ">";
+			}
+
+
+			return prefix + dancer.origSquareNum + dancerLetter(dancer) + suffix;
+		}
+
+
+		function validateFloor(floor) {
+			for (const square of floor.squares) {
+				// both lines are pointing or pointing out
+				console.assert(square.line1[0].pointingIn == square.line2[0].pointingIn);
+
+				for (const line of [square.line1, square.line2]) {
+					// everyone in the the line is facing the same direction.
+					let dir = line[0].pointingIn;
+					for (const dancer of line)
+						console.assert(dancer.pointingIn === dir);
+
+					// Boy girl lines. 
+					console.assert(line[1].isBoy !== line[0].isBoy);
+					console.assert(line[2].isBoy === line[0].isBoy);
+					console.assert(line[3].isBoy === line[1].isBoy);
+
+					// Normal couple 
+					console.assert(line[0].isBoy == (line === square.line1 && dir || line === square.line2 && !dir));
+				}
+
+				// mirror 
+				let opposites = { red: "blue", blue: "red", green: "yellow", yellow: "green" };
+				for (let i = 0; i < 4; i++) {
+					// console.assert(square.line1[i].color === opposites[square.line2[3-i].color]);
+					console.assert(square.line1[i].isBoy === square.line2[3 - i].isBoy);
+				}
+			}
+		}
+
+		function moveOnFloor(floor) {
+
+			if (floor.isLeftToRight) {
+				// for every row
+				for (let squareIdx = 0; squareIdx < floor.squares.length; squareIdx += floor.numHorz) {
+					let lastSquareIdx = squareIdx + floor.numHorz - 1;
+					console.assert(!floor.squares[squareIdx].line1[0].pointingIn);		// Must be pointing out  
+
+					partnerTradeLine(floor.squares[squareIdx].line1);
+					for (let i = squareIdx; i < lastSquareIdx; i++) {
+						let curSquare = floor.squares[i];
+						let nextSquare = floor.squares[i + 1];
+
+						let tempLine = curSquare.line2;
+						curSquare.line2 = nextSquare.line1;
+						uturnBackLine(curSquare.line2);
+
+						nextSquare.line1 = tempLine;
+						uturnBackLine(nextSquare.line1);
+					}
+					partnerTradeLine(floor.squares[lastSquareIdx].line2);
+				}
+			}
+			else {
+				// for every column
+				for (let squareIdx = 0; squareIdx < floor.numHorz; squareIdx++) {
+					let lastSquareIdx = squareIdx + floor.numHorz * (floor.numVert - 1);
+					console.assert(!floor.squares[squareIdx].line1[0].pointingIn);		// Must be pointing out  
+
+					// for every row in that column (we jump by numHorz to get to the next column)
+					partnerTradeLine(floor.squares[squareIdx].line1);
+					for (let i = squareIdx; i < lastSquareIdx; i += floor.numHorz) {
+						let curSquare = floor.squares[i];
+						let nextSquare = floor.squares[i + floor.numHorz];
+
+						let tempLine = curSquare.line2;
+						curSquare.line2 = nextSquare.line1;
+						uturnBackLine(curSquare.line2);
+
+						nextSquare.line1 = tempLine;
+						uturnBackLine(nextSquare.line1);
+					}
+					partnerTradeLine(floor.squares[lastSquareIdx].line2);
+				}
+			}
+			validateFloor(floor);
+		}
+
+		function partnerTradeLine(line) {
+			swap(line, 0, 1);
+			swap(line, 2, 3);
+			uturnBackLine(line);
+		}
+
+		function swap(array, idx1, idx2) {
+			let temp = array[idx1];
+			array[idx1] = array[idx2];
+			array[idx2] = temp;
+		}
+
+		function uturnBackLine(line) {
+			for (const dancer of line)
+				dancer.pointingIn = !dancer.pointingIn;
+		}
+
+		function passThruFloor(floor) {
+			for (const square of floor.squares) {
+				let temp = square.line1;
+				square.line1 = square.line2;
+				square.line2 = temp;
+				for (const line of [square.line1, square.line2]) {
+					for (const dancer of line) {
+						console.assert(dancer.pointingIn);
+						dancer.pointingIn = false;
+					}
+				}
+			}
+			validateFloor(floor);
+		}
+
+		function bendTheLineFloor(floor) {
+			floor.isLeftToRight = !floor.isLeftToRight;
+			for (const square of floor.squares) {
+
+
+				const line1 = square.line1;
+				const origLine1 = line1.slice();
+				const line2 = square.line2;
+				const origLine2 = line2.slice();
+
+				line1[0] = origLine2[1];
+				line1[1] = origLine2[0];
+				line1[2] = origLine1[0];
+				line1[3] = origLine1[1];
+				line2[0] = origLine2[2];
+				line2[1] = origLine2[3];
+				line2[2] = origLine1[3];
+				line2[3] = origLine1[2];
+			}
+
+			validateFloor(floor);
+		}
+
+		function sidesHeadFlipFloor(floor) {
+			floor.isLeftToRight = !floor.isLeftToRight;
+			for (const square of floor.squares) {
+				const line1 = square.line1;
+				const origLine1 = line1.slice();
+				const line2 = square.line2;
+				const origLine2 = line2.slice();
+
+				line1[0] = origLine1[2];
+				line1[1] = origLine1[3];
+				line1[2] = origLine2[3];
+				line1[3] = origLine2[2];
+				line2[0] = origLine1[1];
+				line2[1] = origLine1[0];
+				line2[2] = origLine2[0];
+				line2[3] = origLine2[1];
+			}
+
+			validateFloor(floor);
+		}
+
+		function rotateGirlsFloor(floor) {
+			for (const square of floor.squares) {
+				console.assert(!square.line1[1].isBoy);
+				console.assert(!square.line1[3].isBoy);
+				console.assert(!square.line2[0].isBoy);
+				console.assert(!square.line2[2].isBoy);
+
+				let gir11 = square.line1[1];
+				square.line1[1] = square.line1[3];
+				square.line1[3] = square.line2[2];
+				square.line2[2] = square.line2[0];
+				square.line2[0] = gir11;
+			}
+			validateFloor(floor);
+		}
+
+
+		function passThruMoveOn(floor) {
+			passThruFloor(floor);
+			moveOnFloor(floor);
+		}
+
+		function figure(floor, num) {
+			passThruMoveOn(floor);
+
+			// if (num == 2 || num == 4) 
+			{
+				// rotateGirlsFloor(floor);
+				// rotateGirlsFloor(floor);
+				// sidesHeadFlipFloor(floor);
+			}
+			// if (num == 2)
+			// `	sidesHeadFlipFloor(floor);
+
+			console.log("At end of figure", floor);
+			printFloor(floor);
+		}
+
+		function sumulation1() {
+			let floor = initialFloor();
+
+			console.log("Initial Floor", floor);
+			printFloor(floor);
+
+			figure(floor, 1);
+			figure(floor, 2);
+			figure(floor, 3);
+			figure(floor, 4);
+
+
+			// What works
+			//
+			// Without heads sides flip, no ladies change
+			// Without heads sides flip (two square) chain half each figure  (you visit 4 women)
+
+			// With heads sides flip ladies chain across at mid, 	Need to chain home (at end)
+
+			// FIGURE: pt-mo  - mix only 2 squares.  couples state together, Square moves over and back. 
+			// FIGURE: pt-mo, lc  - mixes only 2 squares, however girls move around , comes back to 
+			//                  original square.  Thus a two square progression.   Everyone moves. (3rd place)  
+			//--------------------------------------------
+			// FIGURE: pt-mo, heads-side at bridge   - mixes with 4 other squares, square moves around 
+			//                  over one at bridge, and then over the other way to end.   square ends
+			//                  on the opposite diagonal.   Everyone moves, but half square always together.  
+			//                  couples stay together.
+			// FIGURE: pt-mo, heads-side at bridge, lc at bridge like previous but you dance with opposite 
+			//                  two figures are with the same girl.  square moves as a whole  (2nd place)
+			// FIGURE: pt-mo, lc, heads-side at bridge - DOES NOT WORK, have mix of square 1 an 4.  
+			//--------------------------------------------
+			// FIGURE: pt-mo -  alternate heads-side    - mix with 4 other squares.  couples stay together
+			//                  square reforms at its original place.    At half way point you have a couple
+			//                  from every square.   two couples never leave the square
+			// FIGURE: pt-mo lc, alternate heads-side - mix with 4 other squares.   2 people (not a couple) 
+			//                  never leave the square.  square reforms at it original place.   (1st place)
+			// 
+			// YOu can get real 4 couple progression but only with 2 squares, comes back to original   
+			// OR you can get 4 squares involved, 
+		}
+
+		console.log("Starting");
+		sumulation1();
+		console.log("Done");
+	</script>
+</body>
+
+</html>

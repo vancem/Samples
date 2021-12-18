@@ -714,8 +714,10 @@
 
         function doSwingThru(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
-            if (!dancersIsFacingOpposite(dancers[0], dancers[1]))
-                throw "Need to have alternating dancers (need to call stw?)."
+            for (let i = 1; i < dancers.length; i++) {
+                if (!dancersIsFacingOpposite(dancers[i], dancers[i-1]))
+                    throw "Need to have alternating dancers" + (lineLen == 4 ? " (need to call stw?)" : "");
+            }
             if (lineLen == 4) {
                 for (let start = 0; start < dancers.length; start += lineLen) {
                     swapPosAndDir(dancers[start], dancers[start + 1]);
@@ -778,7 +780,7 @@
         }
 
         function doStarThru(floor, dancers) {
-            for (let dancer of dancers) 
+            for (let dancer of dancers)
                 dancerMove(dancer, 2, 0, dancer.isBoy ? -1 : 1);
         }
 
