@@ -229,6 +229,7 @@
         }
 
         function passThru(dancer1, dancer2) {
+            // TODO repace with dancerMove
             if (!dancersIsFacingOpposite(dancer1, dancer2))
                 throw "Must be facing to pass thru.";
 
@@ -445,15 +446,22 @@
         // Validates the floor and returns an error message if the floor is bad.
         // returns undefined if the floor is valid.  
         function floorFindError(floor) {
-            syncGUIToModel();   // TODO remove after testing
-
+            syncGUIToModel();   // TODO Remove
             let dancers = floorGetDancers(floor);
             if (dancers.length != 12)
                 return "Not 12 dancers";
 
+            // Can only have these lengths
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2 && lineLen != 4 && lineLen != 6 && lineLen != 12)
+                return "Bad Line Length";
+
+            let dancersFacingHeads = dancerIsFacingHeads(dancers[0]);
             for (let dancer of dancers) {
+                if (dancerIsFacingHeads(dancer) != dancersFacingHeads)
+                    return "T-Bone configuration for dancer" + i;
                 if (5 < Math.abs(dancer.gridX) || 5 < Math.abs(dancer.gridY))
-                    return "Dancer off Grid";
+                    return "Dancer outside Grid";
                 if (Math.floor(dancer.gridX) != dancer.gridX || Math.floor(dancer.gridY) != dancer.gridY)
                     return "Dancer not on integral grid locations";
             }
@@ -475,19 +483,9 @@
                     return "Mirror fails on Direction for dancer " + i;
             }
 
-            // Can only have these lengths
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2 && lineLen != 4 && lineLen != 6 && lineLen != 12)
-                return "Bad Line Length";
-
             if (lineLen == 2 && dancersLineLen(dancers, 2) == 4) {
                 // It is a quarter tag [position].  dancer 0 hould be able to 
                 // move forward 3 spaces and land on the dancer 3
-
-                let dancer0X = dancerGetFacingCoordinate(dancers[0])
-                let inc = dancerForwardValue(dancers[0])
-                let dancer3X = dancerGetFacingCoordinate(dancers[3]);
-
                 if (dancerGetFacingCoordinate(dancers[3]) - dancerGetFacingCoordinate(dancers[0]) != 3)
                     return "Bad Quarter Tag Formation end spacing";
 
@@ -501,12 +499,21 @@
                     return "Bad Home Position ";
                 dancers = floorGetDancers(floor, "h");      // just keep the heads  
             }
+            else {
 
-            // All dancers facing the same walls (heads or sides)
-            let dancersFacingHeads = dancerIsFacingHeads(dancers[0]);
-            for (let i = 0; i < dancers.length; i++) {
-                if (dancerIsFacingHeads(dancers[i]) != dancersFacingHeads)
-                    return "T-Bone configuration for dancer" + i;
+                // We can tighten up where the dancers can be for the lines of 6 or columns case.   
+                for (let dancer of dancers) {
+                    if (lineLen == 6 && Math.abs(dancerGetFacingCoordinate(dancer)) != 1 ||
+                        lineLen == 2 && Math.abs(dancerGetCrossCoordinate(dancer)) != 1)
+                        return "Dancer off Grid";
+
+                    // Symetry on the grid makes it unusual that dancers are on an axis 
+                    // Only in odd line configure
+                    if (dancerGetCrossCoordinate(dancer) == 0)
+                        return "Dancers not symetric in side-to-side dimension";
+                    if (dancerGetFacingCoordinate(dancer) == 0 && (12 / lineLen) % 2 != 1)
+                        return "Dancers not symetric in front-back dimension";
+                }
             }
 
             // Check The dancers are in a perfect rectangle on a grid 
@@ -557,10 +564,10 @@
 
         function doRightAndLeftThru(floor, dancers) {
             for (let box of dancersGetBoxes(dancers)) {
-                if (dancersIsFacingOpposite(box[0], box[1]))
-                    throw "Must be a couple (facing same direction)"
-                swapPosAndDir(box[0], box[3]);
-                swapPosAndDir(box[1], box[2]);
+                for (let beau of [box[0], box[3]])
+                    dancerMove(beau, 2, 2, 2);
+                for (let belle of [box[1], box[2]])
+                    dancerMove(belle, 2, -2, 2);
             }
             floor.sweepCCW = 1;
         }
@@ -723,7 +730,7 @@
 
             // check if the formation  is valid
             for (let i = 1; i < dancers.length; i++) {
-                if (!dancersIsFacingOpposite(dancers[i], dancers[i-1]))
+                if (!dancersIsFacingOpposite(dancers[i], dancers[i - 1]))
                     throw "Need to have alternating dancers" + (lineLen == 4 ? " (need to call stw?)" : "");
             }
 
@@ -854,13 +861,8 @@
         }
 
         function doTouchAQuarter(floor, dancers) {
-            for (let box of dancersGetBoxes(dancers)) {
-                if (!dancersIsFacingOpposite(box[0], box[2]))
-                    throw "Dancers must be facing";
-                swapPos(box[0], box[2]);
-                swapPos(box[1], box[3]);
-                for (let dancer of box)
-                    dancerMove(dancer, 0, 0, -1);
+            for (let dancer of dancers) {
+                    dancerMove(dancer, 2, 0, -1);
             }
         }
 
