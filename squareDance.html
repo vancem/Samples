@@ -165,10 +165,18 @@
                 return dancer.gridX;
         }
 
+        // gets the direction that you change to move left or right.   
+        function dancerGetCrossCoordinate(dancer) {
+            if (dancerIsFacingHeads(dancer))
+                return dancer.gridX;
+            else
+                return dancer.gridY;
+        }
+
         function dancerScaleFacingCoordinate(dancer, factor) {
             if (dancerIsFacingHeads(dancer))
-                dancer.gridY = Math.round(dancer.gridY * factor);   
-            else 
+                dancer.gridY = Math.round(dancer.gridY * factor);
+            else
                 dancer.gridX = Math.round(dancer.gridX * factor);
         }
 
@@ -220,6 +228,13 @@
             dancerMove(dancer2, 0, 0, 2);
         }
 
+        function passThru(dancer1, dancer2) {
+            if (!dancersIsFacingOpposite(dancer1, dancer2))
+                throw "Must be facing to pass thru.";
+
+            swapPos(dancer1, dancer2)
+        }
+
         // In a sorted list of dancers, determine how long the 
         // line is (if you look to your right, how many people
         // do you see with the same facing coordinate).   
@@ -261,6 +276,11 @@
                 throw "Bad formation (can't find lines of 4).";
 
             return [dancers.slice(0, 4), dancers.slice(4, 8), dancers.slice(8, 12)];
+        }
+
+        // returns true if the two dancers are facing
+        function dancersIsFacingOpposite(dancer1, dancer2) {
+            return Math.abs(dancer1.rotation - dancer2.rotation) == 2;
         }
 
         /********************************************************************/
@@ -425,25 +445,33 @@
         // Validates the floor and returns an error message if the floor is bad.
         // returns undefined if the floor is valid.  
         function floorFindError(floor) {
+            syncGUIToModel();   // TODO remove after testing
 
             let dancers = floorGetDancers(floor);
             if (dancers.length != 12)
                 return "Not 12 dancers";
 
+            for (let dancer of dancers) {
+                if (5 < Math.abs(dancer.gridX) || 5 < Math.abs(dancer.gridY))
+                    return "Dancer off Grid";
+                if (Math.floor(dancer.gridX) != dancer.gridX || Math.floor(dancer.gridY) != dancer.gridY)
+                    return "Dancer not on integral grid locations";
+            }
+
             // two dancers can't have the same spot.  
             for (let i = 1; i < dancers.length; i++) {
-                if (dancer[i - 1].gridX == dancer[i].gridX && dancer[i - 1].gridY == dancer[i].gridY)
-                    return false;
+                if (dancers[i - 1].gridX == dancers[i].gridX && dancers[i - 1].gridY == dancers[i].gridY)
+                    return "Two dancers on the same spot";
             }
 
             // there is mirror symetry
             for (let i = 0; i < dancers.length / 2; i++) {
-                if (dancer[i].gridX != -dancer[dancers.length - i].gridX)
+                if (dancers[i].gridX != -dancers[dancers.length - 1 - i].gridX)
                     return "Mirror fails for X for dancer " + i;
-                if (dancer[i].gridY != -dancer[dancers.length - i].gridY)
+                if (dancers[i].gridY != -dancers[dancers.length - 1 - i].gridY)
                     return "Mirror fails for Y for dancer " + i;
-                // They either both point in (rotation 0,2 or 1,3)  or both point out (rotation 2,0 or 3,1)
-                if (Math.abs(dancer[i].rotation - dancer[dancers.length - i].rotation) == 2)
+
+                if (!dancersIsFacingOpposite(dancers[i], dancers[dancers.length - 1 - i]))
                     return "Mirror fails on Direction for dancer " + i;
             }
 
@@ -455,24 +483,54 @@
             if (lineLen == 2 && dancersLineLen(dancers, 2) == 4) {
                 // It is a quarter tag [position].  dancer 0 hould be able to 
                 // move forward 3 spaces and land on the dancer 3
-                if (Math.abs(dancerGetFacingCoordinate(dancers[0]) + dancerForwardValue(dancers[0]) - dancerGetFacingCoordinate(dancers[3])) != 3)
-                    return "Bad Quarter Tag";
+
+                let dancer0X = dancerGetFacingCoordinate(dancers[0])
+                let inc = dancerForwardValue(dancers[0])
+                let dancer3X = dancerGetFacingCoordinate(dancers[3]);
+
+                if (dancerGetFacingCoordinate(dancers[3]) - dancerGetFacingCoordinate(dancers[0]) != 3)
+                    return "Bad Quarter Tag Formation end spacing";
+
+                if (dancerGetCrossCoordinate(dancers[3]) != dancerGetCrossCoordinate(dancers[0]))
+                    return "Bad Quarter Tag Formation left-right";
+
                 dancers = floorGetDancers(floor, "c");  // just keep the centers
             }
             else if (lineLen == 4 && dancersLineLen(dancers, 4) == 2) {  // only valid for home position
-                if (dancer[0].rotation != NORTH || dancer[4].rotation != EAST || dancer[5] != WEST)
+                if (dancers[0].rotation != NORTH || dancers[4].rotation != EAST || dancers[5] != WEST)
                     return "Bad Home Position ";
                 dancers = floorGetDancers(floor, "h");      // just keep the heads  
             }
 
             // All dancers facing the same walls (heads or sides)
-            let dancersFacingHeads = dancerIsFacingHeads(dancer[0]);
+            let dancersFacingHeads = dancerIsFacingHeads(dancers[0]);
             for (let i = 0; i < dancers.length; i++) {
-                if (dancerIsFacingHeads(dancer[i]) != dancersFacingHeads)
+                if (dancerIsFacingHeads(dancers[i]) != dancersFacingHeads)
                     return "T-Bone configuration for dancer" + i;
             }
 
-            // The dancers are rectangular
+            // Check The dancers are in a perfect rectangle on a grid 
+            lineLen = dancersLineLen(dancers);
+            let distBetweenLines = 0;        // means we did not init it.  
+            let distBetweenDancers = Math.abs(dancerGetCrossCoordinate(dancers[1]) - dancerGetCrossCoordinate(dancers[0]));
+            for (let lStart = 0; lStart < dancers.length; lStart += lineLen) {
+                if (distBetweenLines == 0 && 0 < lStart)
+                    distBetweenLines = Math.abs(dancerGetFacingCoordinate(dancers[lStart]) - dancerGetFacingCoordinate(dancers[0]));
+
+                Math.abs(dancerGetFacingCoordinate(dancers[lStart]) - dancerGetFacingCoordinate(dancers[0]))
+
+                for (let i = 1; i < lineLen; i++) {
+                    let rlDist = Math.abs(dancerGetCrossCoordinate(dancers[lStart + i]) - dancerGetCrossCoordinate(dancers[lStart + i - 1]));
+                    if (rlDist != distBetweenDancers)
+                        return "Dancers not equally spaced left to right";
+
+                    if (distBetweenLines != 0) {
+                        let fbDist = Math.abs(dancerGetFacingCoordinate(dancers[lStart + i]) - dancerGetFacingCoordinate(dancers[lStart + i - lineLen]));
+                        if (fbDist != distBetweenLines)
+                            return "Dancers not equally spaced foward and back";
+                    }
+                }
+            }
 
             return undefined;   // success (there is no error)
         }
@@ -495,10 +553,12 @@
                 let beauFactor = (dancer.isBoy ? 1 : 0)           // TODO this should not be sex base.
                 dancerMove(dancers[i], 2 * beauFactor, 2 * beauFactor, -1);
             }
-        }
+        }                
 
         function doRightAndLeftThru(floor, dancers) {
             for (let box of dancersGetBoxes(dancers)) {
+                if (dancersIsFacingOpposite(box[0], box[1]))
+                    throw "Must be a couple (facing same direction)"
                 swapPosAndDir(box[0], box[3]);
                 swapPosAndDir(box[1], box[2]);
             }
@@ -556,6 +616,8 @@
 
         function doHalfSashay(floor, dancers) {
             for (let i = 0; i < dancers.length; i += 2) {
+                if (dancersIsFacingOpposite(dancers[i], dancers[i+1]))
+                    throw "Must be a couple (facing same direction)"
                 swapPos(dancers[i], dancers[i + 1]);
             }
         }
@@ -652,6 +714,8 @@
 
         function doSwingThru(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
+            if (!dancersIsFacingOpposite(dancers[0], dancers[1]))
+                throw "Need to have alternating dancers (need to call stw?)."
             if (lineLen == 4) {
                 for (let start = 0; start < dancers.length; start += lineLen) {
                     swapPosAndDir(dancers[start], dancers[start + 1]);
@@ -714,6 +778,8 @@
 
         function doPassThru(floor, dancers) {
             for (let dancer of dancers) {
+                if (floorIsFacingOut(floor, dancer))
+                    throw "Dancers facing out can't pass thru";
                 dancerMove(dancer, 2, 0, 0);
             }
         }
@@ -725,11 +791,11 @@
 
             trade(dancers[0], dancers[1]);
 
-            swapPos(dancers[2], dancers[4]);
-            swapPos(dancers[3], dancers[5]);
+            passThru(dancers[2], dancers[4]);
+            passThru(dancers[3], dancers[5]);
 
-            swapPos(dancers[6], dancers[8]);
-            swapPos(dancers[7], dancers[9]);
+            passThru(dancers[6], dancers[8]);
+            passThru(dancers[7], dancers[9]);
 
             trade(dancers[10], dancers[11]);
         }
@@ -772,6 +838,8 @@
 
         function doTouchAQuarter(floor, dancers) {
             for (let box of dancersGetBoxes(dancers)) {
+                if (!dancersIsFacingOpposite(box[0], box[2]))
+                    throw "Dancers must be facing";
                 swapPos(box[0], box[2]);
                 swapPos(box[1], box[3]);
                 for (let dancer of box)
@@ -957,7 +1025,6 @@
 
         // the main method for drawing the floor.
         function floorDraw(floor, canvas) {
-            console.log("Drawing floor")
             const canvasContext = canvas.getContext('2d');
 
             canvasContext.clearRect(0, 0, canvas.width, canvas.height);
@@ -1119,21 +1186,25 @@
 
 
             try {
-                // parse the desginators to determine what dancers actually move.  
-                let dancers = floorGetDancers(floor, designator);
-
-                dancersMoveDancersToGrid(dancers, designator);
-
                 // Fetch the javaScript function that does the call
                 let callFtn = CALL_TO_FTN[call];
-                if (!callFtn) {
-                    logError("Error, Unknownn call : " + call);
-                    return false;
-                }
+                if (!callFtn)
+                    throw "Unknown Call '" + call + "'";
+
+                // parse the desginators to determine what dancers actually move.  
+                let dancers = floorGetDancers(floor, designator);
+                dancersMoveDancersToGrid(dancers, designator);
 
                 // and call the function. 
                 callFtn(floor, dancers);
 
+                // See if the call did something illegal.
+                let formationError = floorFindError(floor);
+                if (formationError) {
+                    console.log("Validating call failed, formation error: " + formationError);
+                    syncGUIToModel();   // this is only here to make debugging easier you can see then error formation 
+                    throw "Error: Bad formation for '" + call + "'" + "'";
+                }
             } catch (err) {
                 logError("Error Executing Call: " + err);
                 floorAssign(floor, startFloor);        // restore the state. 
@@ -1157,7 +1228,6 @@
 
         // called when we want to make sure that the GUI represents the model (after we changed the model)
         function syncGUIToModel() {
-            console.log("in syncGUIToModel", g_floor);
             floorDraw(g_floor, g_mainCanvas);
             floorDraw(g_prevFloor, g_prevCanvas);
 
@@ -1242,7 +1312,8 @@
         // TESTING    Called by the 'tst' command to allow quick unit testing
         function doTest() {
             // just run a long sequence that resolves and uses every call.   
-            doCommand("reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt " +
+            doCommand(
+                "reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt " +
                 "tb srt dx e circ gr btl pto hinge td hinge rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
                 "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
@@ -1250,7 +1321,7 @@
             );
 
             if (!g_messageSpan.innerHTML.match(/error/i))
-                g_messageSpan.innerHTML = "<b>" + "Finished Testing.  Square should be resolved (corner boxes)." + "</b>";
+                g_messageSpan.innerHTML = "<b>" + "Successful Testing.  Square should be resolved (corner boxes)." + "</b>";
         }
     </script>
 </body>
