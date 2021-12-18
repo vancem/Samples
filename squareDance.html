@@ -165,6 +165,13 @@
                 return dancer.gridX;
         }
 
+        function dancerScaleFacingCoordinate(dancer, factor) {
+            if (dancerIsFacingHeads(dancer))
+                dancer.gridY = Math.round(dancer.gridY * factor);   
+            else 
+                dancer.gridX = Math.round(dancer.gridX * factor);
+        }
+
         // a deep copy (which is also a shallow copy) of a dancer (used to make a deep copy of the floor)
         function dancerCopy(dancer) {
             let ret = Object.assign({}, dancer);
@@ -224,6 +231,36 @@
                     break;
             }
             return i - start;
+        }
+
+        // given a list of dancers THAT ARE SORTED, return a array of boxes.   
+        // a box is a array of 4 dancers.  Logically the dancers in the box
+        // are arranged like
+        //     2 3
+        //     0 1 
+        function dancersGetBoxes(dancers) {
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen % 2 != 0 || dancers.length % (lineLen * 2) != 0)
+                throw "Bad formation (can't find boxes).";
+
+            let ret = []
+            for (let boxI = 0; boxI < dancers.length; boxI += 2 * lineLen) {
+                for (let i = 0; i < lineLen; i += 2)
+                    ret.push([dancers[i + boxI], dancers[i + 1 + boxI],
+                    dancers[lineLen + i + boxI], dancers[lineLen + i + 1 + boxI]]);
+            }
+            return ret;
+        }
+
+        // given a list of dancers THAT ARE SORTED, return a array of lines of 4 dancers
+        // the dancers are arranged from left to right if you face NORTH-SOUTH
+        // and arranged top to bottom if you face EAST-WEST
+        function dancersGetLinesOf4(dancers) {
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 4)
+                throw "Bad formation (can't find lines of 4).";
+
+            return [dancers.slice(0, 4), dancers.slice(4, 8), dancers.slice(8, 12)];
         }
 
         /********************************************************************/
@@ -311,7 +348,6 @@
                 dancers = [];
                 for (let dancer of floor.dancers) {
                     if (dancerIsHeads(dancer)) {
-                        dancer.gridY += (0 < dancer.gridY) ? -2 : 2;
                         dancers.push(dancer)
                     }
                 }
@@ -321,7 +357,6 @@
                 dancers = [];
                 for (let dancer of floor.dancers) {
                     if (dancerIsSides(dancer)) {
-                        dancer.gridX += (0 < dancer.gridX) ? -4 : 4;
                         dancers.push(dancer)
                     }
                 }
@@ -378,34 +413,68 @@
             throw "Unsupported Designator " + designator;
         }
 
-        // given a list of dancers THAT ARE SORTED, return a array of boxes.   
-        // a box is a array of 4 dancers.  Logically the dancers in the box
-        // are arranged like
-        //     2 3
-        //     0 1 
-        function dancersGetBoxes(dancers) {
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen % 2 != 0 || dancers.length % (lineLen * 2) != 0)
-                throw "Bad formation (can't find boxes).";
-
-            let ret = []
-            for (let boxI = 0; boxI < dancers.length; boxI += 2 * lineLen) {
-                for (let i = 0; i < lineLen; i += 2)
-                    ret.push([dancers[i + boxI], dancers[i + 1 + boxI],
-                    dancers[lineLen + i + boxI], dancers[lineLen + i + 1 + boxI]]);
+        // when you have a heads or side designator, the dancers may not be
+        // on the grid to start with.   Move them to the grid.
+        function dancersMoveDancersToGrid(dancers, designator) {
+            if (designator === "h" || designator === "s") {
+                for (let dancer of dancers)
+                    dancerScaleFacingCoordinate(dancer, Math.abs(1 / dancerGetFacingCoordinate(dancer)));
             }
-            return ret;
         }
 
-        // given a list of dancers THAT ARE SORTED, return a array of lines of 4 dancers
-        // the dancers are arranged from left to right if you face NORTH-SOUTH
-        // and arranged top to bottom if you face EAST-WEST
-        function dancersGetLinesOf4(dancers) {
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen != 4)
-                throw "Bad formation (can't find lines of 4).";
+        // Validates the floor and returns an error message if the floor is bad.
+        // returns undefined if the floor is valid.  
+        function floorFindError(floor) {
 
-            return [dancers.slice(0, 4), dancers.slice(4, 8), dancers.slice(8, 12)];
+            let dancers = floorGetDancers(floor);
+            if (dancers.length != 12)
+                return "Not 12 dancers";
+
+            // two dancers can't have the same spot.  
+            for (let i = 1; i < dancers.length; i++) {
+                if (dancer[i - 1].gridX == dancer[i].gridX && dancer[i - 1].gridY == dancer[i].gridY)
+                    return false;
+            }
+
+            // there is mirror symetry
+            for (let i = 0; i < dancers.length / 2; i++) {
+                if (dancer[i].gridX != -dancer[dancers.length - i].gridX)
+                    return "Mirror fails for X for dancer " + i;
+                if (dancer[i].gridY != -dancer[dancers.length - i].gridY)
+                    return "Mirror fails for Y for dancer " + i;
+                // They either both point in (rotation 0,2 or 1,3)  or both point out (rotation 2,0 or 3,1)
+                if (Math.abs(dancer[i].rotation - dancer[dancers.length - i].rotation) == 2)
+                    return "Mirror fails on Direction for dancer " + i;
+            }
+
+            // Can only have these lengths
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2 && lineLen != 4 && lineLen != 6 && lineLen != 12)
+                return "Bad Line Length";
+
+            if (lineLen == 2 && dancersLineLen(dancers, 2) == 4) {
+                // It is a quarter tag [position].  dancer 0 hould be able to 
+                // move forward 3 spaces and land on the dancer 3
+                if (Math.abs(dancerGetFacingCoordinate(dancers[0]) + dancerForwardValue(dancers[0]) - dancerGetFacingCoordinate(dancers[3])) != 3)
+                    return "Bad Quarter Tag";
+                dancers = floorGetDancers(floor, "c");  // just keep the centers
+            }
+            else if (lineLen == 4 && dancersLineLen(dancers, 4) == 2) {  // only valid for home position
+                if (dancer[0].rotation != NORTH || dancer[4].rotation != EAST || dancer[5] != WEST)
+                    return "Bad Home Position ";
+                dancers = floorGetDancers(floor, "h");      // just keep the heads  
+            }
+
+            // All dancers facing the same walls (heads or sides)
+            let dancersFacingHeads = dancerIsFacingHeads(dancer[0]);
+            for (let i = 0; i < dancers.length; i++) {
+                if (dancerIsFacingHeads(dancer[i]) != dancersFacingHeads)
+                    return "T-Bone configuration for dancer" + i;
+            }
+
+            // The dancers are rectangular
+
+            return undefined;   // success (there is no error)
         }
 
         /*******************************************************************/
@@ -490,7 +559,7 @@
                 swapPos(dancers[i], dancers[i + 1]);
             }
         }
-        
+
         function doFaceIn(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
 
@@ -1053,6 +1122,8 @@
                 // parse the desginators to determine what dancers actually move.  
                 let dancers = floorGetDancers(floor, designator);
 
+                dancersMoveDancersToGrid(dancers, designator);
+
                 // Fetch the javaScript function that does the call
                 let callFtn = CALL_TO_FTN[call];
                 if (!callFtn) {
@@ -1169,14 +1240,17 @@
         /********************************************************************/
         /********************************************************************/
         // TESTING    Called by the 'tst' command to allow quick unit testing
-
         function doTest() {
             // just run a long sequence that resolves and uses every call.   
             doCommand("reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt " +
-                "tb srt dx e circ gr btl pto rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
-                "rfl srt pt tb pt tb fl");
+                "tb srt dx e circ gr btl pto hinge td hinge rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
+                "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
+                "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
+                "lr ptd rlt saq vl fw c pt rlt"
+            );
 
-            g_messageSpan.innerHTML = "<b>" + "Finished Testing.  Square should be resolved (corner boxes)." + "</b>";
+            if (!g_messageSpan.innerHTML.match(/error/i))
+                g_messageSpan.innerHTML = "<b>" + "Finished Testing.  Square should be resolved (corner boxes)." + "</b>";
         }
     </script>
 </body>
