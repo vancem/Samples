@@ -37,9 +37,9 @@
     </ul>
     <div style="display:flex">
         <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
-        <div style="background-color:lightgray;height:500px;min-width:130px;overflow-y:scroll">
-            <p style="margin:10px;;">
-                <center><b>Call History</b><br></center>
+        <div style="background-color:lightgray;height:500px;min-width:80px;overflow-y:scroll">
+            <p style="margin:10px;">
+                <center><b>Call History</b></center><br>
                 <span id=callList></span>
             </p>
         </div>
@@ -297,8 +297,11 @@
             return val2;
         }
 
-        // given a designatore (e.g. c = centers, e = ends, v = very centers, h = heads, s = sides) 
-        // return an array of those dancers
+        // given a designator (e.g. c = centers, e = ends, v = very centers, h = heads, s = sides) 
+        // return an array of those dancers.  The returned dancers are sorted 
+        // * left to right if the dancers are facing NORTH or SOUTH
+        // * top to bottom if the dancers are facing EAST or WEST  
+        // In particular this makes the dancers paired up.  
         function floorGetDancers(floor, designator) {
 
             let dancers = floor.dancers;
@@ -327,7 +330,6 @@
 
             // Sort the dancers so that all couples are next to each other.  couples go from FLOOR left to right
             // (thus sashayed couples might be surprising)
-
             if (dancerIsFacingHeads(dancers[0]))
                 dancers.sort((a, b) => cmpOrder(a.gridY - b.gridY, a.gridX - b.gridX)); // sort by Y A->Z then X A->Z
             else
@@ -376,6 +378,11 @@
             throw "Unsupported Designator " + designator;
         }
 
+        // given a list of dancers THAT ARE SORTED, return a array of boxes.   
+        // a box is a array of 4 dancers.  Logically the dancers in the box
+        // are arranged like
+        //     2 3
+        //     0 1 
         function dancersGetBoxes(dancers) {
             let lineLen = dancersLineLen(dancers);
             if (lineLen % 2 != 0 || dancers.length % (lineLen * 2) != 0)
@@ -384,11 +391,15 @@
             let ret = []
             for (let boxI = 0; boxI < dancers.length; boxI += 2 * lineLen) {
                 for (let i = 0; i < lineLen; i += 2)
-                    ret.push([dancers[i + boxI], dancers[i + 1 + boxI], dancers[lineLen + i + boxI], dancers[lineLen + i + 1 + boxI]]);
+                    ret.push([dancers[i + boxI], dancers[i + 1 + boxI],
+                    dancers[lineLen + i + boxI], dancers[lineLen + i + 1 + boxI]]);
             }
             return ret;
         }
 
+        // given a list of dancers THAT ARE SORTED, return a array of lines of 4 dancers
+        // the dancers are arranged from left to right if you face NORTH-SOUTH
+        // and arranged top to bottom if you face EAST-WEST
         function dancersGetLinesOf4(dancers) {
             let lineLen = dancersLineLen(dancers);
             if (lineLen != 4)
@@ -477,6 +488,35 @@
         function doHalfSashay(floor, dancers) {
             for (let i = 0; i < dancers.length; i += 2) {
                 swapPos(dancers[i], dancers[i + 1]);
+            }
+        }
+        
+        function doFaceIn(floor, dancers) {
+            let lineLen = dancersLineLen(dancers);
+
+            let needFaceEastWest;
+            if (lineLen == 2) {    // column-like
+                needFaceEastWest = dancerIsFacingHeads(dancers[0]);
+            }
+            else if (lineLen == 6) {
+                needFaceEastWest = dancerIsFacingSides(dancers[0]);
+            }
+            else
+                throw "Bad Formation for Face In";
+
+            for (let i = 0; i < dancers.length; i++) {
+                if (needFaceEastWest) {
+                    if (dancers[i].gridX < 0)
+                        dancers[i].rotation = 3;
+                    else
+                        dancers[i].rotation = 1;
+                }
+                else {
+                    if (dancers[i].gridY < 0)
+                        dancers[i].rotation = 0;
+                    else
+                        dancers[i].rotation = 2;
+                }
             }
         }
 
@@ -579,7 +619,7 @@
             }
         }
 
-        function doGirsRun(floor, dancers) {
+        function doGirlsRun(floor, dancers) {
             for (let i = 0; i < 12; i += 2) {
                 swapPos(dancers[i], dancers[i + 1]);
                 if (dancers[i].isBoy)
@@ -670,8 +710,18 @@
             }
         }
 
+        function doStretchFerrisWheel(floor, dancers) {
+            _doWheelFamily(floor, dancers, 5);
+        }
+        function doFerrisWheel(floor, dancers) {
+            _doWheelFamily(floor, dancers, 3);
+        }
+        function doWheelAndDeal(floor, dancers) {
+            _doWheelFamily(floor, dancers, 1);
+        }
+
         // Handles Wheel+Deal (stretch=1), Ferris Wheel(stretch=3) and Stretch Ferris Wheel (stretch=5)
-        function doWheelFamily(floor, dancers, stretch) {
+        function _doWheelFamily(floor, dancers, stretch) {
             let lines = dancersGetLinesOf4(dancers)
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i];
@@ -695,16 +745,6 @@
             floor.sweepCCW = -1;        // only for centers
         }
 
-        function doStretchFerrisWheel(floor, dancers) {
-            doWheelFamily(floor, dancers, 5);
-        }
-        function doFerrisWheel(floor, dancers) {
-            doWheelFamily(floor, dancers, 3);
-        }
-        function doWheelAndDeal(floor, dancers) {
-            doWheelFamily(floor, dancers, 1);
-        }
-
         function doZoom(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
             if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
@@ -720,7 +760,6 @@
         }
 
         function doTriplePassThru(floor, dancers) {
-
             // these are arranged in twos up the central column
             let lineLen = dancersLineLen(dancers);
             if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
@@ -750,35 +789,6 @@
             }
         }
 
-        function doFaceIn(floor, dancers) {
-            let lineLen = dancersLineLen(dancers);
-
-            let needFaceEastWest;
-            if (lineLen == 2) {    // column-like
-                needFaceEastWest = dancerIsFacingHeads(dancers[0]);
-            }
-            else if (lineLen == 6) {
-                needFaceEastWest = dancerIsFacingSides(dancers[0]);
-            }
-            else
-                throw "Bad Formation for Face In";
-
-            for (let i = 0; i < dancers.length; i++) {
-                if (needFaceEastWest) {
-                    if (dancers[i].gridX < 0)
-                        dancers[i].rotation = 3;
-                    else
-                        dancers[i].rotation = 1;
-                }
-                else {
-                    if (dancers[i].gridY < 0)
-                        dancers[i].rotation = 0;
-                    else
-                        dancers[i].rotation = 2;
-                }
-            }
-        }
-
         /*******************************/
         /* MainStream calls */
 
@@ -802,7 +812,6 @@
         }
 
         function doPassToTheCenter(floor, dancers) {
-
             let lineLen = dancersLineLen(dancers);
             if (lineLen != 2)
                 throw "Formation Wrong for Pass To The Center";
@@ -870,7 +879,6 @@
         // puts the orgin in the center and makes y grow up not down
         // Thus it acts like how you would set up x,y in math class. 
         function setOriginInCenter(canvas, canvasContext) {
-
             let centerX = canvas.width / 2;
             let centerY = canvas.height / 2;
 
@@ -878,7 +886,8 @@
             canvasContext.scale(1, -1);
         }
 
-        function drawFloor(floor, canvas) {
+        // the main method for drawing the floor.
+        function floorDraw(floor, canvas) {
             console.log("Drawing floor")
             const canvasContext = canvas.getContext('2d');
 
@@ -913,13 +922,13 @@
 
             // draw Dancers
             for (let dancer of floor.dancers) {
-                drawDancer(dancer, canvas, canvasContext, gridSize)
+                dancerDraw(dancer, canvas, canvasContext, gridSize)
             }
 
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
         }
 
-        function drawDancer(dancer, canvas, canvasContext, gridSize) {
+        function dancerDraw(dancer, canvas, canvasContext, gridSize) {
             setOriginInCenter(canvas, canvasContext);
 
             canvasContext.translate(dancer.gridX * gridSize, dancer.gridY * gridSize);
@@ -1018,31 +1027,40 @@
             return false;
         }
 
+        // Given 'call' (like rtl, sq4 ...) and a designator (e.g. h s c e v ...) 
+        // actually update the floor (and the GUI) to execute the call.  
         function doCall(floor, call, designator) {
-            // Remember the starting point for the floor
+            // The full call includes the designator, we use it when showing the call to the user.  
+            let fullCall = call;
+            if (designator)
+                fullCall = designator + " " + fullCall;
+
+            // make a copy of the floor before we modify it so we can support undo.  
             let startFloor;
             if (0 < g_callHistory.length)
                 startFloor = g_callHistory[g_callHistory.length - 1].end;
             else
                 startFloor = floorCopy(floor);
 
-            // remember our sweep direction for sweepa quarter
+            // most calls do not have flow, so reset it here to create a default
+            // don't reset it for sweep a quarter itself since we need that 
+            // flow information to actually do the call and don't want to destroy it.   
             if (call != "saq")
                 floor.sweepCCW = 0;                // 0 means no sweep  
 
-            let fullCall = call;
-            if (designator)
-                fullCall = designator + " " + fullCall;
 
             try {
+                // parse the desginators to determine what dancers actually move.  
                 let dancers = floorGetDancers(floor, designator);
 
+                // Fetch the javaScript function that does the call
                 let callFtn = CALL_TO_FTN[call];
                 if (!callFtn) {
                     logError("Error, Unknownn call : " + call);
                     return false;
                 }
 
+                // and call the function. 
                 callFtn(floor, dancers);
 
             } catch (err) {
@@ -1051,13 +1069,11 @@
                 return false;
             }
 
+            // update other GUI state after a successful model update
             g_messageSpan.innerHTML = "Finished Call: " + fullCall;
-
             g_prevFloor = startFloor;                // This is the model the GUI uses
-
             // remember the history
             g_callHistory.push({ start: startFloor, call: fullCall, end: floorCopy(floor) });
-
             // update the GUI for the history.
             g_callListSpan.innerHTML += fullCall + "<br>";
             return true;
@@ -1066,6 +1082,19 @@
         function logError(message) {
             beep();
             g_messageSpan.innerHTML = "<b>" + message + "</b>";
+        }
+
+        // called when we want to make sure that the GUI represents the model (after we changed the model)
+        function syncGUIToModel() {
+            console.log("in syncGUIToModel", g_floor);
+            floorDraw(g_floor, g_mainCanvas);
+            floorDraw(g_prevFloor, g_prevCanvas);
+
+            // Update the history list
+            let historyStr = ""
+            for (let g_callHistoryElem of g_callHistory)
+                historyStr += g_callHistoryElem.call + "<br>";
+            g_callListSpan.innerHTML = historyStr;
         }
 
         // used to initialize the CALL_TO_FTN table. 
@@ -1085,7 +1114,7 @@
             ret["tb"] = doTradeBy;
             ret["stw"] = doStepToAWave;
             ret["br"] = doBoysRun;
-            ret["gr"] = doGirsRun;
+            ret["gr"] = doGirlsRun;
             ret["ptd"] = doTrade;
             ret["sb"] = doTrade;;
             ret["td"] = doTrade;;
@@ -1115,19 +1144,6 @@
             return ret;
         }
 
-        // called when we want to make sure that the GUI represents the model (after we changed the model)
-        function syncGUIToModel() {
-            console.log("in syncGUIToModel", g_floor);
-            drawFloor(g_floor, g_mainCanvas);
-            drawFloor(g_prevFloor, g_prevCanvas);
-
-            // Update the history list
-            let historyStr = ""
-            for (let g_callHistoryElem of g_callHistory)
-                historyStr += g_callHistoryElem.call + "<br>";
-            g_callListSpan.innerHTML = historyStr;
-        }
-
         /********************************************************************/
         // support for sound (beeps)
 
@@ -1152,14 +1168,15 @@
 
         /********************************************************************/
         /********************************************************************/
-        // TESTING    Called by the 't' command to allow quick unit testing
+        // TESTING    Called by the 'tst' command to allow quick unit testing
 
         function doTest() {
+            // just run a long sequence that resolves and uses every call.   
             doCommand("reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt " +
                 "tb srt dx e circ gr btl pto rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
                 "rfl srt pt tb pt tb fl");
 
-            g_messageSpan.innerHTML = "<b>" + "Finished Testing" + "</b>";
+            g_messageSpan.innerHTML = "<b>" + "Finished Testing.  Square should be resolved (corner boxes)." + "</b>";
         }
     </script>
 </body>
