@@ -714,10 +714,19 @@
 
         function doSwingThru(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
+
+            // Allow the facing couple ocean wave rule TODO do this more uniformly.   This is a hack
+            if (lineLen == 2 && dancers.length == 12) {
+                doStepToAWave(floor, dancers);
+                return doSwingThru(floor, floorGetDancers(floor));
+            }
+
+            // check if the formation  is valid
             for (let i = 1; i < dancers.length; i++) {
                 if (!dancersIsFacingOpposite(dancers[i], dancers[i-1]))
                     throw "Need to have alternating dancers" + (lineLen == 4 ? " (need to call stw?)" : "");
             }
+
             if (lineLen == 4) {
                 for (let start = 0; start < dancers.length; start += lineLen) {
                     swapPosAndDir(dancers[start], dancers[start + 1]);
