@@ -28,14 +28,16 @@
         <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()">
             <button onClick="doCommand('reset')">reset</button>
             <button onClick="doCommand('undo')">undo</button>
+            <span id=resolved
+                style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247);vertical-align:middle;margin:0px 20px;text-align:center;">Resolved!</span>
         </li>
         <li> Message: <span id=message></span> </li>
     </ul>
     <div style="display:flex">
         <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
-        <div style="background-color:lightgray;height:500px;min-width:80px;overflow-y:scroll">
+        <div style="background-color:lightgray;height:500px;min-width:120px;overflow-y:scroll">
             <p>
-                <center><b>Call History</b></center><br>
+                <b style="display:inline-block;margin:0px 5px">Call History</b><br>
                 <span id=callList></span>
             </p>
         </div>
@@ -64,6 +66,7 @@
         const g_messageSpan = document.getElementById('message');
         const g_callListSpan = document.getElementById('callList');
         const g_allCallsSpan = document.getElementById('allCalls');
+        const g_resolvedsSpan = document.getElementById('resolved');
 
         // Values for dancers based on their dancer number 
         const COLORS = ["red", "green", "cyan", "yellow", "violet", "blue"];
@@ -335,6 +338,52 @@
             return val2;
         }
 
+        function dancerNextNum(num) {
+            return num % 6 + 1;     //  first transform 1-6 to 0-5 then add one then mod, then traslate back.  
+        }
+
+        function floorIsResolved(floor) {
+            let dancers = floor.dancers;
+
+            // I am not counting lines in order as resolved, so it is just boxes.   
+            if (floorIsFacingOut(floor, dancers[0]) || floorIsFacingOut(floor, dancers[1]))
+                return false;
+
+            // The ends are coupled up
+            if (dancers[0].number != dancers[1].number)
+                return false;
+            if (dancers[10].number != dancers[11].number)
+                return false;
+
+            // boxes or columns 
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2)
+                return false;
+
+            // check the boxes. 
+            let lastBoxStart = undefined;
+            for (let boxStart = 0; boxStart < 12; boxStart += 4) {
+                if (!dancers[boxStart + 0].isBoy || !dancers[boxStart + 3].isBoy)
+                    return false
+
+                // our corner is correct. 
+                if (dancerNextNum(dancers[boxStart + 2].number) != dancers[boxStart + 0].number)
+                    return false;
+                if (dancerNextNum(dancers[boxStart + 1].number) != dancers[boxStart + 3].number)
+                    return false;
+
+                // we are partnered up.  
+                if (lastBoxStart) {
+                    if (dancers[boxStart + 0].number != dancers[lastBoxStart + 2].number)
+                        return false;
+                    if (dancers[boxStart + 1].number != dancers[lastBoxStart + 3].number)
+                        return false;
+                }
+                lastBoxStart = boxStart;
+            }
+            return true;
+        }
+
         // given a designator (e.g. c = centers, e = ends, v = very centers, h = heads, s = sides) 
         // return an array of those dancers.  The returned dancers are sorted 
         // * left to right if the dancers are facing NORTH or SOUTH
@@ -534,11 +583,22 @@
         /*******************************/
         /* Basic 1 calls */
 
-        function doLeadRight(floor, dancers) {
-            for (let i = 0; i < dancers.length; i++) {
-                let dancer = dancers[i];
-                let beauFactor = (dancer.isBoy ? 1 : 0)           // TODO this should not be sex base.
-                dancerMove(dancers[i], 2 * beauFactor, 2 * beauFactor, -1);
+        function doAllemandeLeft(floor, dancers) {
+            if (!floor.isResolved)
+                throw "Alemande Left on an unresolved square";
+        }
+
+        function doPassThru(floor, dancers) {
+            for (let dancer of dancers) {
+                if (floorIsFacingOut(floor, dancer))
+                    throw "Dancers facing out can't pass thru";
+                dancerMove(dancer, 2, 0, 0);
+            }
+        }
+
+        function doTrade(floor, dancers) {
+            for (let i = 0; i < dancers.length; i += 2) {
+                trade(dancers[i], dancers[i + 1]);
             }
         }
 
@@ -550,6 +610,33 @@
                     dancerMove(belle, 2, -2, 2);
             }
             floor.sweepCCW = 1;
+        }
+
+        function doStarThru(floor, dancers) {
+            for (let dancer of dancers)
+                dancerMove(dancer, 2, 0, dancer.isBoy ? -1 : 1);
+        }
+
+        function doLeadRight(floor, dancers) {
+            for (let i = 0; i < dancers.length; i++) {
+                let dancer = dancers[i];
+                let beauFactor = (dancer.isBoy ? 1 : 0)           // TODO this should not be sex base.
+                dancerMove(dancers[i], 2 * beauFactor, 2 * beauFactor, -1);
+            }
+        }
+
+        function doSquareThru4(floor, dancers) {
+            for (let box of dancersGetBoxes(dancers)) {
+                dancerMove(box[0], 0, 0, 1);
+                dancerMove(box[1], 0, 0, -1);
+                dancerMove(box[2], 0, 0, -1);
+                dancerMove(box[3], 0, 0, 1);
+            }
+        }
+
+        function doVeerLeft(floor, dancers) {
+            for (let dancer of dancers)
+                dancerMove(dancer, 1, -2, 0);
         }
 
         function doCirculate(floor, dancers) {
@@ -569,20 +656,6 @@
                 }
                 else
                     dancerMove(dancer, delta, 0, 0);
-            }
-        }
-
-        function doVeerLeft(floor, dancers) {
-            for (let dancer of dancers)
-                dancerMove(dancer, 1, -2, 0);
-        }
-
-        function doSquareThru4(floor, dancers) {
-            for (let box of dancersGetBoxes(dancers)) {
-                dancerMove(box[0], 0, 0, 1);
-                dancerMove(box[1], 0, 0, -1);
-                dancerMove(box[2], 0, 0, -1);
-                dancerMove(box[3], 0, 0, 1);
             }
         }
 
@@ -776,27 +849,14 @@
             }
         }
 
-        function doStarThru(floor, dancers) {
-            for (let dancer of dancers)
-                dancerMove(dancer, 2, 0, dancer.isBoy ? -1 : 1);
-        }
-
-        function doPassThru(floor, dancers) {
-            for (let dancer of dancers) {
-                if (floorIsFacingOut(floor, dancer))
-                    throw "Dancers facing out can't pass thru";
-                dancerMove(dancer, 2, 0, 0);
-            }
-        }
-
         function doTradeBy(floor, dancers) {
             // Needed to avoid center boxes working 
             if (!floorIsFacingOut(floor, dancers[0]))
-                    throw "Not a Trade-By formation";
+                throw "Not a Trade-By formation";
 
             trade(dancers[0], dancers[1]);
             // middle people pass thru
-            for(let i =2; i < 10; i++)
+            for (let i = 2; i < 10; i++)
                 dancerMove(dancers[i], 2, 0, 0);
             trade(dancers[10], dancers[11]);
         }
@@ -838,7 +898,7 @@
 
         function doTouchAQuarter(floor, dancers) {
             for (let dancer of dancers) {
-                    dancerMove(dancer, 2, 0, -1);
+                dancerMove(dancer, 2, 0, -1);
             }
         }
 
@@ -945,12 +1005,6 @@
             // remember you have to use the STARTING index 
             trade(dancers[2], dancers[3]);
             trade(dancers[8], dancers[9]);
-        }
-
-        function doTrade(floor, dancers) {
-            for (let i = 0; i < dancers.length; i += 2) {
-                trade(dancers[i], dancers[i + 1]);
-            }
         }
 
         function doRecycle(floor, dancers) {
@@ -1189,6 +1243,7 @@
                     syncGUIToModel();   // this is only here to make debugging easier you can see then error formation 
                     throw "Error: Bad formation for '" + call + "'" + "'";
                 }
+                floor.isResolved = floorIsResolved(floor);
             } catch (err) {
                 logError("Error Executing Call: " + err);
                 floorAssign(floor, startFloor);        // restore the state. 
@@ -1212,6 +1267,8 @@
 
         // called when we want to make sure that the GUI represents the model (after we changed the model)
         function syncGUIToModel() {
+            g_resolvedsSpan.style.visibility = g_floor.isResolved ? "visible" : "hidden";
+
             floorDraw(g_floor, g_mainCanvas);
             floorDraw(g_prevFloor, g_prevCanvas);
 
@@ -1225,22 +1282,23 @@
         // used to initialize the CALL_TO_FTN table. 
         function getCallFtns() {
             let ret = {};
-            ret["lr"] = doLeadRight;
-            ret["st"] = doSwingThru;
-            ret["sq4"] = doSquareThru4;
-            ret["ex"] = doExtend;
             ret["home"] = doHome;
-            ret["rlt"] = doRightAndLeftThru;
-            ret["vl"] = doVeerLeft;
-            ret["btl"] = doBendTheLine;
+            ret["al"] = doAllemandeLeft;
+            ret["pt"] = doPassThru;
             ret["srt"] = doStarThru;
             ret["sl"] = doStarThru;
-            ret["pt"] = doPassThru;
+            ret["rlt"] = doRightAndLeftThru;
+            ret["vl"] = doVeerLeft;
+            ret["sq4"] = doSquareThru4;
+            ret["lr"] = doLeadRight;
+            ret["ptd"] = doTrade;
+            ret["st"] = doSwingThru;
+            ret["ex"] = doExtend;
+            ret["btl"] = doBendTheLine;
             ret["tb"] = doTradeBy;
             ret["stw"] = doStepToAWave;
             ret["br"] = doBoysRun;
             ret["gr"] = doGirlsRun;
-            ret["ptd"] = doTrade;
             ret["sb"] = doTrade;;
             ret["td"] = doTrade;;
             ret["sq3"] = doTrade;;
@@ -1301,9 +1359,14 @@
                 "tb srt dx e circ gr btl pto hinge td hinge rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
                 "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
-                "lr ptd rlt saq vl fw c pt rlt"
+                "lr ptd rlt saq vl fw c pt rlt pt"
             );
-
+            
+            if (!g_floor.isResolved) {
+                logError("TestError: test did not resolve the square");
+                return;
+            }
+            
             if (!g_messageSpan.innerHTML.match(/error/i))
                 g_messageSpan.innerHTML = "<b>" + "Successful Testing.  Square should be resolved (corner boxes)." + "</b>";
         }
