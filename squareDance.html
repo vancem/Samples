@@ -405,18 +405,16 @@
             if (designator == "h") {
                 dancers = [];
                 for (let dancer of floor.dancers) {
-                    if (dancerIsHeads(dancer)) {
+                    if (dancerIsHeads(dancer))
                         dancers.push(dancer)
-                    }
                 }
                 isDesignatedHeadsOrSides = true;
             }
             else if (designator == "s") {
                 dancers = [];
                 for (let dancer of floor.dancers) {
-                    if (dancerIsSides(dancer)) {
+                    if (dancerIsSides(dancer))
                         dancers.push(dancer)
-                    }
                 }
                 isDesignatedHeadsOrSides = true;
             }
@@ -467,6 +465,15 @@
                     return [dancers[0], dancers[5], dancers[6], dancers[11]];
                 else
                     throw "Can't Determine Ends.";
+            }
+            if (designator == "g" || designator == "b") {
+                let wantBoy = (designator == "b");
+                dancers = [];
+                for (let dancer of floor.dancers) {
+                    if (dancer.isBoy == wantBoy)
+                        dancers.push(dancer)
+                }
+                return dancers;
             }
             throw "Unsupported Designator " + designator;
         }
@@ -639,6 +646,15 @@
                 dancerMove(box[1], 0, 0, -1);
                 dancerMove(box[2], 0, 0, -1);
                 dancerMove(box[3], 0, 0, 1);
+            }
+        }
+
+        function doSquareThru2(floor, dancers) {
+            for (let box of dancersGetBoxes(dancers)) {
+                dancerMove(box[0], 2, 2, -1);
+                dancerMove(box[1], 2, -2, 1);
+                dancerMove(box[2], 2, -2, 1);
+                dancerMove(box[3], 2, 2, -1);
             }
         }
 
@@ -864,9 +880,9 @@
 
             trade(dancers[0], dancers[1]);
             // middle people pass thru
-            for (let i = 2; i < dancers.length-2; i++)
+            for (let i = 2; i < dancers.length - 2; i++)
                 dancerMove(dancers[i], 2, 0, 0);
-            trade(dancers[dancers.length-2], dancers[dancers.length-1]);
+            trade(dancers[dancers.length - 2], dancers[dancers.length - 1]);
         }
 
         function doBendTheLine(floor, dancers) {
@@ -1012,7 +1028,7 @@
             // The ends need to partner trade 
             // remember you have to use the STARTING index 
             trade(dancers[2], dancers[3]);
-            trade(dancers[dancers.length-4], dancers[dancers.length-3]);
+            trade(dancers[dancers.length - 4], dancers[dancers.length - 3]);
         }
 
         function doRecycle(floor, dancers) {
@@ -1298,6 +1314,7 @@
             ret["rlt"] = doRightAndLeftThru;
             ret["vl"] = doVeerLeft;
             ret["sq4"] = doSquareThru4;
+            ret["sq2"] = doSquareThru2;
             ret["lr"] = doLeadRight;
             ret["ptd"] = doTrade;
             ret["st"] = doSwingThru;
@@ -1369,7 +1386,7 @@
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
                 "lr ptd rlt saq vl fw c pt rlt"
             );
-            
+
             if (!g_floor.isResolved) {
                 logError("TestError: test did not resolve the square");
                 return;
