@@ -13,19 +13,15 @@
             target="_blank">
             Taminations mainstream list</a>.
     </p>
-    <p>
-        The error handling is rudimentary at best. It has also only been
-        tested in 'simple' cases, but it does seem to work if you stick to
-        valid call sequences.
     <ul>
         <li> Calls are given very short abbreviations that are mostly the first letter of
             each word in the call (exeptions below). Couple circulate is just circulate.
         <li> h=heads, c=centers, e=ends, v = very centers, fl=flutterwheel srt=star thru, sfw = stretch ferris wheel
             st=swing thru, td=trade, sl=slide thru</li>
         <li> Calls Available: <span id=allCalls></span> </li>
-        <li> Must explicitly call step to a wave (stw) from facing couples.
-        <li> You can paste multiple commands (sep by space) into textbox.
-        <li> To try it out, type the following (without commas): h pto,ex,st,br,fw,c sq3
+        <li> Typically Must explicitly call step to a wave (stw) from facing couples.
+        <li> You can paste multiple commands (separated by space) into textbox.
+        <li> To try it out, type the following (one at a time, without commas): h pto,ex,st,br,fw,c sq3
 
     </ul>
     <ul>
@@ -38,7 +34,7 @@
     <div style="display:flex">
         <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
         <div style="background-color:lightgray;height:500px;min-width:80px;overflow-y:scroll">
-            <p style="margin:10px;">
+            <p>
                 <center><b>Call History</b></center><br>
                 <span id=callList></span>
             </p>
@@ -1172,7 +1168,6 @@
             // flow information to actually do the call and don't want to destroy it.   
             if (call != "saq")
                 floor.sweepCCW = 0;                // 0 means no sweep  
-
 
             try {
                 // Fetch the javaScript function that does the call
