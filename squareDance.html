@@ -283,6 +283,8 @@
             if (floor == undefined)
                 floor = {};
             floor.dancers = [];
+            floor.isResolved = false;
+            
             floorMakeCouple(floor.dancers, 1, -3, -3, NORTH);
             floorMakeCouple(floor.dancers, 2, 1, -3, NORTH);
             floorMakeCouple(floor.dancers, 3, 5, -1, WEST);
