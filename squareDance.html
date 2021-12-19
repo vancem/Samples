@@ -1359,14 +1359,14 @@
                 "tb srt dx e circ gr btl pto hinge td hinge rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
                 "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
-                "lr ptd rlt saq vl fw c pt rlt pt"
+                "lr ptd rlt saq vl fw c pt rlt"
             );
             
             if (!g_floor.isResolved) {
                 logError("TestError: test did not resolve the square");
                 return;
             }
-            
+
             if (!g_messageSpan.innerHTML.match(/error/i))
                 g_messageSpan.innerHTML = "<b>" + "Successful Testing.  Square should be resolved (corner boxes)." + "</b>";
         }
