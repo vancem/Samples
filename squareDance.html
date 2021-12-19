@@ -267,9 +267,15 @@
             return Math.abs(dancer1.rotation - dancer2.rotation) == 2;
         }
 
+        function dancerFacingAwayFromCenter(dancer) {
+            let forward = dancerForwardValue(dancer);                               // 1 if going away from orgin
+            let normalizedPos = dancerGetFacingCoordinate(dancer) >= 0 ? 1 : -1;      // 1 if orgin at my back.  
+            return forward == normalizedPos;
+        }
+
         /********************************************************************/
         /********************************************************************/
-        // operations on the floor
+        // operations on the floor  
         // the floor consists of a set of (in our case 12) dancers 
 
         // Some important invariants of floor
@@ -853,14 +859,14 @@
 
         function doTradeBy(floor, dancers) {
             // Needed to avoid center boxes working 
-            if (!floorIsFacingOut(floor, dancers[0]))
+            if (!dancerFacingAwayFromCenter(dancers[0]) || !(dancers.length == 12 || dancers.length == 8))
                 throw "Not a Trade-By formation";
 
             trade(dancers[0], dancers[1]);
             // middle people pass thru
-            for (let i = 2; i < 10; i++)
+            for (let i = 2; i < dancers.length-2; i++)
                 dancerMove(dancers[i], 2, 0, 0);
-            trade(dancers[10], dancers[11]);
+            trade(dancers[dancers.length-2], dancers[dancers.length-1]);
         }
 
         function doBendTheLine(floor, dancers) {
@@ -996,7 +1002,7 @@
         function doPassToTheCenter(floor, dancers) {
             // this is needed to avoid allowing on lines facing in
             let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2)
+            if (lineLen != 2 || !(dancers.length == 12 || dancers.length == 8))
                 throw "Formation Wrong for Pass To The Center";
 
             // everyone passes through
@@ -1006,7 +1012,7 @@
             // The ends need to partner trade 
             // remember you have to use the STARTING index 
             trade(dancers[2], dancers[3]);
-            trade(dancers[8], dancers[9]);
+            trade(dancers[dancers.length-4], dancers[dancers.length-3]);
         }
 
         function doRecycle(floor, dancers) {
