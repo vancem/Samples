@@ -284,7 +284,7 @@
                 floor = {};
             floor.dancers = [];
             floor.isResolved = false;
-            
+
             floorMakeCouple(floor.dancers, 1, -3, -3, NORTH);
             floorMakeCouple(floor.dancers, 2, 1, -3, NORTH);
             floorMakeCouple(floor.dancers, 3, 5, -1, WEST);
@@ -490,7 +490,7 @@
             let dancersFacingHeads = dancerIsFacingHeads(dancers[0]);
             for (let dancer of dancers) {
                 if (dancerIsFacingHeads(dancer) != dancersFacingHeads)
-                    return "T-Bone configuration for dancer" + i;
+                    return "T-Bone configuration for dancer";
                 if (5 < Math.abs(dancer.gridX) || 5 < Math.abs(dancer.gridY))
                     return "Dancer outside Grid";
                 if (Math.floor(dancer.gridX) != dancer.gridX || Math.floor(dancer.gridY) != dancer.gridY)
