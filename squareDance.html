@@ -204,14 +204,6 @@
         /********************************/
         // operations on two dancers 
 
-        function swapPosAndDir(dancer1, dancer2) {
-            swapPos(dancer1, dancer2);
-
-            let temp = dancer1.rotation;
-            dancer1.rotation = dancer2.rotation;
-            dancer2.rotation = temp;
-        }
-
         function swapPos(dancer1, dancer2) {
             let temp = dancer1.gridX;
             dancer1.gridX = dancer2.gridX;
@@ -226,14 +218,6 @@
             swapPos(dancer1, dancer2)
             dancerMove(dancer1, 0, 0, 2);
             dancerMove(dancer2, 0, 0, 2);
-        }
-
-        function passThru(dancer1, dancer2) {
-            // TODO repace with dancerMove
-            if (!dancersIsFacingOpposite(dancer1, dancer2))
-                throw "Must be facing to pass thru.";
-
-            swapPos(dancer1, dancer2)
         }
 
         // In a sorted list of dancers, determine how long the 
@@ -667,7 +651,7 @@
             if (lineLen == 2 && lineLen2 == 4) {
                 for (let i = 0; i < dancers.length; i++) {
                     dancerMove(dancers[i],
-                        ((i <= 1 || 10 <= i) ? 1 : 2),                    // every but ends move forward
+                        ((i <= 1 || 10 <= i) ? 1 : 2),                    // everyone but ends move forward
                         ((i == 0 || i == dancers.length - 1) ? -2 : 0), 0);  // only end on the left slides over 2
                 }
             }
@@ -720,9 +704,10 @@
         }
 
         function doSwingThru(floor, dancers) {
-            let lineLen = dancersLineLen(dancers);
+            // TODO swing thru is not correct for left handed waves (it does a left swing thru)
 
             // Allow the facing couple ocean wave rule TODO do this more uniformly.   This is a hack
+            let lineLen = dancersLineLen(dancers);
             if (lineLen == 2 && dancers.length == 12) {
                 doStepToAWave(floor, dancers);
                 return doSwingThru(floor, floorGetDancers(floor));
@@ -736,24 +721,24 @@
 
             if (lineLen == 4) {
                 for (let start = 0; start < dancers.length; start += lineLen) {
-                    swapPosAndDir(dancers[start], dancers[start + 1]);
-                    swapPosAndDir(dancers[start + 2], dancers[start + 3]);
+                    trade(dancers[start], dancers[start + 1]);
+                    trade(dancers[start + 2], dancers[start + 3]);
 
                     // centers trade (note that we have to use the ORIGINAL indexes
                     // to fetch people now in the center
-                    swapPosAndDir(dancers[start], dancers[start + 3]);
+                    trade(dancers[start], dancers[start + 3]);
                 }
             }
             else if (lineLen == 6) {
                 for (let start = 0; start < dancers.length; start += lineLen) {
-                    swapPosAndDir(dancers[start], dancers[start + 1]);
-                    swapPosAndDir(dancers[start + 2], dancers[start + 3]);
-                    swapPosAndDir(dancers[start + 4], dancers[start + 5]);
+                    trade(dancers[start], dancers[start + 1]);
+                    trade(dancers[start + 2], dancers[start + 3]);
+                    trade(dancers[start + 4], dancers[start + 5]);
 
                     // centers trade (note that we have to use the ORIGINAL indexes
                     // to fetch people now in the center
-                    swapPosAndDir(dancers[start], dancers[start + 3]);
-                    swapPosAndDir(dancers[start + 2], dancers[start + 5]);
+                    trade(dancers[start], dancers[start + 3]);
+                    trade(dancers[start + 2], dancers[start + 5]);
                 }
             }
             else
@@ -809,24 +794,19 @@
         }
 
         function doTradeBy(floor, dancers) {
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2)
-                throw "Expected Trade By formation"
+            // Needed to avoid center boxes working 
+            if (!floorIsFacingOut(floor, dancers[0]))
+                    throw "Not a Trade-By formation";
 
             trade(dancers[0], dancers[1]);
-
-            passThru(dancers[2], dancers[4]);
-            passThru(dancers[3], dancers[5]);
-
-            passThru(dancers[6], dancers[8]);
-            passThru(dancers[7], dancers[9]);
-
+            // middle people pass thru
+            for(let i =2; i < 10; i++)
+                dancerMove(dancers[i], 2, 0, 0);
             trade(dancers[10], dancers[11]);
         }
 
         function doBendTheLine(floor, dancers) {
             let lineLen = dancersLineLen(dancers);
-
             if (lineLen == 4) {
                 for (let line of dancersGetLinesOf4(dancers)) {
                     // this is -1 for left handed waves, 1 for right handed
@@ -902,10 +882,6 @@
         }
 
         function doZoom(floor, dancers) {
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
-                throw "Bad Formation for Zoom";
-
             // these are arranged in twos up the central column
             for (let i = 0; i < dancers.length; i++) {
                 if (4 <= i && i < 8)                  // Very Centers roll back
@@ -917,19 +893,11 @@
 
         function doTriplePassThru(floor, dancers) {
             // these are arranged in twos up the central column
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
-                throw "Bad Formation for Triple Pass Thru";
-
             for (let dancer of dancers)
                 dancerMove(dancer, 6, 0, 0);
         }
 
         function doCloverleaf(floor, dancers) {
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2 || dancers[0].rotation != dancers[2].rotation || dancers[2].rotation != dancers[4].rotation)
-                throw "Bad Formation for Cloverleaf";
-
             // group them into groups of 3, in a box, box3 is the box of the groups of 3
             // boxes are in the order
             //  2 3 
@@ -968,6 +936,7 @@
         }
 
         function doPassToTheCenter(floor, dancers) {
+            // this is needed to avoid allowing on lines facing in
             let lineLen = dancersLineLen(dancers);
             if (lineLen != 2)
                 throw "Formation Wrong for Pass To The Center";
@@ -1207,7 +1176,7 @@
 
             try {
                 // Fetch the javaScript function that does the call
-                let callFtn = CALL_TO_FTN[call];
+                let callFtn = CALL_TO_FTN[call.toLowerCase()];
                 if (!callFtn)
                     throw "Unknown Call '" + call + "'";
 
