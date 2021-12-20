@@ -303,7 +303,10 @@
 
         // makes a deep copy of the floor.  
         function floorCopy(floor) {
-            let ret = {}
+            // do a shallow copy 
+            let ret = Object.assign({}, floor);
+
+            // Need a deeper copy of the dancers
             ret.dancers = [];
             for (let dancer of floor.dancers)
                 ret.dancers.push(dancerCopy(dancer));
@@ -490,7 +493,6 @@
         // Validates the floor and returns an error message if the floor is bad.
         // returns undefined if the floor is valid.  
         function floorFindError(floor) {
-            syncGUIToModel();   // TODO Remove
             let dancers = floorGetDancers(floor);
             if (dancers.length != 12)
                 return "Not 12 dancers";
@@ -920,6 +922,24 @@
                 throw "Formation wrong for bend the line.";
         }
 
+        function doTagTheLine(floor, dancers) {
+            let lineLen = dancersLineLen(dancers);
+            // We don't implement tag the line for lines of 4 although we could.
+            // it would mean adding lines of 3 as a legal configuration, and it does
+            // not seem worth it right now
+            if (lineLen == 6) {
+                for(let i = 0; i < dancers.length; i++) {
+                    let quadrant = Math.floor(i / 3);
+                    let rotation = (quadrant % 2 == 0) ? 3 : 1;
+                    dancers[i].rotation = rotation;         // Face in to the center  
+                    dancerMove(dancers[i], 6, 0, 0);        // move 6 positions in the new direction
+                }
+            }
+            else
+                throw "Formation wrong for tag the line.";
+        }
+
+
         function doTouchAQuarter(floor, dancers) {
             for (let dancer of dancers) {
                 dancerMove(dancer, 2, 0, -1);
@@ -990,6 +1010,14 @@
                 let dir = rotation;
                 for (let i = 0; i < 3; i++)
                     dancerMove(dancers[idxBase + 2 * idxDir * i], -2 * i, (4 - 2 * i) * dir, rotation);
+            }
+        }
+
+        function doBoxTheGnat(floor, dancers) {
+            for (let dancer of dancers) {
+                if (floorIsFacingOut(floor, dancer))
+                    throw "Dancers facing out can't box the gnat";
+                dancerMove(dancer, 2, 0, 2);
             }
         }
 
@@ -1320,6 +1348,7 @@
             ret["st"] = doSwingThru;
             ret["ex"] = doExtend;
             ret["btl"] = doBendTheLine;
+            ret["ttl"] = doTagTheLine;
             ret["tb"] = doTradeBy;
             ret["stw"] = doStepToAWave;
             ret["br"] = doBoysRun;
@@ -1348,6 +1377,7 @@
             ret["dx"] = doDixieStyle;
             ret["wad"] = doWalkAndDodge;
             ret["cl"] = doCloverleaf;
+            ret["bg"] = doBoxTheGnat;
             ret["tpt"] = doTriplePassThru;
             return ret;
         }
@@ -1384,7 +1414,8 @@
                 "tb srt dx e circ gr btl pto hinge td hinge rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
                 "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
-                "lr ptd rlt saq vl fw c pt rlt"
+                "lr ptd rlt saq vl fw c pt rlt hs bg rlt " +
+                "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb"
             );
 
             if (!g_floor.isResolved) {
