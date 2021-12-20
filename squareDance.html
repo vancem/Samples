@@ -349,48 +349,40 @@
             return val2;
         }
 
-        function dancerNextNum(num) {
-            return num % 6 + 1;     //  first transform 1-6 to 0-5 then add one then mod, then traslate back.  
-        }
-
         function floorIsResolved(floor) {
             let dancers = floor.dancers;
 
-            // I am not counting lines in order as resolved, so it is just boxes.   
-            if (floorIsFacingOut(floor, dancers[0]) || floorIsFacingOut(floor, dancers[1]))
-                return false;
+            // We iterate through the dancers 'around the outside counter clockwise' (promenade order)
+            // this gets us the sequence 0 2 4 6 8 10 11 9 7 5 3 1 
+            function dancerLoc(dancer) { return (dancer < 6) ? (2 * dancer + 1) : (10 - 2 * (dancer - 6)); }
 
-            // The ends are coupled up
-            if (dancers[0].number != dancers[1].number)
-                return false;
-            if (dancers[10].number != dancers[11].number)
-                return false;
+            //  first transform 1-6 to 0-5 then add one then mod, then traslate back.  
+            function dancerNextNum(num) { return num % 6 + 1; }
 
-            // boxes or columns 
-            let lineLen = dancersLineLen(dancers);
-            if (lineLen != 2)
-                return false;
+            for (let i = 0; i < 12; i++) {
+                let curDancer = dancers[dancerLoc(i)];
+                let nextDancer = dancers[dancerLoc((i + 1) % 12)];
+                if (nextDancer.isBoy == curDancer.isBoy)    // we alternate genders
+                    return false;  
 
-            // check the boxes. 
-            let lastBoxStart = undefined;
-            for (let boxStart = 0; boxStart < 12; boxStart += 4) {
-                if (!dancers[boxStart + 0].isBoy || !dancers[boxStart + 3].isBoy)
-                    return false
-
-                // our corner is correct. 
-                if (dancerNextNum(dancers[boxStart + 2].number) != dancers[boxStart + 0].number)
-                    return false;
-                if (dancerNextNum(dancers[boxStart + 1].number) != dancers[boxStart + 3].number)
-                    return false;
-
-                // we are partnered up.  
-                if (lastBoxStart) {
-                    if (dancers[boxStart + 0].number != dancers[lastBoxStart + 2].number)
-                        return false;
-                    if (dancers[boxStart + 1].number != dancers[lastBoxStart + 3].number)
+                if (curDancer.isBoy) {                      // the next needs to be your parner
+                    if (nextDancer.number != curDancer.number)
                         return false;
                 }
-                lastBoxStart = boxStart;
+                else {                                      // next dancer is the girls corner
+                    if (nextDancer.number != dancerNextNum(curDancer.number))
+                        return false
+
+                    // either you are facing your corner or you are both facing out
+                    if (floorIsFacingOut(floor, curDancer)) {
+                        if (!floorIsFacingOut(floor, nextDancer))
+                            return false;
+                    }
+                    else {
+                        if (!dancersIsFacingOpposite(nextDancer, curDancer))
+                            return false;
+                    }
+                }
             }
             return true;
         }
@@ -928,7 +920,7 @@
             // it would mean adding lines of 3 as a legal configuration, and it does
             // not seem worth it right now
             if (lineLen == 6) {
-                for(let i = 0; i < dancers.length; i++) {
+                for (let i = 0; i < dancers.length; i++) {
                     let quadrant = Math.floor(i / 3);
                     let rotation = (quadrant % 2 == 0) ? 3 : 1;
                     dancers[i].rotation = rotation;         // Face in to the center  
