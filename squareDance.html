@@ -38,7 +38,7 @@
         <div style="background-color:lightgray;height:500px;min-width:120px;overflow-y:scroll">
             <p>
                 <b style="display:inline-block;margin:0px 5px">Call History</b><br>
-                <span id=callList></span>
+            <ol id=callList></ol>
             </p>
         </div>
         <div style="background-color:#dfedf5">
@@ -64,7 +64,7 @@
 
         const g_commandTextbox = document.getElementById('command');
         const g_messageSpan = document.getElementById('message');
-        const g_callListSpan = document.getElementById('callList');
+        const g_callListOrderedList = document.getElementById('callList');
         const g_allCallsSpan = document.getElementById('allCalls');
         const g_resolvedsSpan = document.getElementById('resolved');
 
@@ -88,8 +88,6 @@
 
         // create the initial floor (squared set)
         let g_floor = floorReset();
-        // the state before the current floor, can be undefined.
-        let g_prevFloor = undefined;
         // keeps track of calls we made, it is the model for the 'Call History' part of the GUI
         let g_callHistory = [];
 
@@ -115,7 +113,7 @@
             allCalls.sort();
             g_allCallsSpan.innerHTML = allCalls.join(", ");
 
-            syncGUIToModel();
+            syncGUIToModel(g_floor);
         }
 
         /********************************************************************/
@@ -1203,12 +1201,13 @@
         function doCommandOnChange() {
             let call = g_commandTextbox.value;
             g_commandTextbox.value = "";
-            doCommand(call, g_floor)
+            doCommand(call)
 
         }
 
         function doCommand(command) {
             console.log("doCommand", command);
+            let floor = g_floor;
 
             while (true) {
                 let match = command.match(/^(([hsbgcev]) )?(\S+)\s*(.*)$/);
@@ -1219,24 +1218,23 @@
                 let call = match[3];
                 command = match[4];
 
-                if (checkForCommand(g_floor, call))
+                if (checkForCommand(floor, call))
                     continue;
 
-                if (!doCall(g_floor, call, designator))
+                if (!doCall(floor, call, designator))
                     break;
             }
-            syncGUIToModel();
+            syncGUIToModel(floor);
         }
 
         function checkForCommand(floor, command) {
             // Hidden for testing 
             if (command == "tst") {
-                doTest();
+                doTest(floor);
                 return true;
             }
 
             if (command == "reset") {
-                g_callListSpan.innerHTML = "";
                 floorReset(floor);
                 g_callHistory = [];
                 g_messageSpan.innerHTML = "Reset complete.";
@@ -1246,13 +1244,11 @@
             if (command == "undo") {
                 if (0 < g_callHistory.length) {
                     let prev = g_callHistory.pop();
-                    floorAssign(g_floor, prev.start);
+                    floorAssign(floor, prev.start);
                     g_messageSpan.innerHTML = "Undid: <b>" + prev.call + "</b>";
 
-                    g_prevFloor = undefined;
                     if (0 < g_callHistory.length) {
                         let prevHistory = g_callHistory[g_callHistory.length - 1];
-                        g_prevFloor = prevHistory.start;
                         g_messageSpan.innerHTML += " last call now: <b>" + prevHistory.call + "</b>";
                     }
                 }
@@ -1303,7 +1299,7 @@
                 let formationError = floorFindError(floor, designator, callFtn);
                 if (formationError) {
                     console.log("Validating call failed, formation error: " + formationError);
-                    syncGUIToModel();   // this is only here to make debugging easier you can see then error formation 
+                    syncGUIToModel(floor);   // this is only here to make debugging easier you can see then error formation 
                     throw "Error: Bad formation for '" + call + "'" + "'";
                 }
                 floor.isResolved = floorIsResolved(floor);
@@ -1315,11 +1311,8 @@
 
             // update other GUI state after a successful model update
             g_messageSpan.innerHTML = "Finished Call: " + fullCall;
-            g_prevFloor = startFloor;                // This is the model the GUI uses
             // remember the history
             g_callHistory.push({ start: startFloor, call: fullCall, end: floorCopy(floor) });
-            // update the GUI for the history.
-            g_callListSpan.innerHTML += fullCall + "<br>";
             return true;
         }
 
@@ -1329,17 +1322,27 @@
         }
 
         // called when we want to make sure that the GUI represents the model (after we changed the model)
-        function syncGUIToModel() {
-            g_resolvedsSpan.style.visibility = g_floor.isResolved ? "visible" : "hidden";
+        function syncGUIToModel(floor) {
+            g_resolvedsSpan.style.visibility = floor.isResolved ? "visible" : "hidden";
 
-            floorDraw(g_floor, g_mainCanvas);
-            floorDraw(g_prevFloor, g_prevCanvas);
+            floorDraw(floor, g_mainCanvas);
+
+            let prevFloor = undefined;
+            if (0 < g_callHistory.length)
+                prevFloor = g_callHistory[g_callHistory.length - 1].start;
+            floorDraw(prevFloor, g_prevCanvas);
 
             // Update the history list
-            let historyStr = ""
-            for (let g_callHistoryElem of g_callHistory)
-                historyStr += g_callHistoryElem.call + "<br>";
-            g_callListSpan.innerHTML = historyStr;
+            g_callListOrderedList.replaceChildren();
+            let lastLI = undefined;
+            for (let historyItem of g_callHistory) {
+                let li = document.createElement("li");
+                li.innerText = historyItem.call;
+                g_callListOrderedList.appendChild(li);
+                lastLI = li;
+            }
+            if (lastLI)
+                lastLI.style.backgroundColor = "lightblue";
         }
 
         // used to initialize the CALL_TO_FTN table. 
@@ -1420,7 +1423,7 @@
         /********************************************************************/
         /********************************************************************/
         // TESTING    Called by the 'tst' command to allow quick unit testing
-        function doTest() {
+        function doTest(floor) {
             // just run a long sequence that resolves and uses every call.   
             doCommand(
                 "reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt " +
@@ -1431,7 +1434,7 @@
                 "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb"
             );
 
-            if (!g_floor.isResolved) {
+            if (!floor.isResolved) {
                 logError("TestError: test did not resolve the square");
                 return;
             }
