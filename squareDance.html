@@ -25,9 +25,9 @@
 
     </ul>
     <ul>
-        <li> Type Calls here: <input id=command type=text onchange="doCommandOnChange()">
-            <button onClick="doCommand('reset')">reset</button>
+        <li> <button onClick="doCommand('reset')">reset</button>
             <button onClick="doCommand('undo')">undo</button>
+            Type Calls here: <input id=command type=text onchange="doCommandOnChange()">
             <span id=resolved
                 style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247);vertical-align:middle;margin:0px 20px;text-align:center;">Resolved!</span>
         </li>
@@ -363,7 +363,7 @@
                 let curDancer = dancers[dancerLoc(i)];
                 let nextDancer = dancers[dancerLoc((i + 1) % 12)];
                 if (nextDancer.isBoy == curDancer.isBoy)    // we alternate genders
-                    return false;  
+                    return false;
 
                 if (curDancer.isBoy) {                      // the next needs to be your parner
                     if (nextDancer.number != curDancer.number)
@@ -484,10 +484,15 @@
 
         // Validates the floor and returns an error message if the floor is bad.
         // returns undefined if the floor is valid.  
-        function floorFindError(floor) {
+        function floorFindError(floor, designator, callFtn) {
             let dancers = floorGetDancers(floor);
             if (dancers.length != 12)
                 return "Not 12 dancers";
+
+            // TODO FIX: we turn off checking, we can do better. 
+            if ((designator == "h" || designator == "s") && callFtn == doPromHalf) {
+                return undefined;
+            }
 
             // Can only have these lengths
             let lineLen = dancersLineLen(dancers);
@@ -729,6 +734,17 @@
             }
         }
 
+        function doPromHalf(floor, dancers) {
+            let isSides = dancerIsSides(dancers[0]);
+            for (let i = 0; i < dancers.length / 2; i++) {
+                if (dancerIsSides(dancers[i]) != isSides)
+                    throw "Dancers must be all heads or all sides";
+                swapPos(dancers[i], dancers[dancers.length - i - 1]);
+                for (let dancer of [dancers[i], dancers[dancers.length - i - 1]])
+                    dancerMove(dancer, 0, 0, 2);
+            }
+        }
+
         /*******************************/
         /* Basic 2 calls */
 
@@ -920,9 +936,12 @@
             // it would mean adding lines of 3 as a legal configuration, and it does
             // not seem worth it right now
             if (lineLen == 6) {
+                let facingSides = dancerIsFacingSides(dancers[0]);
                 for (let i = 0; i < dancers.length; i++) {
                     let quadrant = Math.floor(i / 3);
                     let rotation = (quadrant % 2 == 0) ? 3 : 1;
+                    if (facingSides)
+                        --rotation;
                     dancers[i].rotation = rotation;         // Face in to the center  
                     dancerMove(dancers[i], 6, 0, 0);        // move 6 positions in the new direction
                 }
@@ -1281,7 +1300,7 @@
                 callFtn(floor, dancers);
 
                 // See if the call did something illegal.
-                let formationError = floorFindError(floor);
+                let formationError = floorFindError(floor, designator, callFtn);
                 if (formationError) {
                     console.log("Validating call failed, formation error: " + formationError);
                     syncGUIToModel();   // this is only here to make debugging easier you can see then error formation 
@@ -1329,6 +1348,8 @@
             ret["home"] = doHome;
             ret["al"] = doAllemandeLeft;
             ret["pt"] = doPassThru;
+            ret["p1/2"] = doPromHalf;
+            ret["p12"] = doPromHalf;
             ret["srt"] = doStarThru;
             ret["sl"] = doStarThru;
             ret["rlt"] = doRightAndLeftThru;
