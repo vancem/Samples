@@ -25,9 +25,9 @@
 
     </ul>
     <ul>
-        <li> <button onClick="doCommand('reset')">reset</button>
-            <button onClick="doCommand('undo')">undo</button>
-            Type Calls here: <input id=command type=text onchange="doCommandOnChange()">
+        <li> <button onClick="onCommand('reset')">reset</button>
+            <button onClick="onCommand('undo')">undo</button>
+            Type Calls here: <input id=command type=text onchange="textBoxOnChange(event)">
             <span id=resolved
                 style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247);vertical-align:middle;margin:0px 20px;text-align:center;">Resolved!</span>
         </li>
@@ -62,11 +62,11 @@
         const g_mainCanvas = document.getElementById('main');
         const g_prevCanvas = document.getElementById('prev');
 
-        const g_commandTextbox = document.getElementById('command');
         const g_messageSpan = document.getElementById('message');
-        const g_callListOrderedList = document.getElementById('callList');
         const g_allCallsSpan = document.getElementById('allCalls');
         const g_resolvedsSpan = document.getElementById('resolved');
+
+        const g_callListOrderedList = document.getElementById('callList');
 
         // Values for dancers based on their dancer number 
         const COLORS = ["red", "green", "cyan", "yellow", "violet", "blue"];
@@ -1198,15 +1198,27 @@
         // logic for handling GUI callbacks 
 
         // called when textbox changes (someone hits enter or paste in it)
-        function doCommandOnChange() {
-            let call = g_commandTextbox.value;
-            g_commandTextbox.value = "";
-            doCommand(call)
-
+        function textBoxOnChange(event) {
+            console.log("GUI callback textBoxOnChange", event);
+            let textBox = event.currentTarget;
+            console.assert(textBox.nodeName === "INPUT");   // it is a textBox. 
+            let call = textBox.value;
+            textBox.value = "";
+            onCommand(call);
         }
 
-        function doCommand(command) {
-            console.log("doCommand", command);
+        // called when you click on list item in g_callHistory
+        function callHistoryOnClick(event) {
+            console.log("GUI callback callHistoryOnClick", event);
+            console.assert(event.currentTarget.nodeName === "LI");      // it is a list item  
+            let idx = event.currentTarget["data-index"];
+            console.assert(idx !== undefined);
+            console.log("Got index", idx);
+        }
+
+        // called from either the GUI buttons or by user typing a command.  
+        function onCommand(command) {
+            console.log("onCommand", command);
             let floor = g_floor;
 
             while (true) {
@@ -1335,9 +1347,11 @@
             // Update the history list
             g_callListOrderedList.replaceChildren();
             let lastLI = undefined;
-            for (let historyItem of g_callHistory) {
+            for (let i = 0; i < g_callHistory.length; i++) {
                 let li = document.createElement("li");
-                li.innerText = historyItem.call;
+                li["data-index"] = i;                   // remember where I am in the list 
+                li.innerText = g_callHistory[i].call;
+                li.addEventListener("click", callHistoryOnClick);
                 g_callListOrderedList.appendChild(li);
                 lastLI = li;
             }
@@ -1425,7 +1439,7 @@
         // TESTING    Called by the 'tst' command to allow quick unit testing
         function doTest(floor) {
             // just run a long sequence that resolves and uses every call.   
-            doCommand(
+            onCommand(
                 "reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt " +
                 "tb srt dx e circ gr btl pto hinge td hinge rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
                 "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
