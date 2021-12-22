@@ -905,8 +905,7 @@
                 }
                 floor.sweepCCW = -1; // only for 2 faced, but that is the only kind possible here  TODO handle left handed
             }
-            else if (lineLen == 6 && floorIsFacingOut(floor, dancers[0])) {
-
+            else if (lineLen == 6) {
                 // group them into groups of 3, in a box, box3 is the box of the groups of 3
                 // boxes are in the order
                 //  2 3 
@@ -918,8 +917,12 @@
 
                     let rotation = (1 <= box3 && box3 <= 2) ? -1 : 1;   //  1 on 0,3        -1 on  1,2
                     let dir = -rotation;                                 // -1 on 0,3         1 on  1,2
-                    for (let i = 0; i < 3; i++)
-                        dancerMove(dancers[idxBase + i * idxDir], 2 * i, 2 * i * dir, rotation);
+                    for (let i = 0; i < 3; i++) {
+                        let dancer = dancers[idxBase + i * idxDir];
+                        if (!dancerFacingAwayFromCenter(dancer))
+                            throw "Dancers must be facing out";
+                        dancerMove(dancer, 2 * i, 2 * i * dir, rotation);
+                    }
                 }
             }
             else
@@ -960,7 +963,28 @@
             _doWheelFamily(floor, dancers, 3);
         }
         function doWheelAndDeal(floor, dancers) {
-            _doWheelFamily(floor, dancers, 1);
+
+            // wheel and deal from lines of 6 facing out does not work as two groups of 3, 
+            // but will work as a lef, right and a center couple (centers do a partner trade)  
+            let lines = dancersLineLen(dancers);
+            if (lines == 6 && dancers.length == 12) {
+                for (let dancer of dancers) {
+                    if (!dancerFacingAwayFromCenter(dancer))
+                        throw "Dancers must be facing out";
+                }
+                for (let line = 0; line < 2; line++) {
+                    let lineBase = line * 11;
+                    let dir = (lineBase == 0) ? 1 : -1;
+                    dancerMove(dancers[lineBase + 0 * dir], 2, -6, 2);
+                    dancerMove(dancers[lineBase + 1 * dir], 2, -2, 2);
+                    dancerMove(dancers[lineBase + 2 * dir], 0, -2, 2);
+                    dancerMove(dancers[lineBase + 3 * dir], 0, 2, 2);
+                    dancerMove(dancers[lineBase + 4 * dir], 4, 2, 2);
+                    dancerMove(dancers[lineBase + 5 * dir], 4, 6, 2);
+                }
+            }
+            else
+                _doWheelFamily(floor, dancers, 1);
         }
 
         // Handles Wheel+Deal (stretch=1), Ferris Wheel(stretch=3) and Stretch Ferris Wheel (stretch=5)
@@ -1108,7 +1132,7 @@
                 for (let end of [line[0], line[3]])
                     dancerMove(end, 1, 2, -1)
                 for (let center of [line[1], line[2]])
-                    dancerMove(center   , 1, 2, -1)
+                    dancerMove(center, 1, 2, -1)
             }
         }
 
@@ -1406,8 +1430,8 @@
                 let formationError = floorFindError(floor, designator, callFtn);
                 if (formationError) {
                     console.log("Validating call failed, formation error: " + formationError);
-                     // this is only here to make debugging easier (you can see the formations)
-                    syncGUIToModel(floor, getEndFloor(g_callHistory, g_callHistory.length - 1));  
+                    // this is only here to make debugging easier (you can see the formations)
+                    syncGUIToModel(floor, getEndFloor(g_callHistory, g_callHistory.length - 1));
                     throw "Error: Bad formation for '" + call + "'" + "'";
                 }
                 floor.isResolved = floorIsResolved(floor);
@@ -1561,7 +1585,8 @@
                 "lr ptd rlt saq vl fw c pt rlt hs bg rlt " +
                 "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb " +
                 "stw sct circ br btl pto cast3 hinge cast3 br srt pt " +
-                "c pt v pt ci ptd v rlt srt e td rlt pt tb"
+                "c pt v pt ci ptd v rlt srt e td rlt pt tb " +
+                "srt pt whd v sq3 c pt srt fl srt rlt vl sfw v pt c ptc v pt c sq3"
             );
 
             let endFloor = g_callHistory[g_callHistory.length - 1].endFloor;
