@@ -1031,7 +1031,7 @@
         /*******************************/
         /* MainStream calls */
 
-        function doHinge(floor, dancers) {
+        function doHinge(floor, dancers, reverse) {
             let lineLen = dancersLineLen(dancers);
 
             // we have a line of 6 we need to expand it out before doing the hinge to make space
@@ -1040,8 +1040,12 @@
                     dancerScaleFacingCoordinate(dancer, 2);
             }
 
-            for (let dancer of floor.dancers)
-                dancerMove(dancer, 1, 1, -1);
+            for (let dancer of floor.dancers) {
+                if (!reverse)  // Normal case hinge
+                    dancerMove(dancer, 1, 1, -1);
+                else           // This is cast off 3/4
+                    dancerMove(dancer, -1, 1, 1);
+            }
 
             // if we started with 3 lines of 4 we end up with two lines of 6, contract it down
             if (lineLen == 4) {
@@ -1081,7 +1085,7 @@
                 for (let end of [line[0], line[3]])
                     dancerMove(end, 1, 2, -1)
                 for (let center of [line[1], line[2]])
-                    dancerMove(centers, 1, 2, -1)
+                    dancerMove(center   , 1, 2, -1)
             }
         }
 
@@ -1122,6 +1126,34 @@
             trade(dancers[4], dancers[8]);
         }
 
+        function doCastOff3Quarters(floor, dancers) {
+
+            // We are in waves
+            if (dancersIsFacingOpposite(dancers[0], dancers[1])) {
+                doHinge(floor, dancers, -1);    // Then it is a reverse hinge. 
+                return;
+            }
+            let lineLen = dancersLineLen(dancers);
+            // we have a line of 6 we need to expand it out before doing the hinge to make space
+            if (lineLen == 6) {
+                // we only support lines facing out 
+                if (!dancerFacingAwayFromCenter(dancers[0]))
+                    throw "Formation Wrong for Cast off 3/4";
+                // has the same effect as a bend the line.  
+                doBendTheLine(floor, dancers);
+            }
+            else if (lineLen == 4) {
+                // two faced lines 
+                for (let line of dancersGetLinesOf4(dancers)) {
+                    for (let end of [line[0], line[3]])
+                        dancerMove(end, 1, 2, -1);
+                    for (let center of [line[1], line[2]])
+                        dancerMove(center, -1, 0, -1);
+                }
+            }
+            else
+                throw "Formation Wrong for Cast off 3/4";
+        }
         /********************************************************************/
         // END OF SQUARE DANCE CALLS
         /********************************************************************/
@@ -1247,8 +1279,12 @@
                     g_callListSelectedItemIdx = g_callHistory.length - 1;
                 else if (event.key == "ArrowLeft") // Home key
                     g_callListSelectedItemIdx = 0;
+                else
+                    return true;
+                syncGUIToModel();
+                return false;
             }
-            syncGUIToModel();
+            return true;
         }
 
         // called from either the GUI buttons or by user typing a command.  
@@ -1311,7 +1347,7 @@
                 }
                 else if (g_lastCallHistory) {
                     g_callHistory = g_lastCallHistory;
-                } else 
+                } else
                     logError("Nothing to undo.");
                 return true;
             }
@@ -1340,14 +1376,15 @@
                 let dancers = floorGetDancers(floor, designator);
                 dancersMoveDancersToGrid(dancers, designator);
 
-                // and call the function. 
+                // and call the function.   
                 callFtn(floor, dancers);
 
                 // See if the call did something illegal.
                 let formationError = floorFindError(floor, designator, callFtn);
                 if (formationError) {
                     console.log("Validating call failed, formation error: " + formationError);
-                    syncGUIToModel();   // this is only here to make debugging easier you can see then error formation 
+                     // this is only here to make debugging easier (you can see the formations)
+                    syncGUIToModel(floor, getEndFloor(g_callHistory, g_callHistory.length - 1));  
                     throw "Error: Bad formation for '" + call + "'" + "'";
                 }
                 floor.isResolved = floorIsResolved(floor);
@@ -1383,16 +1420,19 @@
         }
 
         // called when we want to make sure that the GUI represents the model (after we changed the model)
-        function syncGUIToModel() {
-            let endFloor = getEndFloor(g_callHistory, g_callListSelectedItemIdx);
+        // NOTE most of the time you DONT pass endFloor, startfloor.  It is only for debugging when you do
+        function syncGUIToModel(endFloor, startFloor) {
+            if (!endFloor)
+                endFloor = getEndFloor(g_callHistory, g_callListSelectedItemIdx);
 
             // If we ar resolved turn on the label that says so.  
             g_resolvedsSpan.style.visibility = endFloor.isResolved ? "visible" : "hidden";
 
             floorDraw(endFloor, g_mainCanvas);
 
-            let prevFloor = getStartFloor(g_callHistory, g_callListSelectedItemIdx);
-            floorDraw(prevFloor, g_prevCanvas);
+            if (!startFloor)
+                startFloor = getStartFloor(g_callHistory, g_callListSelectedItemIdx);
+            floorDraw(startFloor, g_prevCanvas);
 
             // Update the history listg_callListSelecteItem
             g_callListOrderedList.replaceChildren();
@@ -1458,6 +1498,7 @@
             ret["bg"] = doBoxTheGnat;
             ret["tpt"] = doTriplePassThru;
             ret["sct"] = doSpinChainThru;
+            ret["cast3"] = doCastOff3Quarters;
             return ret;
         }
 
@@ -1494,7 +1535,8 @@
                 "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
                 "lr ptd rlt saq vl fw c pt rlt hs bg rlt " +
-                "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb"
+                "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb " +
+                "stw sct circ br btl pto cast3 hinge cast3 br srt pt"
             );
 
             let endFloor = g_callHistory[g_callHistory.length - 1].endFloor;
