@@ -1020,6 +1020,29 @@
             }
         }
 
+        function doCentersIn(floor, dancers) {
+            let lineLen = dancersLineLen(dancers);
+            if (lineLen != 2) // column-like
+                throw "Bad Formation for centers in";
+
+            // group them into groups of 3, in a box, box3 is the box of the groups of 3
+            // boxes are in the order
+            //  2 3 
+            //  0 1
+            for (let box3 = 0; box3 < 4; box3++) {
+                // we iterate over the group from the center of the line (indexBase) out (idxDir)
+                let idxDir = 2 * Math.floor(box3 / 2) - 1;             // -1 for 0, 1    1 for 1, 2
+                let idxBase = 4 + box3;                                // iterates over the very center box
+                let dir = (box3 == 0 || box3 == 3) ? 1 : -1
+                for (let i = 0; i < 3; i++) {
+                    let dancer = dancers[idxBase + 2 * idxDir * i];
+                    if (!dancerFacingAwayFromCenter(dancer))
+                        throw "Dancers must all be facing out";
+                    dancerMove(dancer, -2 * i, 2 * i * dir, 0);
+                }
+            }
+        }
+
         function doBoxTheGnat(floor, dancers) {
             for (let dancer of dancers) {
                 if (floorIsFacingOut(floor, dancer))
@@ -1499,6 +1522,7 @@
             ret["tpt"] = doTriplePassThru;
             ret["sct"] = doSpinChainThru;
             ret["cast3"] = doCastOff3Quarters;
+            ret["ci"] = doCentersIn;
             return ret;
         }
 
@@ -1536,7 +1560,8 @@
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
                 "lr ptd rlt saq vl fw c pt rlt hs bg rlt " +
                 "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb " +
-                "stw sct circ br btl pto cast3 hinge cast3 br srt pt"
+                "stw sct circ br btl pto cast3 hinge cast3 br srt pt " +
+                "c pt v pt ci ptd v rlt srt e td rlt pt tb"
             );
 
             let endFloor = g_callHistory[g_callHistory.length - 1].endFloor;
