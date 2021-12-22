@@ -44,8 +44,8 @@
         <div style="background-color:#dfedf5">
             <div style="text-align:center;margin:10px;font-size:x-large;font-weight:bold">Previous Dancer Positions
             </div>
-            <canvas id=prev style="border:2px solid red;background-color:lightgray;vertical-align:bottom" height=400
-                width=400> </canvas>
+            <canvas id=prev style="border:2px solid red;background-color:lightgray;vertical-align:bottom" height=300
+                width=300> </canvas>
         </div>
     </div>
     <!-- *************************** END OF HTML ******************************* -->
@@ -1190,15 +1190,15 @@
 
             // draw boy or girl
             if (dancer.isBoy)
-                canvasContext.fillRect(-0.35 * gridSize, -0.35 * gridSize, 0.7 * gridSize, 0.7 * gridSize);
+                canvasContext.fillRect(-0.45 * gridSize, -0.45 * gridSize, 0.9 * gridSize, 0.9 * gridSize);
             else {
                 canvasContext.beginPath();
-                canvasContext.arc(0, 0, 0.4 * gridSize, 0, 2 * Math.PI);
+                canvasContext.arc(0, 0, 0.52 * gridSize, 0, 2 * Math.PI);
                 canvasContext.fill();
             }
             // draw bulge
             canvasContext.beginPath();
-            canvasContext.arc(0, 0.38 * gridSize, 0.2 * gridSize, 0, 2 * Math.PI);
+            canvasContext.arc(0, 0.45 * gridSize, 0.3 * gridSize, 0, 2 * Math.PI);
             canvasContext.fill();
 
             // draw the couple number
