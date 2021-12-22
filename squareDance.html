@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 
-<body>
+<body onkeydown="onKeyDown(event)">
     <!-- *********************************************************************** -->
     <!-- The body section describes the visual layout of the page -->
 
@@ -21,6 +21,7 @@
         <li> Calls Available: <span id=allCalls></span> </li>
         <li> Typically Must explicitly call step to a wave (stw) from facing couples.
         <li> You can paste multiple commands (separated by space) into textbox.
+        <li> You can click on the history list (or use arrow keys) to move around in the history.</li>
         <li> To try it out, type the following (one at a time, without commas): h pto,ex,st,br,fw,c sq3
 
     </ul>
@@ -61,7 +62,6 @@
         // get GUI objects needed
         const g_mainCanvas = document.getElementById('main');
         const g_prevCanvas = document.getElementById('prev');
-
         const g_messageSpan = document.getElementById('message');
         const g_allCallsSpan = document.getElementById('allCalls');
         const g_resolvedsSpan = document.getElementById('resolved');
@@ -82,14 +82,16 @@
 
         /****************************************/
         // Global MUTABLE state (the model)
-        // This is basically just the floor (a set of dancers)
-        // all other globl state is in GUI object which 
-        // we don't consider to be part of the model
 
-        // create the initial floor (squared set)
-        let g_floor = floorReset();
-        // keeps track of calls we made, it is the model for the 'Call History' part of the GUI
+        // The model is embodied in a single structure the history list.
+        // Each element in this list is a call, along with its floor before 
+        // the call, and the floor after the call.   
         let g_callHistory = [];
+
+        // This is the start of the 'viewModel' state.  This is information that the GUI
+        // keeps track of but arguably is not part of the model because it makes sense
+        // for the GUI, but not for an API for the model 
+        let g_callListSelectedItemIdx = -1;      // initialized to be g_callHistory.length-1
 
         // Run any startup needed to get the GUI in the desired start up state.
         startup();
@@ -113,7 +115,7 @@
             allCalls.sort();
             g_allCallsSpan.innerHTML = allCalls.join(", ");
 
-            syncGUIToModel(g_floor);
+            syncGUIToModel();
         }
 
         /********************************************************************/
@@ -300,7 +302,7 @@
         }
 
         // makes a deep copy of the floor.  
-        function floorCopy(floor) {
+        function floorDeepCopy(floor) {
             // do a shallow copy 
             let ret = Object.assign({}, floor);
 
@@ -309,12 +311,6 @@
             for (let dancer of floor.dancers)
                 ret.dancers.push(dancerCopy(dancer));
             return ret;
-        }
-
-        // floorAssign sets 'to' to be a deep copy of 'from'
-        function floorAssign(to, from) {
-            let copy = floorCopy(from);        // Make a deep copy
-            Object.assign(to, copy);        // shallow copy into to 
         }
 
         function floorMakeCouple(dancers, number, gridX, gridY, rotation) {
@@ -1210,16 +1206,33 @@
         // called when you click on list item in g_callHistory
         function callHistoryOnClick(event) {
             console.log("GUI callback callHistoryOnClick", event);
-            console.assert(event.currentTarget.nodeName === "LI");      // it is a list item  
-            let idx = event.currentTarget["data-index"];
+            let listItem = event.currentTarget;
+            console.assert(listItem.nodeName === "LI");      // it is a list item  
+            let idx = listItem["data-index"];
             console.assert(idx !== undefined);
-            console.log("Got index", idx);
+            g_callListSelectedItemIdx = idx;
+            syncGUIToModel()
+        }
+
+        /*****************************/
+        function onKeyDown(event) {
+            console.log("GUI callback callHistoryOnClick", event);
+            if (0 < g_callHistory.length) {
+                if (event.key == "ArrowUp")
+                    g_callListSelectedItemIdx = Math.max(0, g_callListSelectedItemIdx - 1);
+                else if (event.key == "ArrowDown")
+                    g_callListSelectedItemIdx = Math.min(g_callHistory.length - 1, g_callListSelectedItemIdx + 1);
+                else if (event.key == "ArrowRight") // End key
+                    g_callListSelectedItemIdx = g_callHistory.length - 1;
+                else if (event.key == "ArrowLeft") // Home key
+                    g_callListSelectedItemIdx = 0;
+            }
+            syncGUIToModel();
         }
 
         // called from either the GUI buttons or by user typing a command.  
         function onCommand(command) {
             console.log("onCommand", command);
-            let floor = g_floor;
 
             while (true) {
                 let match = command.match(/^(([hsbgcev]) )?(\S+)\s*(.*)$/);
@@ -1229,34 +1242,44 @@
                 let designator = match[2];
                 let call = match[3];
                 command = match[4];
+                let fullCall = call;
+                if (designator)
+                    fullCall = designator + " " + call;
 
-                if (checkForCommand(floor, call))
+                if (checkForCommand(call))
                     continue;
 
-                if (!doCall(floor, call, designator))
+                // We always get the last end floor, we don't look at the selected position.  
+                let startFloor = getEndFloor(g_callHistory, g_callHistory.length - 1);
+                let floor = floorDeepCopy(startFloor);
+
+                // transform the floor with a square dance call.  
+                if (!doCall(floor, call, designator, fullCall))
                     break;
+
+                // remember the results in the call History.  
+                g_callHistory.push({ startFloor: startFloor, call: fullCall, endFloor: floor });
             }
-            syncGUIToModel(floor);
+            // always move the selection point to the end of the list. 
+            g_callListSelectedItemIdx = g_callHistory.length - 1;
+            syncGUIToModel();
         }
 
-        function checkForCommand(floor, command) {
-            // Hidden for testing 
+        function checkForCommand(command) {
+
+            // This is just to make testing easy.   Users don't use the command.  
             if (command == "tst") {
-                doTest(floor);
+                doTest();
                 return true;
             }
-
             if (command == "reset") {
-                floorReset(floor);
                 g_callHistory = [];
                 g_messageSpan.innerHTML = "Reset complete.";
                 return true
             }
-
             if (command == "undo") {
                 if (0 < g_callHistory.length) {
                     let prev = g_callHistory.pop();
-                    floorAssign(floor, prev.start);
                     g_messageSpan.innerHTML = "Undid: <b>" + prev.call + "</b>";
 
                     if (0 < g_callHistory.length) {
@@ -1268,25 +1291,14 @@
                     logError("Nothing to undo.");
                 return true;
             }
-
             return false;
         }
 
         // Given 'call' (like rtl, sq4 ...) and a designator (e.g. h s c e v ...) 
         // actually update the floor (and the GUI) to execute the call.  
-        function doCall(floor, call, designator) {
+        function doCall(floor, call, designator, fullCall) {
             // The full call includes the designator, we use it when showing the call to the user.  
-            let fullCall = call;
-            if (designator)
-                fullCall = designator + " " + fullCall;
             console.log("Doing call", fullCall);
-
-            // make a copy of the floor before we modify it so we can support undo.  
-            let startFloor;
-            if (0 < g_callHistory.length)
-                startFloor = g_callHistory[g_callHistory.length - 1].end;
-            else
-                startFloor = floorCopy(floor);
 
             // most calls do not have flow, so reset it here to create a default
             // don't reset it for sweep a quarter itself since we need that 
@@ -1311,20 +1323,17 @@
                 let formationError = floorFindError(floor, designator, callFtn);
                 if (formationError) {
                     console.log("Validating call failed, formation error: " + formationError);
-                    syncGUIToModel(floor);   // this is only here to make debugging easier you can see then error formation 
+                    syncGUIToModel();   // this is only here to make debugging easier you can see then error formation 
                     throw "Error: Bad formation for '" + call + "'" + "'";
                 }
                 floor.isResolved = floorIsResolved(floor);
             } catch (err) {
                 logError("Error Executing Call: " + err);
-                floorAssign(floor, startFloor);        // restore the state. 
                 return false;
             }
 
             // update other GUI state after a successful model update
             g_messageSpan.innerHTML = "Finished Call: " + fullCall;
-            // remember the history
-            g_callHistory.push({ start: startFloor, call: fullCall, end: floorCopy(floor) });
             return true;
         }
 
@@ -1333,30 +1342,45 @@
             g_messageSpan.innerHTML = "<b>" + message + "</b>";
         }
 
+        function getEndFloor(callHistory, curIndex) {
+            console.assert(-1 <= curIndex && curIndex < callHistory.length);
+
+            if (curIndex < 0)       // length is 0.  
+                return floorReset();
+            return callHistory[curIndex].endFloor;
+        }
+
+        function getStartFloor(callHistory, curIndex) {
+            console.assert(-1 <= curIndex && curIndex < callHistory.length);
+
+            if (curIndex < 0)       // length is 0.  
+                return undefined
+            return callHistory[curIndex].startFloor;
+        }
+
         // called when we want to make sure that the GUI represents the model (after we changed the model)
-        function syncGUIToModel(floor) {
-            g_resolvedsSpan.style.visibility = floor.isResolved ? "visible" : "hidden";
+        function syncGUIToModel() {
+            let endFloor = getEndFloor(g_callHistory, g_callListSelectedItemIdx);
 
-            floorDraw(floor, g_mainCanvas);
+            // If we ar resolved turn on the label that says so.  
+            g_resolvedsSpan.style.visibility = endFloor.isResolved ? "visible" : "hidden";
 
-            let prevFloor = undefined;
-            if (0 < g_callHistory.length)
-                prevFloor = g_callHistory[g_callHistory.length - 1].start;
+            floorDraw(endFloor, g_mainCanvas);
+
+            let prevFloor = getStartFloor(g_callHistory, g_callListSelectedItemIdx);
             floorDraw(prevFloor, g_prevCanvas);
 
-            // Update the history list
+            // Update the history listg_callListSelecteItem
             g_callListOrderedList.replaceChildren();
-            let lastLI = undefined;
             for (let i = 0; i < g_callHistory.length; i++) {
                 let li = document.createElement("li");
                 li["data-index"] = i;                   // remember where I am in the list 
                 li.innerText = g_callHistory[i].call;
                 li.addEventListener("click", callHistoryOnClick);
                 g_callListOrderedList.appendChild(li);
-                lastLI = li;
             }
-            if (lastLI)
-                lastLI.style.backgroundColor = "lightblue";
+            if (0 <= g_callListSelectedItemIdx)
+                g_callListOrderedList.children[g_callListSelectedItemIdx].style.backgroundColor = "#4498E1";
         }
 
         // used to initialize the CALL_TO_FTN table. 
@@ -1437,7 +1461,7 @@
         /********************************************************************/
         /********************************************************************/
         // TESTING    Called by the 'tst' command to allow quick unit testing
-        function doTest(floor) {
+        function doTest() {
             // just run a long sequence that resolves and uses every call.   
             onCommand(
                 "reset h pto ex st br cdtl pt btl tq circ circ circ br sq4 btl srt pt " +
@@ -1448,7 +1472,8 @@
                 "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb"
             );
 
-            if (!floor.isResolved) {
+            let endFloor = g_callHistory[g_callHistory.length - 1].endFloor;
+            if (!endFloor.isResolved) {
                 logError("TestError: test did not resolve the square");
                 return;
             }
