@@ -87,6 +87,9 @@
         // the call, and the floor after the call.   
         let g_callHistory = [];
 
+        // on reset we remember our last call history, so that you can undo it.  
+        let g_lastCallHistory = undefined;
+
         // This is the start of the 'viewModel' state.  This is information that the GUI
         // keeps track of but arguably is not part of the model because it makes sense
         // for the GUI, but not for an API for the model 
@@ -1291,6 +1294,7 @@
                 return true;
             }
             if (command == "reset") {
+                g_lastCallHistory = g_callHistory;
                 g_callHistory = [];
                 g_messageSpan.innerHTML = "Reset complete.";
                 return true
@@ -1305,7 +1309,9 @@
                         g_messageSpan.innerHTML += " last call now: <b>" + prevHistory.call + "</b>";
                     }
                 }
-                else
+                else if (g_lastCallHistory) {
+                    g_callHistory = g_lastCallHistory;
+                } else 
                     logError("Nothing to undo.");
                 return true;
             }
