@@ -23,7 +23,6 @@
         <li> You can paste multiple commands (separated by space) into textbox.
         <li> You can click on the history list (or use arrow keys) to move around in the history.</li>
         <li> To try it out, type the following (one at a time, without commas): h pto,ex,st,br,fw,c sq3
-
     </ul>
     <ul>
         <li> <button onClick="onCommand('reset')">reset</button>
@@ -678,10 +677,10 @@
 
         function doChainDownTheLine(floor, dancers) {
             for (let line of dancersGetLinesOf4(dancers)) {
-                for (let beau of [line[0], line[3]])
-                    dancerMove(beau, 1, 2, -1);
-                for (let belle of [line[1], line[2]])
-                    dancerMove(belle, 1, 2, 1);
+                for (let end of [line[0], line[3]])
+                    dancerMove(end, 1, 2, -1);
+                for (let center of [line[1], line[2]])
+                    dancerMove(center, 1, 2, 1);
             }
             floor.sweepCCW = 1;
         }
@@ -970,17 +969,17 @@
                 if (stretch == 5 && i == 1)        // For stretch ferris wheel, the middle group is not stretched.
                     dancerStretch = 3;
 
-                for (let beau of [line[0], line[3]]) {
-                    if (floorIsFacingOut(floor, beau))
-                        dancerMove(beau, 1, 4, 2);
+                for (let end of [line[0], line[3]]) {
+                    if (floorIsFacingOut(floor, end))
+                        dancerMove(end, 1, 4, 2);
                     else
-                        dancerMove(beau, dancerStretch, 4, 2);
+                        dancerMove(end, dancerStretch, 4, 2);
                 }
-                for (let belle of [line[1], line[2]]) {
-                    if (floorIsFacingOut(floor, belle))
-                        dancerMove(belle, 1, 0, 2);
+                for (let center of [line[1], line[2]]) {
+                    if (floorIsFacingOut(floor, center))
+                        dancerMove(center, 1, 0, 2);
                     else
-                        dancerMove(belle, dancerStretch, 0, 2);
+                        dancerMove(center, dancerStretch, 0, 2);
                 }
             }
             floor.sweepCCW = -1;        // only for centers
@@ -1066,20 +1065,20 @@
 
         function doRecycle(floor, dancers) {
             for (let line of dancersGetLinesOf4(dancers)) {
-                for (let beau of [line[0], line[3]])
-                    dancerMove(beau, 1, 4, 2)
-                for (let belle of [line[1], line[2]])
-                    dancerMove(belle, -1, 0, 0)
+                for (let end of [line[0], line[3]])
+                    dancerMove(end, 1, 4, 2)
+                for (let center of [line[1], line[2]])
+                    dancerMove(center, -1, 0, 0)
             }
             floor.sweepCCW = -1;
         }
 
         function doHalfTag(floor, dancers) {
             for (let line of dancersGetLinesOf4(dancers)) {
-                for (let beau of [line[0], line[3]])
-                    dancerMove(beau, 1, 2, -1)
-                for (let belle of [line[1], line[2]])
-                    dancerMove(belle, 1, 2, -1)
+                for (let end of [line[0], line[3]])
+                    dancerMove(end, 1, 2, -1)
+                for (let center of [line[1], line[2]])
+                    dancerMove(centers, 1, 2, -1)
             }
         }
 
@@ -1099,6 +1098,25 @@
                 for (let belle of [box[1], box[2]])
                     dancerMove(belle, 0, 2, 0);
             }
+        }
+
+        function doSpinChainThru(floor, dancers) {
+            let lineLen = dancersLineLen(dancers);
+            if (dancers.length != 12 || lineLen != 4 || !dancersIsFacingOpposite(dancers[0], dancers[1]))
+                throw "Formation Wrong for Spin Chain Thru";
+
+            // everyone trades. 
+            for (let i = 0; i < dancers.length; i += 2)
+                trade(dancers[i], dancers[i + 1]);
+
+            // centers of central wave trade
+            trade(dancers[4], dancers[11]);
+            trade(dancers[0], dancers[7]);
+
+            // cast off 3/4 is like another trade
+            trade(dancers[0], dancers[11]);
+            trade(dancers[3], dancers[7]);
+            trade(dancers[4], dancers[8]);
         }
 
         /********************************************************************/
@@ -1433,6 +1451,7 @@
             ret["cl"] = doCloverleaf;
             ret["bg"] = doBoxTheGnat;
             ret["tpt"] = doTriplePassThru;
+            ret["sct"] = doSpinChainThru;
             return ret;
         }
 
