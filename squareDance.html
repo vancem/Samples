@@ -27,7 +27,7 @@
     <ul>
         <li> <button tabindex=3 onClick="onCommand('reset')">reset</button>
             <button tabindex=2 onClick="onCommand('undo')">undo</button>
-            Type Calls here: <input id=command type=text tabindex=1 onchange="textBoxOnChange(event)">
+            Type Calls here: <input type=text autofocus tabindex=1 onchange="textBoxOnChange(event)">
             <span id=resolved
                 style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247);vertical-align:middle;margin:0px 20px;text-align:center;">Resolved!</span>
         </li>
@@ -1457,6 +1457,8 @@
                     throw "Error: Bad formation for '" + call + "'" + "'";
                 }
                 floor.isResolved = floorIsResolved(floor);
+                if (floor.isResolved)
+                    chirp();
             } catch (err) {
                 logError("Error Executing Call: " + err);
                 return false;
@@ -1580,6 +1582,8 @@
         // support for sound (beeps)
 
         function beep() { tone(50, 440); }
+
+        function chirp() { tone(20, 2000); }
 
         function tone(duration, frequency) {
             if (audioCtx === undefined)
