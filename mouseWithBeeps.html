@@ -147,8 +147,10 @@
             oscillator.frequency.value = frequency;
             // oscillator.type = "sine"; 
 
-            oscillator.start();
-            setTimeout(function () { oscillator.stop() }, duration);
+            // we delay the start by 1msec to give time to audioCtx to be intialized
+            // the first time this is called.   
+            setTimeout(function () { oscillator.start() }, 1);
+            setTimeout(function () { oscillator.stop() }, duration+1);
         };
         let audioCtx;
 
