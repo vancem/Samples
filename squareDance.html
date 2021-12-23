@@ -48,11 +48,11 @@
         </div>
         <div style="display:flex;flex-direction:column;background-color:#dfedf5">
             <div style="text-align:center;margin:20px 0px 0px 0px;font-size:large;font-weight:bold">Previous Floor</div>
-            <canvas id=prev style="border:2px solid red;background-color:lightgray" height=200 width=200> </canvas>
+            <canvas id=prev style="border:2px solid red;background-color:rgb(236, 236, 236)" height=200 width=200> </canvas>
             <div style="text-align:center;margin:25px 0px 0px 0px;font-size:large;font-weight:bold">Saved Floor <span
                     id=savedCallNum></span></div>
             <canvas id=saved title="Use Ctrl-S or double clicking to save floor here"
-                style="border:2px solid red;background-color:lightgray" height=200 width=200> </canvas>
+                style="border:2px solid red;background-color:rgb(236, 236, 236)" height=200 width=200> </canvas>
         </div>
     </div>
     <!-- *************************** END OF HTML ******************************* -->
@@ -80,8 +80,9 @@
         // Values for dancers based on their dancer number 
         const COLORS = [
             "red", "green", "cyan", "yellow", "violet", "blue",
-            "black", "goldenrod", "lawngreen", "darkgray",
-            "#D5D5D5", // light gray
+            "black", "goldenrod", "lawngreen", 
+            "#5C5C5C", // dark gray
+            "#C5C5C5", // light gray
             "#44C9D4", // deep aqua
             "#55478C", // dark blue
             "#774D18", // deep brown
@@ -138,6 +139,7 @@
                 allCalls.push(key);
             allCalls.push("reset");        // add meta-calls
             allCalls.push("undo");
+            allCalls.push("id");
             allCalls.sort();
             g_allCallsSpan.innerHTML = allCalls.join(", ");
 
@@ -1337,20 +1339,21 @@
 
             canvasContext.translate(dancer.gridX * gridSize, dancer.gridY * gridSize);
 
-            canvasContext.rotate(Math.PI / 2.0 * dancer.rotation)
+            canvasContext.rotate(Math.PI / 2.0 * dancer.rotation);
+
+            canvasContext.beginPath(); 
             canvasContext.fillStyle = dancerGetColor(dancer);
 
-            // draw boy or girl
-            if (dancer.isBoy)
-                canvasContext.fillRect(-0.45 * gridSize, -0.45 * gridSize, 0.9 * gridSize, 0.9 * gridSize);
-            else {
-                canvasContext.beginPath();
-                canvasContext.arc(0, 0, 0.52 * gridSize, 0, 2 * Math.PI);
-                canvasContext.fill();
-            }
-            // draw bulge
-            canvasContext.beginPath();
+                        // draw bulge
             canvasContext.arc(0, 0.45 * gridSize, 0.3 * gridSize, 0, 2 * Math.PI);
+            canvasContext.fill();
+
+            // draw boy or girl
+            canvasContext.beginPath();
+            if (dancer.isBoy)
+                canvasContext.rect(-0.45 * gridSize, -0.45 * gridSize, 0.9 * gridSize, 0.9 * gridSize);
+            else 
+                canvasContext.arc(0, 0, 0.52 * gridSize, 0, 2 * Math.PI);
             canvasContext.fill();
 
             // draw the couple number
