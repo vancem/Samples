@@ -78,9 +78,15 @@
         const g_identifyButton = document.getElementById('identify');
 
         // Values for dancers based on their dancer number 
-        const COLORS = ["red", "green", "cyan", "yellow", "violet", "blue",
-            "firebrick", "black", "orange", "maroon", "darkgray", "goldenrod",
-            "lawngreen", "darkviolet", "orangered"];
+        const COLORS = [
+            "red", "green", "cyan", "yellow", "violet", "blue",
+            "black", "goldenrod", "lawngreen", "darkgray",
+            "#D5D5D5", // light gray
+            "#44C9D4", // deep aqua
+            "#55478C", // dark blue
+            "#774D18", // deep brown
+            "#9F027A", // dark pink
+        ];
 
         // Values for dancer.rotation.  These work like map directions
         const NORTH = 0;
@@ -1585,7 +1591,7 @@
 
             // If we ar resolved turn on the label that says so.  
             g_resolvedsSpan.style.visibility = endFloor.isResolved ? "visible" : "hidden";
-            
+
             g_identifyButton.innerText = g_couplesIdentified ? "hide" : "identify";
 
             floorDraw(endFloor, g_mainCanvas);
