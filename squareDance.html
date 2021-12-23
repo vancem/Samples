@@ -21,13 +21,17 @@
         <li> Calls Available: <span id=allCalls></span> </li>
         <li> Typically Must explicitly call step to a wave (stw) from facing couples.
         <li> You can paste multiple commands (separated by space) into textbox.
-        <li> You can click on the history list (or use arrow keys) to move around in the history.</li>
+        <li> You can click on the history list (or use arrow keys) to move around in the history. Ctrl-S will save the
+            floor.</li>
         <li> To try it out, type the following (one at a time, without commas): h pto,ex,st,br,fw,c sq3
     </ul>
     <ul>
-        <li> <button tabindex=3 onClick="onCommand('reset')">reset</button>
-            <button tabindex=2 onClick="onCommand('undo')">undo</button>
-            Type Calls here: <input type=text autofocus tabindex=1 onchange="textBoxOnChange(event)">
+        <li>
+            <button id=identify title="Identify couples by color (Ctrl-I)" tabindex=2
+                onClick="onCommand('id')">hide</button>
+            <button title="Reset the call history (Ctrl-R)" onClick="onCommand('reset')">reset</button>
+            <button title="Undo the last call (Ctrl-Z)" tabindex=2 onClick="onCommand('undo')">undo</button>
+            Type Calls here: <input id=call type=text autofocus tabindex=1 onchange="textBoxOnChange(event)">
             <span id=resolved
                 style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247);vertical-align:middle;margin:0px 20px;text-align:center;">Resolved!</span>
         </li>
@@ -35,17 +39,20 @@
     </ul>
     <div style="display:flex">
         <canvas id=main style="border:2px solid red" height=500 width=500> </canvas>
-        <div style="background-color:lightgray;height:500px;min-width:120px;overflow-y:scroll">
+        <div title="Use arrow keys or single click to look at past floor configurations"
+            style="background-color:lightgray;height:500px;min-width:120px;overflow-y:scroll">
             <p>
                 <b style="display:inline-block;margin:0px 5px">Call History</b><br>
             <ol id=callList></ol>
             </p>
         </div>
-        <div style="background-color:#dfedf5">
-            <div style="text-align:center;margin:10px;font-size:x-large;font-weight:bold">Previous Dancer Positions
-            </div>
-            <canvas id=prev style="border:2px solid red;background-color:lightgray;vertical-align:bottom" height=300
-                width=300> </canvas>
+        <div style="display:flex;flex-direction:column;background-color:#dfedf5">
+            <div style="text-align:center;margin:20px 0px 0px 0px;font-size:large;font-weight:bold">Previous Floor</div>
+            <canvas id=prev style="border:2px solid red;background-color:lightgray" height=200 width=200> </canvas>
+            <div style="text-align:center;margin:25px 0px 0px 0px;font-size:large;font-weight:bold">Saved Floor <span
+                    id=savedCallNum></span></div>
+            <canvas id=saved title="Use Ctrl-S or double clicking to save floor here"
+                style="border:2px solid red;background-color:lightgray" height=200 width=200> </canvas>
         </div>
     </div>
     <!-- *************************** END OF HTML ******************************* -->
@@ -61,14 +68,19 @@
         // get GUI objects needed
         const g_mainCanvas = document.getElementById('main');
         const g_prevCanvas = document.getElementById('prev');
+        const g_savedCanvas = document.getElementById('saved');
+        const g_savedCallNumSpan = document.getElementById('savedCallNum');
         const g_messageSpan = document.getElementById('message');
         const g_allCallsSpan = document.getElementById('allCalls');
         const g_resolvedsSpan = document.getElementById('resolved');
-
         const g_callListOrderedList = document.getElementById('callList');
+        const g_callInput = document.getElementById('call');
+        const g_identifyButton = document.getElementById('identify');
 
         // Values for dancers based on their dancer number 
-        const COLORS = ["red", "green", "cyan", "yellow", "violet", "blue"];
+        const COLORS = ["red", "green", "cyan", "yellow", "violet", "blue",
+            "firebrick", "black", "orange", "maroon", "darkgray", "goldenrod",
+            "lawngreen", "darkviolet", "orangered"];
 
         // Values for dancer.rotation.  These work like map directions
         const NORTH = 0;
@@ -94,6 +106,12 @@
         // keeps track of but arguably is not part of the model because it makes sense
         // for the GUI, but not for an API for the model 
         let g_callListSelectedItemIdx = -1;      // initialized to be g_callHistory.length-1
+        // This is the index into g_callList that is shown in the 'saved floor'
+        let g_callListSavedIdx = -1;
+        // Are the coupled identified by color/number?
+        let g_couplesIdentified = true;
+        let g_dancerColorsBoys;     // If we choose random colors these are the colors. (array based on dancer number)
+        let g_dancerColorsGirls;
 
         // Run any startup needed to get the GUI in the desired start up state.
         startup();
@@ -1256,7 +1274,7 @@
             for (let x = -6; x <= 6; x++) {
                 for (let y = -6; y <= 6; y++) {
                     canvasContext.beginPath();
-                    canvasContext.arc(x * gridSize, y * gridSize, 2, 0, 2 * Math.PI);
+                    canvasContext.arc(x * gridSize, y * gridSize, gridSize / 20, 0, 2 * Math.PI);
                     canvasContext.fill();
                 }
             }
@@ -1281,13 +1299,40 @@
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
         }
 
+        function dancerGetColor(dancer) {
+            if (g_couplesIdentified)
+                return COLORS[dancer.number - 1];
+
+            // have we picked some random colors?
+            if (!g_dancerColorsBoys) {
+
+                // take the list of colors, make a copy and shuffle it
+                let randomColor = COLORS.slice();
+                for (let i = 0; i < 64; i++) {
+                    let randIdx1 = Math.floor(Math.random() * COLORS.length);
+                    let randIdx2 = Math.floor(Math.random() * COLORS.length);
+                    // swap
+                    let temp = randomColor[randIdx1];
+                    randomColor[randIdx1] = randomColor[randIdx2];
+                    randomColor[randIdx2] = temp;
+                }
+                g_dancerColorsBoys = randomColor.slice(0, 6);
+                g_dancerColorsGirls = randomColor.slice(6, 12);
+            }
+
+            if (dancer.isBoy)
+                return g_dancerColorsBoys[dancer.number - 1];
+            else
+                return g_dancerColorsGirls[dancer.number - 1];
+        }
+
         function dancerDraw(dancer, canvas, canvasContext, gridSize) {
             setOriginInCenter(canvas, canvasContext);
 
             canvasContext.translate(dancer.gridX * gridSize, dancer.gridY * gridSize);
 
             canvasContext.rotate(Math.PI / 2.0 * dancer.rotation)
-            canvasContext.fillStyle = COLORS[dancer.number - 1];
+            canvasContext.fillStyle = dancerGetColor(dancer);
 
             // draw boy or girl
             if (dancer.isBoy)
@@ -1303,11 +1348,13 @@
             canvasContext.fill();
 
             // draw the couple number
-            canvasContext.rotate(-Math.PI / 2.0 * dancer.rotation)
-            canvasContext.scale(1, -1);
-            canvasContext.font = (gridSize / 2) + "px Arial";
-            canvasContext.fillStyle = "black";
-            canvasContext.fillText(dancer.number, -gridSize * 0.15, gridSize * 0.2);
+            if (g_couplesIdentified) {
+                canvasContext.rotate(-Math.PI / 2.0 * dancer.rotation)
+                canvasContext.scale(1, -1);
+                canvasContext.font = (gridSize / 2) + "px Arial";
+                canvasContext.fillStyle = "black";
+                canvasContext.fillText(dancer.number, -gridSize * 0.15, gridSize * 0.2);
+            }
 
             canvasContext.setTransform(1, 0, 0, 1, 0, 0);
         }
@@ -1326,20 +1373,51 @@
         }
 
         // called when you click on list item in g_callHistory
-        function callHistoryOnClick(event) {
+        function callHistoryOnClick(event, isDouble) {
             console.log("GUI callback callHistoryOnClick", event);
             let listItem = event.currentTarget;
             console.assert(listItem.nodeName === "LI");      // it is a list item  
             let idx = listItem["data-index"];
             console.assert(idx !== undefined);
-            g_callListSelectedItemIdx = idx;
+            if (isDouble)
+                g_callListSavedIdx = idx;
+            else
+                g_callListSelectedItemIdx = idx;
             syncGUIToModel()
+        }
+
+        // called when you click on list item in g_callHistory
+        function callHistoryOnDblClick(event) {
+            callHistoryOnClick(event, true);
         }
 
         /*****************************/
         function onKeyDown(event) {
             console.log("GUI callback callHistoryOnClick", event);
-            tone(0,0);  // insure that audio is initialized.    
+            tone(0, 0);  // ensure that audio is initialized.    
+
+            if (event.ctrlKey) {
+                if (event.key == "s") {
+                    g_callListSavedIdx = g_callListSelectedItemIdx;
+                    syncGUIToModel();
+                    event.preventDefault();   // avoid browser's save functionality
+                    return false;
+                }
+                if (event.key == "z") {
+                    onCommand("undo");
+                    return false;
+                }
+                if (event.key == "i") {
+                    onCommand("id");
+                    return false;
+                }
+                if (event.key == "r") {
+                    onCommand("reset");
+                    event.preventDefault();   // avoid browser's reset functionality
+                    return false;
+                }
+            }
+
             if (0 < g_callHistory.length) {
                 if (event.key == "ArrowUp")
                     g_callListSelectedItemIdx = Math.max(0, g_callListSelectedItemIdx - 1);
@@ -1402,6 +1480,8 @@
             if (command == "reset") {
                 g_lastCallHistory = g_callHistory;
                 g_callHistory = [];
+                g_callListSelectedItemIdx = -1;
+                g_callListSavedIdx = -1;
                 g_messageSpan.innerHTML = "Reset complete.";
                 return true
             }
@@ -1419,6 +1499,12 @@
                     g_callHistory = g_lastCallHistory;
                 } else
                     logError("Nothing to undo.");
+                return true;
+            }
+            if (command == "id") {
+                g_couplesIdentified = !g_couplesIdentified;
+                g_dancerColorsBoys = undefined;
+                g_dancerColorsGirls = undefined;
                 return true;
             }
             return false;
@@ -1499,12 +1585,23 @@
 
             // If we ar resolved turn on the label that says so.  
             g_resolvedsSpan.style.visibility = endFloor.isResolved ? "visible" : "hidden";
+            
+            g_identifyButton.innerText = g_couplesIdentified ? "hide" : "identify";
 
             floorDraw(endFloor, g_mainCanvas);
 
             if (!startFloor)
                 startFloor = getStartFloor(g_callHistory, g_callListSelectedItemIdx);
             floorDraw(startFloor, g_prevCanvas);
+
+            let savedFloor = undefined;
+            let savedCallNum = "";
+            if (0 <= g_callListSavedIdx) {
+                savedFloor = getEndFloor(g_callHistory, g_callListSavedIdx);
+                savedCallNum = g_callListSavedIdx + 1;
+            }
+            g_savedCallNumSpan.innerText = savedCallNum;
+            floorDraw(savedFloor, g_savedCanvas);
 
             // Update the history listg_callListSelecteItem
             g_callListOrderedList.replaceChildren();
@@ -1513,13 +1610,21 @@
                 li["data-index"] = i;                   // remember where I am in the list 
                 li.innerText = g_callHistory[i].call;
                 li.addEventListener("click", callHistoryOnClick);
+                li.addEventListener("dblclick", callHistoryOnDblClick);
                 g_callListOrderedList.appendChild(li);
             }
             if (0 <= g_callListSelectedItemIdx) {
                 let selected = g_callListOrderedList.children[g_callListSelectedItemIdx];
-                selected.style.backgroundColor = "#4498E1";
+                selected.style.backgroundColor = "#4498E1";  // a light blue
                 selected.scrollIntoView();
             }
+            if (0 <= g_callListSavedIdx) {
+                let saved = g_callListOrderedList.children[g_callListSavedIdx];
+                saved.style.backgroundColor = "#3BAB39"; // a green 
+                saved.scrollIntoView();
+            }
+
+            g_callInput.focus();    // put focus here. 
         }
 
         // used to initialize the CALL_TO_FTN table. 
