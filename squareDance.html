@@ -1339,6 +1339,7 @@
         /*****************************/
         function onKeyDown(event) {
             console.log("GUI callback callHistoryOnClick", event);
+            tone(0,0);  // insure that audio is initialized.    
             if (0 < g_callHistory.length) {
                 if (event.key == "ArrowUp")
                     g_callListSelectedItemIdx = Math.max(0, g_callListSelectedItemIdx - 1);
@@ -1585,9 +1586,14 @@
 
         function chirp() { tone(20, 2000); }
 
+        // tone(0,0) can be called to insure sound is set up
+        // It must be done AFTER first user interaction AND
+        // it takes a while (> 100 msec).  
         function tone(duration, frequency) {
             if (audioCtx === undefined)
                 audioCtx = new window.AudioContext;
+            if (duration == 0)
+                return;
             let oscillator = audioCtx.createOscillator();
             let gainNode = audioCtx.createGain();
 
@@ -1597,10 +1603,8 @@
             oscillator.frequency.value = frequency;
             // oscillator.type = "sine"; 
 
-            // we delay the start by 1msec to give time to audioCtx to be intialized
-            // the first time this is called.   
-            setTimeout(function () { oscillator.start() }, );
-            setTimeout(function () { oscillator.stop() }, duration+1);
+            oscillator.start();
+            setTimeout(function () { oscillator.stop() }, duration);
         };
         let audioCtx;
 

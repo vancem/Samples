@@ -49,20 +49,17 @@
             y = y + deltaY;
 
             // Bounce off the left and right wall 
-            if (x < ballSize && deltaX < 0)
-            {
+            if (x < ballSize && deltaX < 0) {
                 deltaX = -deltaX;
                 beep();
             }
-            else if (ballCanvas.width < x + ballSize && 0 < deltaX)
-            {
+            else if (ballCanvas.width < x + ballSize && 0 < deltaX) {
                 deltaX = -deltaX;
                 beep();
             }
 
             // Bounce off the top and bottom wall 
-            if (y < ballSize && deltaY < 0)
-            {
+            if (y < ballSize && deltaY < 0) {
                 deltaY = -deltaY;
                 beep();
             }
@@ -74,8 +71,7 @@
 
             // Bounce off paddle
             let bottomOfBall = y + ballSize;
-            if (0 < deltaY && paddleY < bottomOfBall && paddleX - paddleWidth / 2 <= x && x <= paddleX + paddleWidth / 2)
-            {
+            if (0 < deltaY && paddleY < bottomOfBall && paddleX - paddleWidth / 2 <= x && x <= paddleX + paddleWidth / 2) {
                 deltaY = -deltaY;
                 beep();
             }
@@ -116,6 +112,7 @@
 
         /*****************************/
         function mouseMove(eventData) {
+            tone(0, 0);
             paddleX = eventData.offsetX;
             paddleX = Math.max(paddleX, paddleWidth / 2);
             paddleX = Math.min(paddleX, ballCanvas.width - paddleWidth / 2);
@@ -123,6 +120,7 @@
 
         /*****************************/
         function keypress(eventData) {
+            tone(0, 0);
             if (eventData.key == "ArrowLeft") {
                 paddleX -= 50;
                 paddleX = Math.max(paddleX, paddleWidth / 2);
@@ -135,9 +133,14 @@
 
         function beep() { tone(50, 440); }
 
+        // tone(0,0) can be called to insure sound is set up
+        // It must be done AFTER first user interaction AND
+        // it takes a while (> 100 msec).  
         function tone(duration, frequency) {
             if (audioCtx === undefined)
                 audioCtx = new window.AudioContext;
+            if (duration == 0)
+                return;
             let oscillator = audioCtx.createOscillator();
             let gainNode = audioCtx.createGain();
 
@@ -147,10 +150,8 @@
             oscillator.frequency.value = frequency;
             // oscillator.type = "sine"; 
 
-            // we delay the start by 1msec to give time to audioCtx to be intialized
-            // the first time this is called.   
-            setTimeout(function () { oscillator.start() }, 1);
-            setTimeout(function () { oscillator.stop() }, duration+1);
+            oscillator.start();
+            setTimeout(function () { oscillator.stop() }, duration);
         };
         let audioCtx;
 
