@@ -25,16 +25,16 @@
         <li> To try it out, type the following (one at a time, without commas): h pto,ex,st,br,fw,c sq3
     </ul>
     <ul>
-        <li> <button onClick="onCommand('reset')">reset</button>
-            <button onClick="onCommand('undo')">undo</button>
-            Type Calls here: <input id=command type=text onchange="textBoxOnChange(event)">
+        <li> <button tabindex=3 onClick="onCommand('reset')">reset</button>
+            <button tabindex=2 onClick="onCommand('undo')">undo</button>
+            Type Calls here: <input id=command type=text tabindex=1 onchange="textBoxOnChange(event)">
             <span id=resolved
                 style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247);vertical-align:middle;margin:0px 20px;text-align:center;">Resolved!</span>
         </li>
         <li> Message: <span id=message></span> </li>
     </ul>
     <div style="display:flex">
-        <canvas id=main tabindex=1 style="border:2px solid red" height=500 width=500> </canvas>
+        <canvas id=main style="border:2px solid red" height=500 width=500> </canvas>
         <div style="background-color:lightgray;height:500px;min-width:120px;overflow-y:scroll">
             <p>
                 <b style="display:inline-block;margin:0px 5px">Call History</b><br>
@@ -1512,8 +1512,11 @@
                 li.addEventListener("click", callHistoryOnClick);
                 g_callListOrderedList.appendChild(li);
             }
-            if (0 <= g_callListSelectedItemIdx)
-                g_callListOrderedList.children[g_callListSelectedItemIdx].style.backgroundColor = "#4498E1";
+            if (0 <= g_callListSelectedItemIdx) {
+                let selected = g_callListOrderedList.children[g_callListSelectedItemIdx];
+                selected.style.backgroundColor = "#4498E1";
+                selected.scrollIntoView();
+            }
         }
 
         // used to initialize the CALL_TO_FTN table. 
