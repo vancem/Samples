@@ -27,8 +27,8 @@
     </ul>
     <ul>
         <li>
-            <button id=identify title="Identify couples by color (Ctrl-I)" tabindex=2
-                onClick="onCommand('id')">hide</button>
+            <button id=identify tabindex=2 onClick="onCommand('id')" 
+            title="Identify couples by color (Ctrl-I)&#10Clicking hide on an empty call list will pick new colors.">hide </button>
             <button title="Reset the call history (Ctrl-R)" onClick="onCommand('reset')">reset</button>
             <button title="Undo the last call (Ctrl-Z)" tabindex=2 onClick="onCommand('undo')">undo</button>
             Type Calls here: <input id=call type=text autofocus tabindex=1 onchange="textBoxOnChange(event)">
@@ -48,7 +48,8 @@
         </div>
         <div style="display:flex;flex-direction:column;background-color:#dfedf5">
             <div style="text-align:center;margin:20px 0px 0px 0px;font-size:large;font-weight:bold">Previous Floor</div>
-            <canvas id=prev style="border:2px solid red;background-color:rgb(236, 236, 236)" height=200 width=200> </canvas>
+            <canvas id=prev style="border:2px solid red;background-color:rgb(236, 236, 236)" height=200 width=200>
+            </canvas>
             <div style="text-align:center;margin:25px 0px 0px 0px;font-size:large;font-weight:bold">Saved Floor <span
                     id=savedCallNum></span></div>
             <canvas id=saved title="Use Ctrl-S or double clicking to save floor here"
@@ -80,7 +81,7 @@
         // Values for dancers based on their dancer number 
         const COLORS = [
             "red", "green", "cyan", "yellow", "violet", "blue",
-            "black", "goldenrod", "lawngreen", 
+            "black", "goldenrod", "lawngreen",
             "#5C5C5C", // dark gray
             "#C5C5C5", // light gray
             "#44C9D4", // deep aqua
@@ -1341,10 +1342,10 @@
 
             canvasContext.rotate(Math.PI / 2.0 * dancer.rotation);
 
-            canvasContext.beginPath(); 
+            canvasContext.beginPath();
             canvasContext.fillStyle = dancerGetColor(dancer);
 
-                        // draw bulge
+            // draw bulge
             canvasContext.arc(0, 0.45 * gridSize, 0.3 * gridSize, 0, 2 * Math.PI);
             canvasContext.fill();
 
@@ -1352,11 +1353,11 @@
             canvasContext.beginPath();
             if (dancer.isBoy)
                 canvasContext.rect(-0.45 * gridSize, -0.45 * gridSize, 0.9 * gridSize, 0.9 * gridSize);
-            else 
+            else
                 canvasContext.arc(0, 0, 0.52 * gridSize, 0, 2 * Math.PI);
             canvasContext.fill();
 
-            // draw the couple number
+            // draw the couple number (if we want couple numbers)
             if (g_couplesIdentified) {
                 canvasContext.rotate(-Math.PI / 2.0 * dancer.rotation)
                 canvasContext.scale(1, -1);
@@ -1486,7 +1487,7 @@
                 doTest();
                 return true;
             }
-            if (command == "reset") {
+            if (command == "reset" || command == "r") {
                 g_lastCallHistory = g_callHistory;
                 g_callHistory = [];
                 g_callListSelectedItemIdx = -1;
@@ -1494,7 +1495,7 @@
                 g_messageSpan.innerHTML = "Reset complete.";
                 return true
             }
-            if (command == "undo") {
+            if (command == "undo" || command == "u") {
                 if (0 < g_callHistory.length) {
                     let prev = g_callHistory.pop();
                     g_messageSpan.innerHTML = "Undid: <b>" + prev.call + "</b>";
@@ -1512,8 +1513,11 @@
             }
             if (command == "id") {
                 g_couplesIdentified = !g_couplesIdentified;
-                g_dancerColorsBoys = undefined;
-                g_dancerColorsGirls = undefined;
+                // This lets you peek, if you are at a reset state, then choose new dancer colors too.  
+                if (g_callHistory.length == 0) {
+                    g_dancerColorsBoys = undefined;
+                    g_dancerColorsGirls = undefined;
+                }
                 return true;
             }
             return false;
@@ -1629,7 +1633,7 @@
             if (0 <= g_callListSelectedItemIdx) {
                 let selected = g_callListOrderedList.children[g_callListSelectedItemIdx];
                 selected.style.backgroundColor = "#4498E1";  // a light blue
-                selected.scrollIntoView({block: "nearest"});
+                selected.scrollIntoView({ block: "nearest" });
             }
             g_callInput.focus();    // put focus here. 
         }
