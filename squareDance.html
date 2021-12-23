@@ -1619,17 +1619,15 @@
                 li.addEventListener("dblclick", callHistoryOnDblClick);
                 g_callListOrderedList.appendChild(li);
             }
+            if (0 <= g_callListSavedIdx) {
+                let saved = g_callListOrderedList.children[g_callListSavedIdx];
+                saved.style.backgroundColor = "#3BAB39";    // a green 
+            }
             if (0 <= g_callListSelectedItemIdx) {
                 let selected = g_callListOrderedList.children[g_callListSelectedItemIdx];
                 selected.style.backgroundColor = "#4498E1";  // a light blue
-                selected.scrollIntoView();
+                selected.scrollIntoView({block: "nearest"});
             }
-            if (0 <= g_callListSavedIdx) {
-                let saved = g_callListOrderedList.children[g_callListSavedIdx];
-                saved.style.backgroundColor = "#3BAB39"; // a green 
-                saved.scrollIntoView();
-            }
-
             g_callInput.focus();    // put focus here. 
         }
 
