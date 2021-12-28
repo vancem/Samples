@@ -10,9 +10,9 @@
 <body style="margin:0; box-sizing:border-box; height:100vh; overflow:hidden; display:flex;"
     onkeydown="onKeyDown(event)">
     <!-- This is the main part of the GUI -->
-    <div style="flex-grow:2; display:flex; flex-direction:column;">
+    <div style="flex-grow:2; display:flex; flex-direction:column; font-size: 1.2rem;">
         <!-- Textbox and buttons -->
-        <div style="display:flex;">
+        <div style="display:flex; overflow-x: hidden;">
             <input id=call type=text autofocus tabindex=1 placeholder="Enter Calls" onchange="textBoxOnChange(event)">
             <button id=identify tabindex=2 onClick="onCommand('id')"
                 title="Identify couples by color (Ctrl-I)&#10Clicking hide on an empty call list will pick new colors.">hide
@@ -27,7 +27,7 @@
         <!-- The main floor and the prev/saved flow beside them -->
         <div style="flex-grow:1; display:flex;">
             <!-- The Call History column -->
-            <div style="flex-grow:0; background-color:lightgray;min-width:100px; border: 2px solid black; overflow-y:auto"
+            <div style="background-color:lightgray;min-width:7em; border: 2px solid black; overflow-y:scroll; max-height:calc(100vh - 1.5em);"
                 title="Use arrow keys or single click to look at past floor configurations">
                 <p>
                     <b style="display:inline-block; margin:0px 5px">Call History</b>
@@ -35,12 +35,12 @@
                 </p>
             </div>
             <!-- The main canvas -->
-            <div style="flex-grow:2; display:flex; flex-direction:column; background-color:rgb(252, 221, 236);">
+            <div style="display:flex; flex-direction:column; background-color:rgb(252, 221, 236);">
                 <canvas id=main width=500 height=500
                     style="margin:auto 5px; background-color:white; border:2px solid red; width:87vh; height:87vh;"></canvas>
             </div>
             <!-- The previous and save floor displays -->
-            <div style="flex-grow:1; display:flex; flex-direction:column; background-color:#dfedf5">
+            <div style="display:flex; flex-direction:column; background-color:#dfedf5">
                 <div style="margin:auto;">
                     <!-- The previous floor display -->
                     <div style="text-align:center; margin:20px 0px 0px 0px; font-size:large; font-weight:bold">Previous
@@ -60,7 +60,7 @@
         </div>
     </div>
     <!-- The instructions -->
-    <div style="flex-grow:1; margin:5px; overflow-y: auto; min-width: 200px;">
+    <div style="flex-grow:1; margin:5px; overflow: auto; min-width: 200px;">
         <h2>Instructions</h2>
         This is a program that simulates square dance calls for a 6 couple rectangle.
         This was inspired by the
@@ -1476,7 +1476,7 @@
             console.log("onCommand", command);
 
             while (true) {
-                let match = command.match(/^(([hsbgcev]) )?(\S+)\s*(.*)$/);
+                let match = command.toLowerCase().match(/^(([hsbgcev]) )?(\S+)\s*(.*)$/);
                 if (!match)
                     break;
 
@@ -1565,7 +1565,7 @@
 
             try {
                 // Fetch the javaScript function that does the call
-                let callFtn = CALL_TO_FTN[call.toLowerCase()];
+                let callFtn = CALL_TO_FTN[call];
                 if (!callFtn)
                     throw "Unknown Call '" + call + "'";
 
@@ -1762,7 +1762,7 @@
                 "tb srt dx e circ gr btl pto hinge td hinge rec saq srt vl sfw v pt c pt sl pt hs utb fl " +
                 "rfl srt pt tb pt tb fl sq3 ptd vl sfw zoom zoom tpt cl zoom fi srt cl v pt c pt pt tb pt tb " +
                 "pt tb tq wad ptd rfl srt ptc c sq3 srt pto st br ht sb br srt stw st br whd " +
-                "lr ptd rlt saq vl fw c pt rlt hs bg rlt " +
+                "lr ptd rlt saq vl fw c pt rlt hs btg rlt " +
                 "srt ttl cl fi srt pt tb pt tb srt tq circ circ circ br rlt pt tb rlt vl sfw v sq3 c ptc v pt c pt rlt pt tb " +
                 "stw sct circ br btl pto cast3 hinge cast3 br srt pt " +
                 "c pt v pt ci ptd v rlt srt e td rlt pt tb " +
