@@ -35,9 +35,9 @@
                 </p>
             </div>
             <!-- The main canvas -->
-            <div style="flex-grow:2; display:flex; flex-direction:column; background-color:rgb(247, 207, 227);">
+            <div style="flex-grow:2; display:flex; flex-direction:column; background-color:rgb(252, 221, 236);">
                 <canvas id=main width=500 height=500
-                    style="margin:auto 5px; background-color:white; border:2px solid red; width:80vh; height:80vh;"></canvas>
+                    style="margin:auto 5px; background-color:white; border:2px solid red; width:87vh; height:87vh;"></canvas>
             </div>
             <!-- The previous and save floor displays -->
             <div style="flex-grow:1; display:flex; flex-direction:column; background-color:#dfedf5">
@@ -60,7 +60,7 @@
         </div>
     </div>
     <!-- The instructions -->
-    <div style="flex-grow:1; overflow-y: auto;">
+    <div style="flex-grow:1; margin:5px; overflow-y: auto; min-width: 200px;">
         <h2>Instructions</h2>
         This is a program that simulates square dance calls for a 6 couple rectangle.
         This was inspired by the
@@ -75,7 +75,7 @@
             <li> h=heads, c=centers, e=ends, v = very centers, fl=flutterwheel srt=star thru, sfw = stretch ferris wheel
                 st=swing thru, td=trade, sl=slide thru</li>
             <li> Calls Available: <span id=allCalls></span> </li>
-            <li> Typically Must explicitly call step to a wave (stw) from facing couples.
+            <li> Typically you must explicitly call step to a wave (stw) from facing couples (st is an exception).
             <li> You can paste multiple commands (separated by space) into textbox.
             <li> You can click on the history list (or use arrow keys) to move around in the history. Ctrl-S will save
                 the
