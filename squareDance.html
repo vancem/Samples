@@ -1,5 +1,12 @@
 <!doctype html>
 <html>
+<style>
+    input,
+    button {
+        margin: 5px;
+        font-size: 100%;
+    }
+</style>
 
 <!-- *********************************************************************** -->
 <!-- The body section describes the visual layout of the page -->
@@ -10,34 +17,41 @@
 <body style="margin:0; box-sizing:border-box; height:100vh; overflow:hidden; display:flex;"
     onkeydown="onKeyDown(event)">
     <!-- This is the main part of the GUI -->
-    <div style="flex-grow:2; display:flex; flex-direction:column; font-size: 1.2rem;">
+    <div style="flex-grow:2; display:flex; flex-direction:column; font-size: 1.5rem;">
         <!-- Textbox and buttons -->
-        <div style="display:flex; overflow-x: hidden;">
-            <input id=call type=text autofocus tabindex=1 placeholder="Enter Calls" onchange="textBoxOnChange(event)">
+        <div style="font-size: 2.5rem">
+            <input id=call type=text autofocus tabindex=1 placeholder="Enter Calls" size=10
+                onchange="textBoxOnChange(event)">
             <button id=identify tabindex=2 onClick="onCommand('id')"
                 title="Identify couples by color (Ctrl-I)&#10Clicking hide on an empty call list will pick new colors.">hide
             </button>
             <button title="Reset the call history (Ctrl-R)" onClick="onCommand('reset')">reset</button>
             <button title="Undo the last call (Ctrl-Z)" tabindex=2 onClick="onCommand('undo')">undo</button>
+
+        </div>
+
+        <div style="overflow-x: hidden;">
+            <b>Message:</b>
             <span id=resolved
-                style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247);vertical-align:middle;margin:0px 20px;text-align:center;">Resolved!
+                style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247); font-size:smaller; vertical-align:middle; margin:0px .6em;text-align:center;">
+                Resolved
             </span>
-            <span> <b>Message:</b> <span id=message></span> </span>
+            <span id=message></span>
         </div>
         <!-- The main floor and the prev/saved flow beside them -->
         <div style="flex-grow:1; display:flex;">
             <!-- The Call History column -->
-            <div style="background-color:lightgray;min-width:7em; border: 2px solid black; overflow-y:scroll; max-height:calc(100vh - 1.5em);"
+            <div style="background-color:lightgray;min-width:7em; border: 2px solid black; overflow-y:scroll; max-height:calc(90vh - 2.5em);"
                 title="Use arrow keys or single click to look at past floor configurations">
                 <p>
                     <b style="display:inline-block; margin:0px 5px">Call History</b>
-                <ol id=callList></ol>
+                <ol id=callList style="margin-left:1em"></ol>
                 </p>
             </div>
             <!-- The main canvas -->
             <div style="display:flex; flex-direction:column; background-color:rgb(252, 221, 236);">
                 <canvas id=main width=500 height=500
-                    style="margin:auto 5px; background-color:white; border:2px solid red; width:87vh; height:87vh;"></canvas>
+                    style="margin:auto 5px; background-color:white; border:2px solid red; width:80vmin; height:80vmin;"></canvas>
             </div>
             <!-- The previous and save floor displays -->
             <div style="display:flex; flex-direction:column; background-color:#dfedf5">
@@ -47,13 +61,13 @@
                         Floor
                     </div>
                     <canvas id=prev width=230 height=230
-                        style="margin:5px; border:2px solid red; background-color:rgb(236, 236, 236); width:35vh; height:35vh;"></canvas>
+                        style="margin:5px; border:2px solid red; background-color:rgb(236, 236, 236); width:30vmin; height:30vmin"></canvas>
                     <!-- The saved floor display -->
                     <div style="text-align:center;margin:25px 0px 0px 0px;font-size:large;font-weight:bold">Saved Floor
                         <span id=savedCallNum></span>
                     </div>
                     <canvas id=saved width=230 height=230
-                        style="margin:5px; border:2px solid red; background-color:rgb(236, 236, 236); width:35vh; height:35vh;"
+                        style="margin:5px; border:2px solid red; background-color:rgb(236, 236, 236); width:30vmin; height:30vmin"
                         title="Use Ctrl-S or double clicking to save floor here"></canvas>
                 </div>
             </div>
