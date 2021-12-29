@@ -71,7 +71,7 @@
                     </div>
                     <canvas id=saved width=230 height=230
                         style="margin:5px; border:2px solid red; background-color:rgb(236, 236, 236); width:30vmin; height:30vmin"
-                        title="Use Ctrl-S or double clicking to save floor here"></canvas>
+                        title="Use Ctrl-S or double clicking in the call history to save floor here."></canvas>
                 </div>
             </div>
         </div>
@@ -86,18 +86,55 @@
         <a href="https://www.tamtwirlers.org/taminations/#?level=Basic%20and%20Mainstream&main=LEVELS&detail=CALLS"
             target="_blank">
             Taminations mainstream list</a>.
+        <h2>Quick Start</h2>
+        <p>
+            If the instructions are hard to see, resize the window to be short and wide.
+            On a phone turn it to the landscape view.
+        </p>
+        <p>
+            To get started type the <strong>bold abbreviations</strong> (one line at a time) in the 'Enter Calls' textbox.
+        </p>
+        <ul>
+            <li><strong>h pto</strong> (<strong>H</strong>eads <strong>P</strong>ass <strong>T</strong>he <strong>O</strong>cean)</li>
+            <li><strong>ex</strong> (<strong>Ex</strong>tend)</li>
+            <li><strong>st</strong> (<strong>S</strong>wing <strong>T</strong>hru)</li>
+            <li><strong>br</strong> (<strong>B</strong>oys <strong>R</strong>un)</li>
+            <li><strong>fw</strong> (<strong>F</strong>erris <strong>W</strong>heel)</li>
+            <li><strong>c sq3</strong> (<strong>C</strong>enters <strong>Sq</strong>uare thru <strong>3</strong>)</li>
+        </ul>
+        <p>
+            Notice each time you type a call it shows the end formation. It also shows the beginning formation
+            in the 'Previous floor' area.  When the square is resolved it will chirp, an also display a notification.
+        </p>
+        <p>
+            You can use the <strong>up and down arrow keys</strong> or click on entries in the 'Call History' area
+            to review previous calls.
+            The <strong>left an right arrow keys</strong> jump to the first or last call in the call history.
+        </p>
+        <p>
+            At any time you can type <strong>Ctrl-S</strong> (Save) to remember the currently displayed floor in the
+            'Saved floor' area.
+            You can also double click on any call in the call history to save the floor after that call.
+        </p>
+        <p>
+            You can clear the call history with the <strong>reset</strong> (or Ctrl-R) button and undo the
+            last call with the <strong>undo</strong> (or Ctrl-Z) button. You can also practice remembering dancers by
+            using the 'hide' button to give each dancer a random color. Resetting the square does NOT
+            change the colors, but hitting the 'hide' button when there are no calls WILL change the colors.
+        </p>
+        <h2>More details on Usage</h2>
         <ul>
             <li> Calls are given very short abbreviations that are mostly the first letter of
-                each word in the call (exception below). Couple circulate is just circulate.
-            <li> h=heads, c=centers, e=ends, v = very centers, fl=flutterwheel srt=star thru, sfw = stretch ferris wheel
-                st=swing thru, td=trade, sl=slide thru</li>
+                each word in the call (exception below).  When using the first letter of of each 
+                word would be ambiguous (e.g st is Swing Thru or Square Thru), we either use
+                the next letter (e.g Extend = ex) or the LAST consonant (e.g. StaR Thru = srt).
+            <li>One word calls typically have the first syllable. (e.g. recycle = rec)</li>
+            <li> Dancer Designators are all one letter, and separated from the call by space
+                (h=heads, s=sides, c=centers, e=ends, v = very centers)
             <li> Calls Available: <span id=allCalls></span> </li>
+            <li>Couples circulate is the same as circulate so we don't have that call.</li>
             <li> Typically you must explicitly call step to a wave (stw) from facing couples (st is an exception).
-            <li> You can paste multiple commands (separated by space) into textbox.
-            <li> You can click on the history list (or use arrow keys) to move around in the history. Ctrl-S will save
-                the
-                floor.</li>
-            <li> To try it out, type the following (one at a time, without commas): h pto,ex,st,br,fw,c sq3
+            <li> You can paste multiple commands (separated by space or a ;) into textbox.
         </ul>
         <h2>New/changed calls</h2>
         There are a few calls that are either new, or need an explanation for dancers to be successful.
@@ -134,29 +171,31 @@
         </ul>
         <h2>Modules Work on 6 Couple Squares</h2>
         <p>
-            It is surprizing (at least to me), that MOST square dance figures that work in 4 couple squares
+            It is surprising (at least to me), that MOST square dance figures that work in 4 couple squares
             <strong>also work in 6 couple squares</strong>. The main caveats
         <ul>
             <li><strong>Promenade 1/2</strong> is <strong>NOT</strong> equivalent to a
                 <strong>Heads Right and Left Thru</strong>. The problem is that a promenade swaps
                 the head dancer couples left-right as well as front-back. If you substituted
-                a RLT for the PROM 1/2 the figure would likely work.
+                a <strong>Heads Right and Left Thru</strong> for the <strong>Promenade 1/2</strong>
+                the figure would likely work.
                 <p>
-                    Note that figures that get you 'across the street', still all basically work
+                    Note that figures that get you 'across the street', still all work
                     (they are equivalent to a <strong>Heads Right and Left Thru</strong>)
                     Thus things like
                     <strong>Heads Square Thru 2</strong>, <strong>Heads Pass the Ocean, Extend</strong>,
                     or the use a 1/2 chicken plucker (RLT-PT-TB), all work.
                 </p>
             </li>
-            <li>Anything that creates 4 groups of 3, rather than 3 groups of 4 is not likely to work.
+            <li>Anything that creates 4 groups of 3, rather than 3 groups of 4 is not likely to work
+                without modification.
                 This includes bending a line of 6 as well as anything dealing with a triple pass
-                through formations. Thus things that are not likely to work include
+                through formations. Thus things that will need modification include
                 <ul>
                     <li><strong>Tag the Line</strong></li>
                     <li><strong>Cloverleaf</strong></li>
                     <li><strong>Wheel and Deal</strong> (facing out, 2-faced is OK)</li>
-                    <li>strong>Bend the Line</strong> (of 6, 4 is OK)</li>
+                    <li><strong>Bend the Line</strong> (of 6, 4 is OK)</li>
                 </ul>
                 Note that figures that form triple pass through formation can often be fixed
                 simply by adding a extra <strong>Zoom</strong>. For example the zero
@@ -169,7 +208,7 @@
                 </ul>
             </li>
         </ul>
-        In short, probably most of your most popular figures 'ust work'. This means that you
+        In short, probably most of your most popular figures 'just work'. This means that you
         can call a six couple square immediately (just stick with modules you know work).
 
         <h2>Resolving</h2>
@@ -262,9 +301,9 @@
                 the center of the square which is OPPOSITE what they are used to.
                 They end up being in TANDEM with their partner as the do the
                 move, which is what makes it all work. It is definitely something
-                you want to have your dancers practice first.   The grand-square 
+                you want to have your dancers practice first. The grand-square
                 takes the same amount of time, however you will need more time
-                for the promenade, so it is OK that dancers go fast on this one.  
+                for the promenade, so it is OK that dancers go fast on this one.
             </li>
         </ul>
     </div>
