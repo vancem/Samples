@@ -11,7 +11,7 @@ Here are some links to display the HTML files in this repository.
   * http://vancem.github.io/Samples/calculator.html - a simple 4 function calculator.  
   * http://vancem.github.io/Samples/Simon.html - The 'simon' says memory game. 
   * http://vancem.github.io/Samples/life.html - Conway's game of life simulation. 
-  * http://vancem.github.io/Samples/squareDance.html - A program to help Square Dance callers call for 6 couples.   
+  * http://vancem.github.io/Samples/SquareDanceSim6Couple.html - A program to help Square Dance callers call for 6 couples.   
 
 The above is not a complete list of links for HTML file in this repo, but these links are automatically generated, so they exist 
 for every file automatically.   Basically it is http://vancem.github.io/Samples followed by the relative path in this repo.   
