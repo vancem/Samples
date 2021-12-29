@@ -34,7 +34,7 @@
         </div>
 
         <div style="overflow-x: hidden;">
-            <b>Message:</b>
+            <strong>Message:</strong>
             <span id=resolved
                 style="visibility:hidden;display:inline-block;color:red;background-color:rgb(183,181,247); font-size:smaller; vertical-align:middle; margin:0px .6em;text-align:center;">
                 Resolved
@@ -47,7 +47,7 @@
             <div style="background-color:lightgray;min-width:7em; border: 2px solid black; overflow-y:scroll; max-height:calc(90vh - 2.5em);"
                 title="Use arrow keys or single click to look at past floor configurations">
                 <p>
-                    <b style="display:inline-block; margin:0px 5px">Call History</b>
+                    <strong style="display:inline-block; margin:0px 5px">Call History</strong>
                 <ol id=callList style="margin-left:1em"></ol>
                 </p>
             </div>
@@ -88,7 +88,7 @@
             Taminations mainstream list</a>.
         <ul>
             <li> Calls are given very short abbreviations that are mostly the first letter of
-                each word in the call (exeptions below). Couple circulate is just circulate.
+                each word in the call (exception below). Couple circulate is just circulate.
             <li> h=heads, c=centers, e=ends, v = very centers, fl=flutterwheel srt=star thru, sfw = stretch ferris wheel
                 st=swing thru, td=trade, sl=slide thru</li>
             <li> Calls Available: <span id=allCalls></span> </li>
@@ -99,9 +99,108 @@
                 floor.</li>
             <li> To try it out, type the following (one at a time, without commas): h pto,ex,st,br,fw,c sq3
         </ul>
+        <h2>New/changed calls</h2>
+        There are a few calls that are either new, or need an explanation for dancers to be successful.
+        <ul>
+            <li>
+                <strong>Wheel and Deal</strong> (whd) - When called from lines facing out, there are
+                three couples facing out. The outside two couples do what they would normally do, the very center
+                couple does a partner trade (and because the very centers of the double pass through formation).
+            </li>
+            <li><strong>First Couple go Left Next Right</strong> (flnr) - This starts in a completed double pass
+                through formation and again the first two couples do what they would have done in a 4 couple square.
+                The last couple does a partner trade, and together they all form a line facing in.
+            </li>
+            <li><strong>Bend the line</strong> - When there are 2 rows of 6 dancers facing, you can bend the
+                line but the simulator currently does not support it because the flow is so bad. However bending
+                a line of 6 facing out does flow well, and so this is supported. Bending from two faced
+                lines of 4 also is legal and supported.
+            </li>
+            <li><strong>Triple Pass Thru</strong> (tpt) - This works just like double pass through, however
+                you pass 3 people and end in a completed triple pass through (facing out or someone's back).
+            </li>
+            <li><strong>Centers and Very Centers</strong> (v and c) - Ends or outsides work as before. However There
+                are now 4 couples that are in the center not just 2. However it is useful to have only the most
+                central 2 couples do something, and they are referred to as the 'very centers'.
+            </li>
+            <li><strong>Stretch Ferris Wheel</strong> - normal <strong>Ferris Wheel</strong> works and is supported,
+                but it is useful to be able to form triple pass through formation (after all, in a 4 couple square
+                a <strong>Ferris Wheel</strong> makes a double pass through formation). To achieve this, we ask the
+                dancers
+                facing in to not <strong>Wheel And Deal</strong> with the first couple they meet but the second.
+            </li>
+        </ul>
+        <h2>Resolving</h2>
+        Resolving a 6 couple square is not much harder than a 4 couple square. The hardest part is that you have
+        to remember 3 couples (not just 2) to know what to do. Any three in a row will work, but for the sake of
+        discussion, we will assume that the three couples are the side couple #6 and the couples on either side (#5 and
+        #1). In general you have to remember all 6 of these people to resolve.
+
+        The general technique for resolution is as follows
+        <ul>
+            <li><strong>Get your focus couple coupled up</strong> - You can do this many ways one way si to get to
+                ocean waves and then use all-8 circulate one gender circulates to match them up.
+            </li>
+            <li><strong>Get that couple to lines of 6 facing in</strong> - (recycle bend the line will do it)</li>
+            <li><strong>Call Wheel and Deal</strong> - this makes a triple pass through formation.</li>
+            <li><strong>Get your focus couple to the ENDS position</strong> - call <strong>Zoom</strong> enough times to
+                do this.
+        </ul>
+        You have now resolved the ends (your focus couple). However importantly because you are in a
+        triple pass thru configuration
+        you can operate on JUST 2 couples (the very centers) or 4 couples (the centers)
+        <strong>without disturbing</strong> what you have already resolved.
+        This is the key to the resolution technique. The next step is to
+        get all the 'neighbors' (couple #1 an #5) of your focus couple (#6) next to that focus couple. The
+        operations you have are
+        <ul>
+            <li><strong>Very Centers FlutterWheel</strong>- Look at
+                the two pairs of dancers in the very center. Either they BOTH go to one side or there
+                is a mix (one needs to go to one side and the other needs to go in the opposite direction).
+                In this later case, use <strong>Very Centers FlutterWheel</strong>
+                to fix it so that each couple on one side of the very centers both need to go in the
+                same direction.
+            </li>
+            <li><strong>Very Centers Pass thru or Square thru 3 </strong> - Once the
+                very centers need to go the same way, you use either a <strong>Very Centers Pass Thru</strong> or
+                a <strong>Very Centers Square Thru 3</strong> to get them on the correct side
+                facing the other center couple.
+            </li>
+        </ul>
+        <p>
+            As this point the OTHER center couple might contain dancers that are on the wrong side. if This
+            happens, then you need to do a <strong>Centers Pass To the Center</strong>. This bring these outside
+            centers to the very center. You can the repeat the process of using FL, RFL, and V PT or V SQ3 to
+            get these dancers to the correct side.
+        </p>
+        <p>
+            Now that have all the neighbors of your focus couple near your focus couple you are almost
+            there. The procedure from here works EXACTLY like in the 4 couple case. There are two cases.
+        </p>
+        <ul>
+            <li><strong>The all dancers are paired up</strong> - in this case do a <strong>Centers Pass Thru,
+                    Veer Left, and Bend the Line.</strong> This forms lines of couple up dancers. Then just like
+                in 4 couple resolution, you can either do a <strong>Star Thru, Square Thru 3</strong> or
+                a <strong>Star Thru, Pass Thru</strong> to complete the resolution.
+
+            </li>
+            <li><strong>The neighbor dancers are mixed</strong> - this work JUST LIKE 4 couple resolution. Either
+                a <strong>Centers Pass Thru</strong> or a <strong>Centers Square Thru 3</strong> will resolve
+                the square.
+            </li>
+        </ul>
+        <p>
+            There are many variations on this basic theme as well as shortcuts etc. For example you can use
+            <strong>Stretch Ferris Wheel</strong> instead of <strong>Wheel and Deal</strong> to get to the
+            triple pass through formation. There are plenty of alternatives to <strong>FlutterWheel</strong>
+            which swap dancers in a box.  These could be used instead.   There are many such variations. 
+            The key insight however, is that 'very centers' and 'centers' let you fix the inner part of the 
+            square without disturbing the ends.
+            The other important insight is that it is enough to get the neighbors of your focus couple to the
+            correct half of the square. The rest works like 4 couple resolution.
+        </p>
     </div>
     <!-- *************************** END OF HTML ******************************* -->
-
     <script>
         "use strict";                // do extra error checking at load time
 
@@ -170,7 +269,7 @@
 
         /*******************************************************************/
         // END OF STARTUP CODE.   
-        // The rest of this code is function declrations that have no
+        // The rest of this code is function declarations that have no
         //  effect at the time the are scanned by javascript.
         /*******************************************************************/
 
@@ -194,7 +293,7 @@
         /********************************************************************/
         // operations on a single dancer (note deltas can be negative to move in the opposite direction)
 
-        // moves a dancer in a given direction and changes its rotiation.
+        // moves a dancer in a given direction and changes its rotation.
         // parameters can be negative 
         function dancerMove(dancer, forwardDelta, slideRightDelta, rotateCCWDelta) {
             console.assert(dancer.gridX == Math.floor(dancer.gridX));        // integer value
@@ -229,7 +328,7 @@
         }
 
         // gets the coordinate of dancer (gridX or gridY) in its facing direction
-        // thus if you are facing heads, you get gridY (since you move in this direction fowward and back)
+        // thus if you are facing heads, you get gridY (since you move in this direction forward and back)
         function dancerGetFacingCoordinate(dancer) {
             if (dancerIsFacingHeads(dancer))
                 return dancer.gridY;
@@ -341,8 +440,8 @@
         }
 
         function dancerFacingAwayFromCenter(dancer) {
-            let forward = dancerForwardValue(dancer);                               // 1 if going away from orgin
-            let normalizedPos = dancerGetFacingCoordinate(dancer) >= 0 ? 1 : -1;      // 1 if orgin at my back.  
+            let forward = dancerForwardValue(dancer);                               // 1 if going away from origin
+            let normalizedPos = dancerGetFacingCoordinate(dancer) >= 0 ? 1 : -1;    // 1 if origin at my back.  
             return forward == normalizedPos;
         }
 
@@ -356,7 +455,7 @@
         //   * The origin of this grid is the very center of the rectangle of dancers 
         //     in the GUI the origin is marked with a cross
         //   * X grows to the right, Y grows up (like in Math, NOT like in graphics)
-        //   * a dancer's rotation is alwasy a number 0-3 (see NORTH, SOUTH, EAST, WEST)
+        //   * a dancer's rotation is always a number 0-3 (see NORTH, SOUTH, EAST, WEST)
 
         function floorReset(floor) {
             if (floor == undefined)
@@ -423,7 +522,7 @@
             // this gets us the sequence 0 2 4 6 8 10 11 9 7 5 3 1 
             function dancerLoc(dancer) { return (dancer < 6) ? (2 * dancer + 1) : (10 - 2 * (dancer - 6)); }
 
-            //  first transform 1-6 to 0-5 then add one then mod, then traslate back.  
+            //  first transform 1-6 to 0-5 then add one then mod, then translate back.  
             function dancerNextNum(num) { return num % 6 + 1; }
 
             for (let i = 0; i < 12; i++) {
@@ -432,7 +531,7 @@
                 if (nextDancer.isBoy == curDancer.isBoy)    // we alternate genders
                     return false;
 
-                if (curDancer.isBoy) {                      // the next needs to be your parner
+                if (curDancer.isBoy) {                      // the next needs to be your partner
                     if (nextDancer.number != curDancer.number)
                         return false;
                 }
@@ -582,7 +681,7 @@
                     return "Two dancers on the same spot";
             }
 
-            // there is mirror symetry
+            // there is mirror symmetry
             for (let i = 0; i < dancers.length / 2; i++) {
                 if (dancers[i].gridX != -dancers[dancers.length - 1 - i].gridX)
                     return "Mirror fails for X for dancer " + i;
@@ -594,7 +693,7 @@
             }
 
             if (lineLen == 2 && dancersLineLen(dancers, 2) == 4) {
-                // It is a quarter tag [position].  dancer 0 hould be able to 
+                // It is a quarter tag [position].  dancer 0 should be able to 
                 // move forward 3 spaces and land on the dancer 3
                 if (dancerGetFacingCoordinate(dancers[3]) - dancerGetFacingCoordinate(dancers[0]) != 3)
                     return "Bad Quarter Tag Formation end spacing";
@@ -616,12 +715,12 @@
                         lineLen == 2 && Math.abs(dancerGetCrossCoordinate(dancer)) != 1)
                         return "Dancer off Grid";
 
-                    // Symetry on the grid makes it unusual that dancers are on an axis 
+                    // Symmetry on the grid makes it unusual that dancers are on an axis 
                     // Only in odd line configure
                     if (dancerGetCrossCoordinate(dancer) == 0)
-                        return "Dancers not symetric in side-to-side dimension";
+                        return "Dancers not symmetric in side-to-side dimension";
                     if (dancerGetFacingCoordinate(dancer) == 0 && (12 / lineLen) % 2 != 1)
-                        return "Dancers not symetric in front-back dimension";
+                        return "Dancers not symmetric in front-back dimension";
                 }
             }
 
@@ -643,7 +742,7 @@
                     if (distBetweenLines != 0) {
                         let fbDist = Math.abs(dancerGetFacingCoordinate(dancers[lStart + i]) - dancerGetFacingCoordinate(dancers[lStart + i - lineLen]));
                         if (fbDist != distBetweenLines)
-                            return "Dancers not equally spaced foward and back";
+                            return "Dancers not equally spaced forward and back";
                     }
                 }
             }
@@ -741,7 +840,7 @@
                         dancer.gridX = -dancer.gridX;         // flip the other side
                     else
                         dancer.gridY = -dancer.gridY;         // flip the other side
-                    dancerMove(dancer, 0, 0, 2);        // flip direction
+                    dancerMove(dancer, 0, 0, 2);              // flip direction
                 }
                 else
                     dancerMove(dancer, delta, 0, 0);
@@ -820,8 +919,8 @@
             if (lineLen == 2 && lineLen2 == 4) {
                 for (let i = 0; i < dancers.length; i++) {
                     dancerMove(dancers[i],
-                        ((i <= 1 || 10 <= i) ? 1 : 2),                    // everyone but ends move forward
-                        ((i == 0 || i == dancers.length - 1) ? -2 : 0), 0);  // only end on the left slides over 2
+                        ((i <= 1 || 10 <= i) ? 1 : 2),                      // everyone but ends move forward
+                        ((i == 0 || i == dancers.length - 1) ? -2 : 0), 0); // only end on the left slides over 2
                 }
             }
             else
@@ -875,14 +974,14 @@
         function doSwingThru(floor, dancers) {
             // TODO swing thru is not correct for left handed waves (it does a left swing thru)
 
-            // Allow the facing couple ocean wave rule TODO do this more uniformly.   This is a hack
+            // Allow the facing couple ocean wave rule TODO do this more uniformly. This is a hack
             let lineLen = dancersLineLen(dancers);
             if (lineLen == 2 && dancers.length == 12) {
                 doStepToAWave(floor, dancers);
                 return doSwingThru(floor, floorGetDancers(floor));
             }
 
-            // check if the formation  is valid
+            // check if the formation is valid
             for (let i = 1; i < dancers.length; i++) {
                 if (!dancersIsFacingOpposite(dancers[i], dancers[i - 1]))
                     throw "Need to have alternating dancers" + (lineLen == 4 ? " (need to call stw?)" : "");
@@ -893,7 +992,7 @@
                     trade(dancers[start], dancers[start + 1]);
                     trade(dancers[start + 2], dancers[start + 3]);
 
-                    // centers trade (note that we have to use the ORIGINAL indexes
+                    // centers trade (note that we have to use the ORIGINAL indexes)
                     // to fetch people now in the center
                     trade(dancers[start], dancers[start + 3]);
                 }
@@ -904,7 +1003,7 @@
                     trade(dancers[start + 2], dancers[start + 3]);
                     trade(dancers[start + 4], dancers[start + 5]);
 
-                    // centers trade (note that we have to use the ORIGINAL indexes
+                    // centers trade (note that we have to use the ORIGINAL indexes)
                     // to fetch people now in the center
                     trade(dancers[start], dancers[start + 3]);
                     trade(dancers[start + 2], dancers[start + 5]);
@@ -1300,7 +1399,7 @@
         /********************************************************************/
         // GUI Drawing support
 
-        // puts the orgin in the center and makes y grow up not down
+        // puts the origin in the center and makes y grow up not down
         // Thus it acts like how you would set up x,y in math class. 
         function setOriginInCenter(canvas, canvasContext) {
             let centerX = canvas.width / 2;
@@ -1543,11 +1642,11 @@
             if (command == "undo" || command == "u") {
                 if (0 < g_callHistory.length) {
                     let prev = g_callHistory.pop();
-                    g_messageSpan.innerHTML = "Undid: <b>" + prev.call + "</b>";
+                    g_messageSpan.innerHTML = "Undid: <strong>" + prev.call + "</strong>";
 
                     if (0 < g_callHistory.length) {
                         let prevHistory = g_callHistory[g_callHistory.length - 1];
-                        g_messageSpan.innerHTML += " last call now: <b>" + prevHistory.call + "</b>";
+                        g_messageSpan.innerHTML += " last call now: <strong>" + prevHistory.call + "</strong>";
                     }
                 }
                 else if (g_lastCallHistory) {
@@ -1586,7 +1685,7 @@
                 if (!callFtn)
                     throw "Unknown Call '" + call + "'";
 
-                // parse the desginators to determine what dancers actually move.  
+                // parse the designators to determine what dancers actually move.  
                 let dancers = floorGetDancers(floor, designator);
                 dancersMoveDancersToGrid(dancers, designator);
 
@@ -1616,7 +1715,7 @@
 
         function logError(message) {
             beep();
-            g_messageSpan.innerHTML = "<b>" + message + "</b>";
+            g_messageSpan.innerHTML = "<strong>" + message + "</strong>";
         }
 
         function getEndFloor(callHistory, curIndex) {
@@ -1636,7 +1735,7 @@
         }
 
         // called when we want to make sure that the GUI represents the model (after we changed the model)
-        // NOTE most of the time you DONT pass endFloor, startfloor.  It is only for debugging when you do
+        // NOTE most of the time you DON'T pass endFloor, startfloor.  It is only for debugging when you do
         function syncGUIToModel(endFloor, startFloor) {
             if (!endFloor)
                 endFloor = getEndFloor(g_callHistory, g_callListSelectedItemIdx);
@@ -1661,7 +1760,7 @@
             g_savedCallNumSpan.innerText = savedCallNum;
             floorDraw(savedFloor, g_savedCanvas);
 
-            // Update the history listg_callListSelecteItem
+            // Update the history list g_callListSelectedItem
             g_callListOrderedList.replaceChildren();
             for (let i = 0; i < g_callHistory.length; i++) {
                 let li = document.createElement("li");
@@ -1793,7 +1892,7 @@
             }
 
             if (!g_messageSpan.innerHTML.match(/error/i))
-                g_messageSpan.innerHTML = "<b>" + "Successful Testing.  Square should be resolved (corner boxes)." + "</b>";
+                g_messageSpan.innerHTML = "<strong>" + "Successful Testing.  Square should be resolved (corner boxes)." + "</strong>";
         }
     </script>
 </body>
