@@ -77,7 +77,7 @@
         </div>
     </div>
     <!-- The instructions -->
-    <div style="flex-grow:1; margin:5px; overflow: auto; min-width: 200px;">
+    <div style="flex-grow:1; margin:5px; overflow: auto; min-width: 100px;">
         <h2>Instructions</h2>
         This is a program that simulates square dance calls for a 6 couple rectangle.
         This was inspired by the
@@ -97,7 +97,8 @@
         </p>
         <ul>
             <li><strong>h pto</strong> (<strong>H</strong>eads <strong>P</strong>ass <strong>T</strong>he
-                <strong>O</strong>cean)</li>
+                <strong>O</strong>cean)
+            </li>
             <li><strong>ex</strong> (<strong>Ex</strong>tend)</li>
             <li><strong>st</strong> (<strong>S</strong>wing <strong>T</strong>hru)</li>
             <li><strong>br</strong> (<strong>B</strong>oys <strong>R</strong>un)</li>
@@ -284,16 +285,16 @@
         </p>
         <p>
             You will quickly find that the hardest part of resolving a 6 couple square
-            is remembering where the dancer's home position is.   To help in practicing 
+            is remembering where the dancer's home position is. To help in practicing
             this you can press the 'hide' button which removes the numbers an consistent
-            coloring of the dancers.  Instead they are given random colors.   You will find
+            coloring of the dancers. Instead they are given random colors. You will find
             it much more difficult to resolve under these conditions (which mimic real world
-            conditions better).   If you forget dancers belong you can 'peek' by clicking
-            the 'identify' button and again to go back.   You can also hit the left arrow
-            to see the first position of the square (which tells you where home is) and then 
-            it the right arrow key to go back.   When you wish to get a new set of colors
-            to try, you need only hit the 'hide' key when the dancers are reset.  Thus you can 
-            keep hitting 'hide' if on a reset square to keep getting new sets of colors.  
+            conditions better). If you forget dancers belong you can 'peek' by clicking
+            the 'identify' button and again to go back. You can also hit the left arrow
+            to see the first position of the square (which tells you where home is) and then
+            it the right arrow key to go back. When you wish to get a new set of colors
+            to try, you need only hit the 'hide' key when the dancers are reset. Thus you can
+            keep hitting 'hide' if on a reset square to keep getting new sets of colors.
         </p>
         <h2>Singing Calls (Corner Progression)</h2>
         You can even do singing calls with corner progression with 6 couples.
@@ -703,7 +704,15 @@
 
             // Sort the dancers so that all couples are next to each other.  couples go from FLOOR left to right
             // (thus sashayed couples might be surprising)
-            if (dancerIsFacingHeads(dancers[0]))
+            // If facing heads  we expect
+            // 4 5 6 7
+            // 0 1 2 3
+            // If facing sides we sort  (so the sides case looks like the heads case)
+            // 0 4 
+            // 1 5
+            // 2 6 
+            // 3 7
+            if (dancerIsFacingHeads(dancers[0])) // If facing heads, numbers go left to right FIRST from bottom to top 
                 dancers.sort((a, b) => cmpOrder(a.gridY - b.gridY, a.gridX - b.gridX)); // sort by Y A->Z then X A->Z
             else
                 dancers.sort((a, b) => cmpOrder(a.gridX - b.gridX, b.gridY - a.gridY)); // sort by X A->Z then Y Z->A
@@ -1348,7 +1357,7 @@
             for (let box3 = 0; box3 < 4; box3++) {
                 // we iterate over the group from the center of the line (indexBase) out (idxDir)
                 let idxDir = 2 * Math.floor(box3 / 2) - 1;         // -1 for 0, 1    1 for 1, 2
-                let idxBase = 4 + box3;                                // iterates over the very center box
+                let idxBase = 4 + box3;                            // iterates over the very center box
                 let rotation = (box3 == 0 || box3 == 3) ? 1 : -1
                 let dir = rotation;
                 for (let i = 0; i < 3; i++)
@@ -1513,6 +1522,66 @@
             else
                 throw "Formation Wrong for Cast off 3/4";
         }
+        /********************************************************************/
+        /* Plus Calls */
+
+        function doTrack2(floor, dancers) {
+            // Because we sorting we do in floorGetDancers, we only have to handle the
+            // case where we start with dancers facing head walls.  
+            //  10 11
+            //  8  9
+            //   ...
+            //  3  4
+            //  0  1
+
+            // group them into groups of 3, in a box, box3 is the box of the groups of 3
+            // boxes are in the order
+            //  2 3 
+            //  0 1
+            for (let box3 = 0; box3 < 4; box3++) {
+                // we iterate over the group from the center of the line (indexBase) out (idxDir)
+                let idxDir = 2 * Math.floor(box3 / 2) - 1;         // -1 for 0, 1    1 for 1, 2
+                let idxBase = 4 + box3;                            // iterates over the very center box
+                let dir = (box3 == 0 || box3 == 3) ? 1 : -1
+                for (let i = 0; i < 3; i++)
+                    dancerMove(dancers[idxBase + 2 * idxDir * i], 3 - 6 * i, 1 - 3 * dir, 2);
+            }
+        }
+
+        function doSpinChainTheGears(floor, dancers) {
+            // The result of a spin chain the gears is that the ends circulate
+            // and the centers reverse circulate.  
+            let centers = floorGetDancers(floor, "c");
+            doTurnBack(floor, centers);
+            doCirculate(floor, dancers);   // This is a reverse for the centers since we turned back. 
+            doTurnBack(floor, centers);    // cancel out our turn back. 
+        }
+
+        function doCrossFire(floor, dancers) {
+            for (let line of dancersGetLinesOf4(dancers)) {
+                for (let end of [line[0], line[3]])     // ends cross fold and extend
+                    dancerMove(end, 1, 4, 2);
+                for (let center of [line[1], line[2]])     // centers trade and extend
+                    dancerMove(center, -1, 2, 2);
+            }
+        }
+
+        function doCoordinate(floor, dancers) {
+            // Do the boys
+            for (let i = 0; i < 3; i++) {
+                dancerMove(dancers[4*i], 1, 4, 2);
+                dancerMove(dancers[4*i+3], 1, 4, 2);
+            }
+            // The mid girls
+            for (let i = 0; i < 2; i++) {
+                dancerMove(dancers[4*i+2], 3, 2, 2);
+                dancerMove(dancers[4*i+5], 3, 2, 2);
+            }
+            // the end Girs.   
+            dancerMove(dancers[10], -1, 0, 0);
+            dancerMove(dancers[1], -1, 0, 0);
+        }
+
         /********************************************************************/
         // END OF SQUARE DANCE CALLS
         /********************************************************************/
@@ -1819,7 +1888,7 @@
                     console.log("Validating call failed, formation error: " + formationError);
                     // this is only here to make debugging easier (you can see the formations)
                     syncGUIToModel(floor, getEndFloor(g_callHistory, g_callHistory.length - 1));
-                    throw "Error: Bad formation for '" + call + "'" + "'";
+                    throw "Error: Bad formation for '" + call + "'";
                 }
                 floor.isResolved = floorIsResolved(floor);
                 if (floor.isResolved)
@@ -1957,6 +2026,10 @@
             ret["cast3"] = doCastOff3Quarters;
             ret["ci"] = doCentersIn;
             ret["flnr"] = doFirstLeftNextRight;
+            ret["t2"] = doTrack2;
+            ret["scg"] = doSpinChainTheGears;
+            ret["cf"] = doCrossFire;
+            ret["coord"] = doCoordinate;
             return ret;
         }
 
