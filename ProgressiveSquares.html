@@ -5,6 +5,7 @@
 	<script>
 		"use strict";
 
+		// A Floor has a number of squares as well as whether the lines are going left to right (or up and down)
 		function initialFloor() {
 			let squares = [];
 			for (let i = 1; i <= 4; i++)
@@ -13,6 +14,8 @@
 			validateFloor(ret);
 			return ret;
 		}
+		// A Dancer is a struct that has a origSquareNum, pointinIn isBoy and couple color attributes.  
+        // A square is a struct of two lines.  
 		function initialSquare(squareNum) {
 			let line1 = [];
 			for (const color of ["red", "yellow"])
@@ -215,8 +218,6 @@
 		function bendTheLineFloor(floor) {
 			floor.isLeftToRight = !floor.isLeftToRight;
 			for (const square of floor.squares) {
-
-
 				const line1 = square.line1;
 				const origLine1 = line1.slice();
 				const line2 = square.line2;
@@ -230,8 +231,33 @@
 				line2[1] = origLine2[3];
 				line2[2] = origLine1[3];
 				line2[3] = origLine1[2];
-			}
 
+				for (const line of [square.line1, square.line2]) {
+					for (const dancer of line) {
+					    dancer.pointingIn = true;
+					}
+				}
+			}
+			console.log("AFTER BTL"); printFloor(floor);
+			validateFloor(floor);
+		}
+
+		function rightAndLeftThruFloor(floor) {
+			for (const square of floor.squares) {
+				const line1 = square.line1;
+				const origLine1 = line1.slice();
+				const line2 = square.line2;
+				const origLine2 = line2.slice();
+
+				line1[0] = origLine2[1];
+				line1[1] = origLine2[0];
+				line1[2] = origLine2[3];
+				line1[3] = origLine2[2];
+				line2[0] = origLine1[1];
+				line2[1] = origLine1[0];
+				line2[2] = origLine1[3];
+				line2[3] = origLine1[2];
+			}
 			validateFloor(floor);
 		}
 
@@ -280,28 +306,39 @@
 
 		function figure(floor, num) {
 			passThruMoveOn(floor);
+			bendTheLineFloor(floor);
 
-			// if (num == 2 || num == 4) 
-			{
-				// rotateGirlsFloor(floor);
-				// rotateGirlsFloor(floor);
-				// sidesHeadFlipFloor(floor);
-			}
-			// if (num == 2)
-			// `	sidesHeadFlipFloor(floor);
-
-			console.log("At end of figure", floor);
+			console.log("At end of figure ", num);
 			printFloor(floor);
 		}
 
 		function sumulation1() {
 			let floor = initialFloor();
 
-			console.log("Initial Floor", floor);
+ 		console.log("Initial Floor");
 			printFloor(floor);
 
 			figure(floor, 1);
 			figure(floor, 2);
+
+			// rightAndLeftThruFloor(floor);
+			// console.log("After RLT");
+
+			passThruFloor(floor);
+			console.log("After PT"); printFloor(floor);
+
+			bendTheLineFloor(floor);
+			console.log("After BTL"); printFloor(floor);
+
+			passThruFloor(floor);
+			console.log("After PT"); printFloor(floor);
+
+			bendTheLineFloor(floor);
+			console.log("After BTL"); printFloor(floor);
+
+			console.log("After PT BTL PT BTL");
+			printFloor(floor);
+
 			figure(floor, 3);
 			figure(floor, 4);
 
