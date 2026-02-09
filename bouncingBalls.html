@@ -92,7 +92,7 @@
         /********************************************************************/
         // collision utilities
 
-        // This just upates the velocity of ball and otherball if they are in contact with each other.  
+        // This just updates the velocity of ball and otherBall if they are in contact with each other.  
         function updateIfCollidesWith(ball, otherBall) {
             // Quick check, do the enclosing rectangles intersect?
             if (rectanglesOverlap(ball, otherBall)) {
@@ -106,7 +106,7 @@
                         // We have intersection, The balls should bounce
                         let collisionUnit = scale(collisionDir, 1 / collisionDist);
 
-                        // Calcuate speeds in the direction of the collision
+                        // Calculate speeds in the direction of the collision
                         let collisionSpeed = dot(collisionUnit, ball.velocity);
                         let otherBallCollisionSpeed = dot(collisionUnit, otherBall.velocity);
 
@@ -161,7 +161,7 @@
             return Math.sqrt(v.x * v.x + v.y * v.y);
         }
 
-        // Given a vector v = (x,y), and a scall factor scale, scale the vector by scale
+        // Given a vector v = (x,y), and a scale factor scale, scale the vector by scale
         function scale(v, scale) {
             return { x: v.x * scale, y: v.y * scale };
         }
