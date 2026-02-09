@@ -338,7 +338,7 @@
         const g_savedCallNumSpan = document.getElementById('savedCallNum');
         const g_messageSpan = document.getElementById('message');
         const g_allCallsSpan = document.getElementById('allCalls');
-        const g_resolvedsSpan = document.getElementById('resolved');
+        const g_resolvedSpan = document.getElementById('resolved');
         const g_callListOrderedList = document.getElementById('callList');
         const g_callInput = document.getElementById('call');
         const g_identifyButton = document.getElementById('identify');
@@ -894,7 +894,7 @@
 
         function doAllemandeLeft(floor, dancers) {
             if (!floor.isResolved)
-                throw "Alemande Left on an unresolved square";
+                throw "Allemande Left on an unresolved square";
         }
 
         function doPassThru(floor, dancers) {
@@ -1569,13 +1569,13 @@
         function doCoordinate(floor, dancers) {
             // Do the boys
             for (let i = 0; i < 3; i++) {
-                dancerMove(dancers[4*i], 1, 4, 2);
-                dancerMove(dancers[4*i+3], 1, 4, 2);
+                dancerMove(dancers[4 * i], 1, 4, 2);
+                dancerMove(dancers[4 * i + 3], 1, 4, 2);
             }
             // The mid girls
             for (let i = 0; i < 2; i++) {
-                dancerMove(dancers[4*i+2], 3, 2, 2);
-                dancerMove(dancers[4*i+5], 3, 2, 2);
+                dancerMove(dancers[4 * i + 2], 3, 2, 2);
+                dancerMove(dancers[4 * i + 5], 3, 2, 2);
             }
             // the end Girls.   
             dancerMove(dancers[10], -1, 0, 0);
@@ -1589,7 +1589,7 @@
                 if (i == 0 || i == 5)
                     right = 10 * dir;
                 dancerMove(dancers[i], 0, right, dir);
-                dancerMove(dancers[11-i], 0, right, dir);   
+                dancerMove(dancers[11 - i], 0, right, dir);
             }
         }
 
@@ -1936,13 +1936,13 @@
         }
 
         // called when we want to make sure that the GUI represents the model (after we changed the model)
-        // NOTE most of the time you DON'T pass endFloor, startfloor.  It is only for debugging when you do
+        // NOTE most of the time you DON'T pass endFloor, startFloor.  It is only for debugging when you do
         function syncGUIToModel(endFloor, startFloor) {
             if (!endFloor)
                 endFloor = getEndFloor(g_callHistory, g_callListSelectedItemIdx);
 
             // If we ar resolved turn on the label that says so.  
-            g_resolvedsSpan.style.visibility = endFloor.isResolved ? "visible" : "hidden";
+            g_resolvedSpan.style.visibility = endFloor.isResolved ? "visible" : "hidden";
 
             g_identifyButton.innerText = g_couplesIdentified ? "hide" : "identify";
 

@@ -113,7 +113,7 @@
                 this.#padding = 3;
                 this.#charHeight = 12;
 
-                this.#editorWindowDiv = editorWindowDiv;               
+                this.#editorWindowDiv = editorWindowDiv;
                 this.#editorWindowDiv.editor = this;
                 this.#editorWindowDiv.onkeydown = TextEditor.#onKeyDown;
                 this.#editorWindowDiv.onpaste = TextEditor.#onPaste;
@@ -286,7 +286,7 @@
                 console.log("onMouseClick: ", event);
                 if (event.currentTarget == null)
                     return;
-                const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
+                const editor = event.currentTarget.editor;  // get editor associated with this DOM element
                 if (editor == null)
                     return;
 
@@ -301,7 +301,7 @@
                 const text = event.clipboardData.getData("text");
                 if (!text)
                     return;
-                const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
+                const editor = event.currentTarget.editor;  // get editor associated with this DOM element
                 if (editor == null)
                     return;
                 editor.addString(text);
@@ -316,7 +316,7 @@
                 if (event.metaKey)
                     return;
 
-                const editor = event.currentTarget.editor;  // get editor associated with this DOM elememnt
+                const editor = event.currentTarget.editor;  // get editor associated with this DOM element
                 if (editor == null)
                     return;
                 if (event.key.length == 1) {
@@ -336,7 +336,7 @@
                 else if ("ArrowDown" == event.key)
                     editor.moveDown();
                 else
-                    console.log("Unknonwn key: ", event);
+                    console.log("Unknown key: ", event);
             }
 
             static #onResize(event) {
@@ -374,7 +374,7 @@
             // returns the (short) name do the file (files may not have a full path)
             get name() { return this.#file.name; }
             // returns true if the cursor is at the end of file (readLine will return "")
-            get endOfFile() { return this.size <= this.postion; }
+            get endOfFile() { return this.size <= this.position; }
 
             // Returns the next line in the file, returns the empty string on end of file. 
             // It will only read 'maxByte' (not characters), so you can use that to limit
@@ -414,8 +414,8 @@
                 return retStr;
             }
 
-            // returns true if the last readLine executed was trucated (Because hit maxBytes limit)
-            get lastReadLineTrucated() { return this.#lastReadLineTruncated; }
+            // returns true if the last readLine executed was truncated (Because hit maxBytes limit)
+            get lastReadLineTruncated() { return this.#lastReadLineTruncated; }
 
             // scans backwards in the file one line.   If you are in the middle of a ine it goes to 
             // the first character in the line.  If you are at the first character it goes 
@@ -517,7 +517,7 @@
                 await this.#fill(newPositionOfBuffer);
                 this.#offsetInBuffer = position - newPositionOfBuffer;
                 assert(this.#offsetInBuffer < bufferSize);
-                assert(this.#positionOfBuffer % bufferSize == 0);   // we read in bufferSize chunks aways.  
+                assert(this.#positionOfBuffer % bufferSize == 0);   // we read in bufferSize chunks always.  
 
                 this.DEBUGPosBytes = this.#utf8Decoder.decode(this.#buffer.slice(this.#offsetInBuffer, this.#offsetInBuffer + 80));
                 assertExclusiveLeave("BigFile.seek");
@@ -526,7 +526,7 @@
 
             // Fill the buffer with 'bufferSize' bytes (if we don't hit EOF) starting at file offset 'filePos'
             async #fill(filePos) {
-                assert(filePos % bufferSize == 0);   // we read in bufferSize chunks aways.  
+                assert(filePos % bufferSize == 0);   // we read in bufferSize chunks always.  
                 this.#positionOfBuffer = filePos;
                 const bufferBlob = this.#file.slice(this.#positionOfBuffer, this.#positionOfBuffer + bufferSize);
                 const bufferArrayBuffer = await bufferBlob.arrayBuffer();
@@ -768,7 +768,7 @@
             }
 
             console.log("    running random location trials");
-            // Random location tials 
+            // Random location trials 
             for (let trial = 0; trial < 10000; trial++) {
                 if (trial % 1000 == 0)
                     console.log("    ran 1000 more times");

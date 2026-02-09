@@ -10,12 +10,12 @@
 			let squares = [];
 			for (let i = 1; i <= 4; i++)
 				squares.push(initialSquare(i));
-			let ret = { squares: squares, isLeftToRight: true, numHorz: 2, numVert: 2 };
+			let ret = { squares: squares, isLeftToRight: true, numHoriz: 2, numVert: 2 };
 			validateFloor(ret);
 			return ret;
 		}
-		// A Dancer is a struct that has a origSquareNum, pointinIn isBoy and couple color attributes.  
-        // A square is a struct of two lines.  
+		// A Dancer is a struct that has a origSquareNum, pointingIn isBoy and couple color attributes.  
+		// A square is a struct of two lines.  
 		function initialSquare(squareNum) {
 			let line1 = [];
 			for (const color of ["red", "yellow"])
@@ -36,8 +36,8 @@
 				for (let row = 0; row < floor.numVert; row++) {
 					for (let i = 0; i < 4; i++) {
 						let line = "   ";
-						for (let col = 0; col < floor.numHorz; col++) {
-							let squareIdx = row * floor.numHorz + col
+						for (let col = 0; col < floor.numHoriz; col++) {
+							let squareIdx = row * floor.numHoriz + col
 							let square = floor.squares[squareIdx];
 
 							if (col != 0)
@@ -56,8 +56,8 @@
 
 					for (const isFirstLine of [true, false]) {
 						let line = "   ";
-						for (let col = 0; col < floor.numHorz; col++) {
-							let squareIdx = row * floor.numHorz + col
+						for (let col = 0; col < floor.numHoriz; col++) {
+							let squareIdx = row * floor.numHoriz + col
 							let square = floor.squares[squareIdx];
 							if (col != 0)
 								line += " |  ";
@@ -139,8 +139,8 @@
 
 			if (floor.isLeftToRight) {
 				// for every row
-				for (let squareIdx = 0; squareIdx < floor.squares.length; squareIdx += floor.numHorz) {
-					let lastSquareIdx = squareIdx + floor.numHorz - 1;
+				for (let squareIdx = 0; squareIdx < floor.squares.length; squareIdx += floor.numHoriz) {
+					let lastSquareIdx = squareIdx + floor.numHoriz - 1;
 					console.assert(!floor.squares[squareIdx].line1[0].pointingIn);		// Must be pointing out  
 
 					partnerTradeLine(floor.squares[squareIdx].line1);
@@ -160,15 +160,15 @@
 			}
 			else {
 				// for every column
-				for (let squareIdx = 0; squareIdx < floor.numHorz; squareIdx++) {
-					let lastSquareIdx = squareIdx + floor.numHorz * (floor.numVert - 1);
+				for (let squareIdx = 0; squareIdx < floor.numHoriz; squareIdx++) {
+					let lastSquareIdx = squareIdx + floor.numHoriz * (floor.numVert - 1);
 					console.assert(!floor.squares[squareIdx].line1[0].pointingIn);		// Must be pointing out  
 
-					// for every row in that column (we jump by numHorz to get to the next column)
+					// for every row in that column (we jump by numHoriz to get to the next column)
 					partnerTradeLine(floor.squares[squareIdx].line1);
-					for (let i = squareIdx; i < lastSquareIdx; i += floor.numHorz) {
+					for (let i = squareIdx; i < lastSquareIdx; i += floor.numHoriz) {
 						let curSquare = floor.squares[i];
-						let nextSquare = floor.squares[i + floor.numHorz];
+						let nextSquare = floor.squares[i + floor.numHoriz];
 
 						let tempLine = curSquare.line2;
 						curSquare.line2 = nextSquare.line1;
@@ -234,7 +234,7 @@
 
 				for (const line of [square.line1, square.line2]) {
 					for (const dancer of line) {
-					    dancer.pointingIn = true;
+						dancer.pointingIn = true;
 					}
 				}
 			}
@@ -312,10 +312,10 @@
 			printFloor(floor);
 		}
 
-		function sumulation1() {
+		function simulation1() {
 			let floor = initialFloor();
 
- 		console.log("Initial Floor");
+			console.log("Initial Floor");
 			printFloor(floor);
 
 			figure(floor, 1);
@@ -373,7 +373,7 @@
 		}
 
 		console.log("Starting");
-		sumulation1();
+		simulation1();
 		console.log("Done");
 	</script>
 </body>

@@ -45,7 +45,7 @@
             event.preventDefault();
         }
 
-        // Files are Blobs with extra Information (name, size, modfied time, mime type)
+        // Files are Blobs with extra Information (name, size, modified time, mime type)
 
         // DON'T USE FileReader - it is obsolete.   
         // Typically the File blob can simply be converted to text() (for text) or u8gfO() 
@@ -97,7 +97,7 @@
                     }
                     let remainder = chunk.substr(startIndex);
                     ({ value: chunk, done: readerDone } = await reader.read());
-                    // Inefficient, don't concatinate the chunk, but rather simply concatinate 
+                    // Inefficient, don't concatenate the chunk, but rather simply concatenate 
                     // the pieces in the return value.   
                     chunk = remainder + (chunk ? utf8Decoder.decode(chunk) : "");
                     startIndex = re.lastIndex = 0;

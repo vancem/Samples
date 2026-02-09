@@ -33,7 +33,6 @@ let secondPromise = firstPromise.then(firstPromiseValue => {
 
     // console.log(ts() + " Error firstPromise.then()");
     // throw "FIRST_THEN ERROR";
-    // firstPromise.sdfaadsg(); 
 
     JSON.parse("}}}");
     console.log(ts() + " firstPromise.then returning 0");

@@ -4,7 +4,7 @@
         nodejs server.js 
 
     This server has the following commands
-        * localhost              - resppond with client.html
+        * localhost              - respond with client.html
         * localhost/increment    - increment a count, respond with count in JSON
         * localhost/decrement    - decrement a count, respond with the count in JSON
         * localhost/status       - respond with the count in JSON
@@ -31,7 +31,7 @@ function sendJSONResponse(res, json) {
 
 /************************************************************************ */
 http.createServer(function (req, res) {
-    console.log("RECIEVED REQUEST url='" + req.url + "' at " + (new Date()).toLocaleTimeString());
+    console.log("RECEIVED REQUEST url='" + req.url + "' at " + (new Date()).toLocaleTimeString());
     if (req.url == "/increment") {
         state.count++;
         sendJSONResponse(res, state);
@@ -44,11 +44,11 @@ http.createServer(function (req, res) {
         sendJSONResponse(res, state);
     }
     else if (req.url == "/") {
-        console.log("*********** Recieved Request: ROOT");
+        console.log("*********** Received Request: ROOT");
         fs.readFile("client.html", (err, fileData) => {
             console.log("Read File  len = " + fileData.length);
             console.assert(!err);
-            console.log("Sending Responce for ROOT");
+            console.log("Sending Response for ROOT");
             res.writeHead(200, { "Content-Type": "text/html" });
             res.end(fileData);
         });

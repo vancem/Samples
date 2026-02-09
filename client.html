@@ -45,7 +45,7 @@
             if (!response.ok)
                 throw "Error fetching URL: ./" + url + " error: " + response.statusText;
             let responseData = await response.json();
-            console.log("Got a HTTP responce from URL: " + response.url);
+            console.log("Got a HTTP response from URL: " + response.url);
             console.log("response data: ", responseData);
             document.getElementById("statusSpan").innerHTML = responseData.count;
             document.getElementById("timeSpan").innerHTML = (new Date()).toLocaleTimeString();

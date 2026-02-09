@@ -1,31 +1,32 @@
 <html>
+
 <body>
     <form>
-    <textarea  id="textInput" rows="10" cols="120"></textarea><br>
-    <div id="status">status</div><br>
-    <textarea  id="textOutput" rows="50" cols="120"></textarea><br>
-    <script>
-        "use strict";           // Tell javaScript to be picky to find more errors
+        <textarea id="textInput" rows="10" cols="120"></textarea><br>
+        <div id="status">status</div><br>
+        <textarea id="textOutput" rows="50" cols="120"></textarea><br>
+        <script>
+            "use strict";           // Tell javaScript to be picky to find more errors
 
-        let textInput = document.getElementById("textInput");   
-        textInput.oninput = function(ev) {
-            let data = textInput.value;
+            let textInput = document.getElementById("textInput");
+            textInput.oninput = function (ev) {
+                let data = textInput.value;
 
-            let suppliedIdx = data.indexOf("/* supplied functionality");
-            if (0 < suppliedIdx)
-                data = data.slice(0, suppliedIdx);
+                let suppliedIdx = data.indexOf("/* supplied functionality");
+                if (0 < suppliedIdx)
+                    data = data.slice(0, suppliedIdx);
 
-            data = data.replace(/ \/\//g, "\n//");
-            data = data.replace(/ public /g, "\npublic ");
-            data = data.replace(/{ /g, "{\n");
-            data = data.replace(/; /g, ";\n");
+                data = data.replace(/ \/\//g, "\n//");
+                data = data.replace(/ public /g, "\npublic ");
+                data = data.replace(/{ /g, "{\n");
+                data = data.replace(/; /g, ";\n");
 
-            data = data.replace(/(^\/\/.*?) ([A-Za-z]*\(.*\);)$/mg, "$1\n$2");
-            data = data.replace(/(^\/\/.*?) (for *\(.*)$/mg, "$1\n$2");
-            data = data.replace(/(^\/\/.*?) ([{}] *)$/mg, "$1\n$2");
-            textOutput.value = data;
-        };
-    </script>
+                data = data.replace(/(^\/\/.*?) ([A-Za-z]*\(.*\);)$/mg, "$1\n$2");
+                data = data.replace(/(^\/\/.*?) (for *\(.*)$/mg, "$1\n$2");
+                data = data.replace(/(^\/\/.*?) ([{}] *)$/mg, "$1\n$2");
+                textOutput.value = data;
+            };
+        </script>
 </body>
 
 </html>
